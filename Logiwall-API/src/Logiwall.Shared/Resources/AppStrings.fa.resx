@@ -1,0 +1,379 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="RangeAttribute_ValidationError" xml:space="preserve">
+    <value>مقدار {0} باید بین {1} و {2} باشد.</value>
+  </data>
+  <data name="RequiredAttribute_ValidationError" xml:space="preserve">
+    <value>پر کردن فیلد {0} اجباری است!</value>
+  </data>
+  <data name="BadRequestException" xml:space="preserve">
+    <value>درخواست نامعتبر</value>
+  </data>
+  <data name="ResourceValidationException" xml:space="preserve">
+    <value>داده های درخواست معتبر نمیباشند.</value>
+  </data>
+  <data name="RestException" xml:space="preserve">
+    <value>ToDo</value>
+  </data>
+  <data name="UnknownException" xml:space="preserve">
+    <value>خطای نامشخص</value>
+  </data>
+  <data name="ResourceNotFoundException" xml:space="preserve">
+    <value>منبع یافت نشد</value>
+  </data>
+  <data name="TooManyRequestsExceptions" xml:space="preserve">
+    <value>ارسال درخواست فراوان</value>
+  </data>
+  <data name="ServerConnectionException" xml:space="preserve">
+    <value>عدم امکان اتصال به سرور</value>
+  </data>
+  <data name="Active" xml:space="preserve">
+    <value>فعال</value>
+  </data>
+  <data name="All" xml:space="preserve">
+    <value>همه</value>
+  </data>
+  <data name="FullName" xml:space="preserve">
+    <value>نام</value>
+  </data>
+  <data name="TermsTitle" xml:space="preserve">
+    <value>ToDo</value>
+  </data>
+  <data name="ProfileUpdatedSuccessfullyMessage" xml:space="preserve">
+    <value>پروفایل شما با موفقیت آپدیت شد.</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>رمز عبور</value>
+  </data>
+  <data name="PasswordChangedSuccessfullyMessage" xml:space="preserve">
+    <value>تغییر رمز عبور با موفقیت انجام شد.</value>
+  </data>
+  <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
+  <data name="ResendConfirmationLinkMessage" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="WaitForResetPasswordEmailResendDelay" xml:space="preserve">
+    <value>شما قبلا ایمیل تغییر رمز عبور را دریافت نموده اید. لطفا پس از {0} تلاش کنید.</value>
+  </data>
+  <data name="TermsAccepted" xml:space="preserve">
+    <value>ToDo</value>
+  </data>
+  <data name="YouHaveToAcceptTerms" xml:space="preserve">
+    <value>شما باید با شرایط ما موافقت کنید.</value>
+  </data>
+  <data name="BirthDate" xml:space="preserve">
+    <value>تاریخ تولد</value>
+  </data>
+  <data name="Name" xml:space="preserve">
+    <value>نام</value>
+  </data>
+  <data name="Price" xml:space="preserve">
+    <value>قیمت</value>
+  </data>
+  <data name="YouNeedToSignIn" xml:space="preserve">
+    <value>برای ادامه لطفا با کاربری خود وارد شوید.</value>
+  </data>
+  <data name="InvalidUsernameOrPassword" xml:space="preserve">
+    <value>نام کاربری یا رمز عبور صحیح نیست</value>
+  </data>
+  <data name="WaitForConfirmationEmailResendDelay" xml:space="preserve">
+    <value>شما قبلا ایمیل تایید را دریافت نموده اید. لطفا پس از {0} تلاش کنید</value>
+  </data>
+  <data name="Title" xml:space="preserve">
+    <value>عنوان</value>
+  </data>
+  <data name="AreYouSureWannaDelete" xml:space="preserve">
+    <value>از حذف {0} مطمئن هستید؟</value>
+  </data>
+  <data name="UserNameNotFound" xml:space="preserve">
+    <value>کاربری با نام کاربری {0} در سیستم بافت نشد!</value>
+  </data>
+  <data name="Add" xml:space="preserve">
+    <value>اضافه کردن</value>
+  </data>
+  <data name="ConfirmEmailMessage" xml:space="preserve">
+    <value>یک لینک تایید برای شما ایمیل شده است، لطفا با کلیک بر آن ایمیل خود را تایید نمایید.</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>ویرایش</value>
+  </data>
+  <data name="ForgetPasswordTitle" xml:space="preserve">
+    <value>فراموشی رمز عبور</value>
+  </data>
+  <data name="NewPassword" xml:space="preserve">
+    <value>پسورد جدید</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>خیر</value>
+  </data>
+  <data name="Or" xml:space="preserve">
+    <value>یا</value>
+  </data>
+  <data name="ProfileImage" xml:space="preserve">
+    <value>عکس پروفایل</value>
+  </data>
+  <data name="Remove" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+  <data name="ResendEmail" xml:space="preserve">
+    <value>ارسال مجدد ایمیل</value>
+  </data>
+  <data name="ResetPasswordTitle" xml:space="preserve">
+    <value>تغییر رمز عبور</value>
+  </data>
+  <data name="Save" xml:space="preserve">
+    <value>ذخیره</value>
+  </data>
+  <data name="SignInTitle" xml:space="preserve">
+    <value>ورود</value>
+  </data>
+  <data name="SignOut" xml:space="preserve">
+    <value>خروج</value>
+  </data>
+  <data name="SignUp" xml:space="preserve">
+    <value>ثبت نام</value>
+  </data>
+  <data name="TermsMessage" xml:space="preserve">
+    <value>ToDo</value>
+  </data>
+  <data name="UploadNewProfileImage" xml:space="preserve">
+    <value>تصویر پروفایل جدیدی را بارگزاری نمایید.</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>بله</value>
+  </data>
+  <data name="SelectBirthDate" xml:space="preserve">
+    <value>تاریخ تولد خود را انتخاب کنید</value>
+  </data>
+  <data name="ResetPassword" xml:space="preserve">
+    <value>تغییر رمز عبور</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>بازگشت</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>لغو</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>ورود</value>
+  </data>
+  <data name="SignInAsDifferentUser" xml:space="preserve">
+    <value>ورود با کاربری دیگر</value>
+  </data>
+  <data name="YouAreSignInAs" xml:space="preserve">
+    <value>ToDo</value>
+  </data>
+  <data name="ForgotPasswordLink" xml:space="preserve">
+    <value>فراموشی رمز عبور</value>
+  </data>
+  <data name="RememberMe" xml:space="preserve">
+    <value>مرا بخاطر بسپار</value>
+  </data>
+  <data name="Update" xml:space="preserve">
+    <value>ToDo</value>
+  </data>
+  <data name="UpdateToNewVersion" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="TotalProducts" xml:space="preserve">
+    <value>کل محصولات</value>
+  </data>
+  <data name="EditCategory" xml:space="preserve">
+    <value>ویرایش دسته</value>
+  </data>
+  <data name="CategoriesPageTitle" xml:space="preserve">
+    <value>دسته ها</value>
+  </data>
+  <data name="SearchOnName" xml:space="preserve">
+    <value>جستجو با نام</value>
+  </data>
+  <data name="ProductsCountPerCategoryChartText" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="ProductsPageTitle" xml:space="preserve">
+    <value>محصولات</value>
+  </data>
+  <data name="ProductsPercentagePerCategoryText" xml:space="preserve">
+    <value>ToDo</value>
+  </data>
+  <data name="ProductCategory" xml:space="preserve">
+    <value>دسته محصولات</value>
+  </data>
+  <data name="Products" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="ProductCouldNotBeFound" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="CategoryNotEmpty" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="AreYouSureWannaDeleteCategory" type="System.Resources.ResXNullRef, System.Windows.Forms">
+    <value />
+  </data>
+  <data name="CategoryCouldNotBeFound" xml:space="preserve">
+    <value>دسته مورد نظر یافت نشد</value>
+  </data>
+  <data name="Category" xml:space="preserve">
+    <value>دسته</value>
+  </data>
+  <data name="PhoneNumber" xml:space="preserve">
+    <value>شماره موبایل</value>
+  </data>
+  <data name="OfflineEditProfileTitle" xml:space="preserve">
+    <value>آفلاین</value>
+  </data>
+  <data name="TodoTitle" xml:space="preserve">
+    <value>ToDo</value>
+  </data>
+  <data name="ToDoItemCouldNotBeFound" xml:space="preserve">
+    <value>توو دوو</value>
+  </data>
+  <data name="TodoAddPlaceholder" xml:space="preserve">
+    <value>توو دوو</value>
+  </data>
+  <data name="TodoSearchPlaceholder" xml:space="preserve">
+    <value>Todo</value>
+  </data>
+  <data name="InvalidOrder" xml:space="preserve">
+    <value>سفارش مورد نظر در سیستم یافت نشد!</value>
+  </data>
+  <data name="OtpServiceIsNotConnected" xml:space="preserve">
+    <value>در اتصال با سرویس ارسال پیامک مشکلی پیش آمده، لطفا لحظاتی دیگر مجددا تلاش نمائید.</value>
+  </data>
+  <data name="OtpCodeIsNotCorrect" xml:space="preserve">
+    <value>کد otp ارسالی صحیح نیست</value>
+  </data>
+  <data name="OtpCodeIsExpired" xml:space="preserve">
+    <value>کد otp منقضی شده است.</value>
+  </data>
+  <data name="OtpCodeIsSent" xml:space="preserve">
+    <value>کد ورود به سیستم برای شما ارسال گردید.</value>
+  </data>
+  <data name="LimitedPackageSize" xml:space="preserve">
+    <value>اندازه بسته بزرگتر از حد مجاز است. ابعاد مجاز مرسوله از ۱۰x۱۰x۱۰ تا ۴۵x۴۵x۴۵ سانتی متر می باشد.</value>
+  </data>
+  <data name="AnErrorOccurrdWhileRegisteration" xml:space="preserve">
+    <value>هنگام ثبت نام خطایی رخ داده است</value>
+  </data>
+  <data name="YouRegisteredBefore" xml:space="preserve">
+    <value>شما قبلا در سامانه ثبت نام کرده اید</value>
+  </data>
+</root>

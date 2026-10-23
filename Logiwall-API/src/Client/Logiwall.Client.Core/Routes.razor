@@ -1,0 +1,23 @@
+﻿<CascadingAuthenticationState>
+    <LayoutView Layout="@typeof(MainLayout)">
+        <Router AppAssembly="@GetType().Assembly"
+                AdditionalAssemblies="@(AssemblyLoadContext.Default.Assemblies.Where(asm => asm.GetName().Name?.Contains("Logiwall") is true))">
+            <Found Context="routeData">
+                <AuthorizeRouteView RouteData="@routeData">
+                    <Authorizing>
+                        <LoadingComponent />
+                    </Authorizing>
+                    <NotAuthorized>
+                        <NotAuthorizedPage />
+                    </NotAuthorized>
+                </AuthorizeRouteView>
+            </Found>
+            <NotFound>
+                <NotFoundPage />
+            </NotFound>
+            <Navigating>
+                <LoadingComponent />
+            </Navigating>
+        </Router>
+    </LayoutView>
+</CascadingAuthenticationState>

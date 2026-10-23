@@ -1,0 +1,11 @@
+{
+  "solution": {
+    "path": "Logiwall.sln",
+    "projects": [
+      "src\\Logiwall.Server\\Logiwall.Server.csproj",
+      "src\\Logiwall.Shared\\Logiwall.Shared.csproj",
+      "src\\Client\\Logiwall.Client.Core\\Logiwall.Client.Core.csproj",
+      "src\\Client\\Logiwall.Client.Web\\Logiwall.Client.Web.csproj"
+    ]
+  }
+}

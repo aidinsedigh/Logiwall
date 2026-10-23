@@ -1,0 +1,104 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>net8.0</TargetFramework>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Bit.CodeAnalyzers" Version="8.10.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Bit.SourceGenerators" Version="8.10.0">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.8" />
+        <PackageReference Include="Serilog" Version="4.0.1" />
+        <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
+        <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
+        <PackageReference Include="Serilog.Extensions.Logging" Version="8.0.0" />
+        <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Using Include="Microsoft.Extensions.Options" />
+        <Using Include="Microsoft.AspNetCore.Authorization" />
+        <Using Include="Logiwall.Shared.Enums" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Magick.NET-Q16-AnyCPU" Version="14.0.0" />
+        <PackageReference Include="FluentEmail.Smtp" Version="3.0.2" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
+        <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="8.0.8" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.8" />
+        <PackageReference Include="Microsoft.AspNetCore.OData" Version="9.0.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.8" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.8" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.8">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+        <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.8" />
+        <PackageReference Include="MimeTypeMapOfficial" Version="1.0.17" />
+        <PackageReference Include="Swashbuckle.AspNetCore" Version="6.7.3" />
+        <PackageReference Include="AspNetCore.HealthChecks.System" Version="8.0.1" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI" Version="8.0.2" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.1" />
+        <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="8.0.1" />
+        <PackageReference Include="AspNetCore.HealthChecks.Network" Version="8.0.1" />
+        <PackageReference Include="Riok.Mapperly" Version="3.6.0" />
+
+        <Using Include="Microsoft.EntityFrameworkCore.Migrations" />
+        <Using Include="Microsoft.EntityFrameworkCore.Metadata.Builders" />
+        <Using Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
+        <Using Include="Logiwall.Server.Data" />
+        <Using Include="Logiwall.Server.Mappers" />
+        <Using Include="Microsoft.AspNetCore.Identity" />
+        <Using Include="Microsoft.EntityFrameworkCore" />
+        <Using Include="Microsoft.AspNetCore.OData.Query" />
+        <Using Include="Microsoft.AspNetCore.Mvc" />
+
+        <None Update="IdentityCertificate.pfx">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+        
+        <Content Include=".config\dotnet-tools.json" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Logiwall.Application\Logiwall.Application.csproj" />
+        <ProjectReference Include="..\Logiwall.Infrastructure\Logiwall.Infrastructure.csproj" />
+        <ProjectReference Include="..\Logiwall.Shared\Logiwall.Shared.csproj" />
+        <ProjectReference Include="..\Client\Logiwall.Client.Web\Logiwall.Client.Web.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Compile Update="**\*.Designer.cs">
+            <DesignTime>True</DesignTime>
+            <AutoGen>True</AutoGen>
+            <DependentUpon>$([System.String]::Copy('%(Filename)').Replace('.Designer','')).resx</DependentUpon>
+        </Compile>
+        <EmbeddedResource Update="**\*.resx">
+            <Generator>PublicResXFileCodeGenerator</Generator>
+            <LastGenOutput>%(Filename).Designer.cs</LastGenOutput>
+        </EmbeddedResource>
+    </ItemGroup>
+
+    <!-- https://learn.microsoft.com/en-us/dotnet/core/docker/publish-as-container -->
+    <PropertyGroup>
+        <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
+        <EnableSdkContainerDebugging>True</EnableSdkContainerDebugging>
+        <UserSecretsId>61E1DBE7-8DA9-472A-A5B8-C6EF58EFF057</UserSecretsId>
+        <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+        <DockerfileContext>..\..</DockerfileContext>
+    </PropertyGroup>
+
+</Project>
