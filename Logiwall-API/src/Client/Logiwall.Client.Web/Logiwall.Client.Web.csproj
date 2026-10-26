@@ -14,8 +14,8 @@
         <BlazorCacheBootResources Condition=" '$(PwaEnabled)' == 'true' ">false</BlazorCacheBootResources>
         <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
         <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
-                <WasmStripILAfterAOT>true</WasmStripILAfterAOT>
-                <WasmBuildNative>true</WasmBuildNative>
+        <!-- Use the prebuilt WASM runtime on hosts without the wasm-tools workload. -->
+        <WasmBuildNative>false</WasmBuildNative>
     </PropertyGroup>
 
     <ItemGroup Condition=" '$(PwaEnabled)' == 'true' ">
