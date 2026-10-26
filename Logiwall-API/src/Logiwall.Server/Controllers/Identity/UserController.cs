@@ -1,4 +1,3 @@
-﻿using Logiwall.Client.Core.Controllers.Identity;
 using Logiwall.Domain.Entities.Identity;
 using Logiwall.Shared.Dtos.Identity;
 
@@ -6,7 +5,7 @@ namespace Logiwall.Server.Controllers.Identity;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-public partial class UserController : AppControllerBase, IUserController
+public partial class UserController : AppControllerBase
 {
     [AutoInject] private UserManager<User> userManager = default!;
 

@@ -1,6 +1,6 @@
-﻿using System.IO.Compression;
+using System.IO.Compression;
 using Logiwall.Server.Services;
-using Logiwall.Client.Web;
+
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.ResponseCompression;
 using System.Net.Mail;
@@ -37,6 +37,7 @@ public static partial class Program
         services.AddResponseCaching();
 
         services.AddHttpContextAccessor();
+        services.AddAntiforgery();
 
         services.AddResponseCompression(opts =>
         {
@@ -121,39 +122,9 @@ public static partial class Program
             }
         }
 
-        AddBlazor(builder);
+        services.AddSharedProjectServices();
+        services.TryAddTransient(_ => AppJsonContext.Default.Options);
 
-    }
-
-    private static void AddBlazor(WebApplicationBuilder builder)
-    {
-        var services = builder.Services;
-        var configuration = builder.Configuration;
-
-        services.TryAddTransient<IAuthTokenProvider, ServerSideAuthTokenProvider>();
-
-        services.TryAddTransient(sp =>
-        {
-            Uri.TryCreate(configuration.GetApiServerAddress(), UriKind.RelativeOrAbsolute, out var apiServerAddress);
-
-            if (apiServerAddress!.IsAbsoluteUri is false)
-            {
-                apiServerAddress = new Uri(sp.GetRequiredService<IHttpContextAccessor>().HttpContext!.Request.GetBaseUrl(), apiServerAddress);
-            }
-
-            return new HttpClient(sp.GetRequiredKeyedService<HttpMessageHandler>("DefaultMessageHandler"))
-            {
-                BaseAddress = apiServerAddress
-            };
-        });
-
-        services.AddRazorComponents()
-            .AddInteractiveServerComponents()
-            .AddInteractiveWebAssemblyComponents();
-
-        services.AddMvc();
-
-       services.AddClientWebProjectServices();
     }
 
     private static void AddIdentity(WebApplicationBuilder builder)

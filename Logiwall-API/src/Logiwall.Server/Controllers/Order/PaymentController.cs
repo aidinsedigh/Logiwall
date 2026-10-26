@@ -1,12 +1,11 @@
-﻿using Logiwall.Shared.Dtos.PaymentItems;
-using Logiwall.Client.Core.Controllers.Order;
+using Logiwall.Shared.Dtos.PaymentItems;
 using Logiwall.Application.Abstractions.OrderItems;
 
 namespace Logiwall.Server.Controllers.Order;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-public partial class PaymentController : AppControllerBase, IPaymentController
+public partial class PaymentController : AppControllerBase
 {
     [AutoInject] private IPaymentService paymentService = default!;
 

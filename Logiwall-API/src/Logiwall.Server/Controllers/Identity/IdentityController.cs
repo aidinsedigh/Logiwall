@@ -1,9 +1,8 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using FluentEmail.Core;
 using Logiwall.Application.Abstractions.Identity;
-using Logiwall.Client.Core.Controllers.Identity;
 using Logiwall.Domain.Entities.Identity;
 using Logiwall.Server.Resources;
 using Logiwall.Shared.Dtos.Identity;
@@ -17,7 +16,7 @@ namespace Logiwall.Server.Controllers.Identity;
 
 [Microsoft.AspNetCore.Mvc.Route("api/[controller]/[action]")]
 [ApiController, AllowAnonymous]
-public partial class IdentityController : AppControllerBase, IIdentityController
+public partial class IdentityController : AppControllerBase
 {
     [AutoInject] private UserManager<User> userManager = default!;
 

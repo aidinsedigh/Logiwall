@@ -1,11 +1,10 @@
-﻿using Logiwall.Shared.Dtos.Dashboard;
-using Logiwall.Client.Core.Controllers.Dashboard;
+using Logiwall.Shared.Dtos.Dashboard;
 
 namespace Logiwall.Server.Controllers;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-public partial class DashboardController : AppControllerBase, IDashboardController
+public partial class DashboardController : AppControllerBase
 {
     [HttpGet]
     public async Task<OverallAnalyticsStatsDataResponseDto> GetOverallAnalyticsStatsData(CancellationToken cancellationToken)

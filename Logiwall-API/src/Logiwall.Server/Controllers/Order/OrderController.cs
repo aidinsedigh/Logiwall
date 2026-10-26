@@ -1,5 +1,4 @@
-﻿using Logiwall.Application.Abstractions.OrderItems;
-using Logiwall.Client.Core.Controllers.Order;
+using Logiwall.Application.Abstractions.OrderItems;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.OrderItems;
 
@@ -7,7 +6,7 @@ namespace Logiwall.Server.Controllers.Order;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-public partial class OrderController : AppControllerBase, IOrderController
+public partial class OrderController : AppControllerBase
 {
     [AutoInject] private IOrderService orderService = default!;
     [HttpPost]

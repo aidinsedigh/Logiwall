@@ -1,5 +1,4 @@
-﻿using Logiwall.Application.Abstractions.People;
-using Logiwall.Client.Core.Controllers.People;
+using Logiwall.Application.Abstractions.People;
 using Logiwall.Domain.Entities.Identity;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.People;
@@ -8,7 +7,7 @@ namespace Logiwall.Server.Controllers.People;
 
 [Route("api/[controller]/[action]")]
 [ApiController]
-public partial class PersonController : AppControllerBase, IPersonController
+public partial class PersonController : AppControllerBase
 {
     [AutoInject] private UserManager<User> userManager = default!;
     [AutoInject] private SignInManager<User> signInManager = default!;

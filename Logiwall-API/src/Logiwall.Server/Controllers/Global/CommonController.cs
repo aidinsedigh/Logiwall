@@ -1,7 +1,5 @@
-﻿using Logiwall.Application.Abstractions.Global;
+using Logiwall.Application.Abstractions.Global;
 using Logiwall.Application.Abstractions.OrderItems;
-using Logiwall.Client.Core.Controllers.Global;
-using Logiwall.Client.Core.Controllers.Order;
 using Logiwall.Infrastructure.Services.OrderItems;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.OrderItems;
@@ -11,7 +9,7 @@ namespace Logiwall.Server.Controllers.Global;
 [Route("api/[controller]/[action]")]
 [ApiController]
 [AllowAnonymous]
-public partial class CommonController : AppControllerBase, ICommonController
+public partial class CommonController : AppControllerBase
 {
     [AutoInject] private ICommonService commonService = default!;
 

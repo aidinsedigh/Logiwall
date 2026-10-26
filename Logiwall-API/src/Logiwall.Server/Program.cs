@@ -1,4 +1,4 @@
-﻿
+
 using Serilog.Events;
 using Serilog;
 
@@ -22,7 +22,7 @@ public static partial class Program
             var builder = WebApplication.CreateBuilder(args);
             // Add Serilog to logging
             builder.Host.UseSerilog();
-            builder.Configuration.AddClientConfigurations();
+
 
             // The following line (using the * in the URL), allows the emulators and mobile devices to access the app using the host IP address.
             if (BuildConfiguration.IsDebug() && OperatingSystem.IsWindows())

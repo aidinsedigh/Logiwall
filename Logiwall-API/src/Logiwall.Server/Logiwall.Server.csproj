@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
         <TargetFramework>net8.0</TargetFramework>
@@ -13,7 +13,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.8" />
+
         <PackageReference Include="Serilog" Version="4.0.1" />
         <PackageReference Include="Serilog.AspNetCore" Version="8.0.2" />
         <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
@@ -77,7 +77,7 @@
         <ProjectReference Include="..\Logiwall.Application\Logiwall.Application.csproj" />
         <ProjectReference Include="..\Logiwall.Infrastructure\Logiwall.Infrastructure.csproj" />
         <ProjectReference Include="..\Logiwall.Shared\Logiwall.Shared.csproj" />
-        <ProjectReference Include="..\Client\Logiwall.Client.Web\Logiwall.Client.Web.csproj" />
+
     </ItemGroup>
 
     <ItemGroup>
@@ -101,4 +101,10 @@
         <DockerfileContext>..\..</DockerfileContext>
     </PropertyGroup>
 
+    <!-- Blazor UI is temporarily excluded; email templates remain available. -->
+    <ItemGroup>
+        <RazorComponent Remove="Components\App.razor" />
+        <Content Remove="Components\App.razor" />
+        <Compile Remove="Components\App.razor.cs;Services\ServerSideAuthTokenProvider.cs" />
+    </ItemGroup>
 </Project>

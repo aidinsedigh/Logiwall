@@ -1,4 +1,4 @@
-﻿namespace Logiwall.Server.Controllers;
+namespace Logiwall.Server.Controllers;
 
 public partial class AppControllerBase : ControllerBase
 {
