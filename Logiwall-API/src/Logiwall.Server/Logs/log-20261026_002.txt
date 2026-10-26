@@ -1,0 +1,10 @@
+2026-10-26 23:43:15.185 +03:30 [INF] Starting web host
+2026-10-26 23:43:17.535 +03:30 [FTL] Host terminated unexpectedly
+Microsoft.Extensions.Hosting.HostAbortedException: The host was aborted.
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.ThrowHostAborted()
+   at Microsoft.Extensions.Hosting.HostFactoryResolver.HostingListener.OnNext(KeyValuePair`2 value)
+   at System.Diagnostics.DiagnosticListener.Write(String name, Object value)
+   at Microsoft.Extensions.Hosting.HostBuilder.ResolveHost(IServiceProvider serviceProvider, DiagnosticListener diagnosticListener)
+   at Microsoft.Extensions.Hosting.HostApplicationBuilder.Build()
+   at Microsoft.AspNetCore.Builder.WebApplicationBuilder.Build()
+   at Logiwall.Server.Program.Main(String[] args) in E:\Projects\logiwall-backend\Logiwall\Logiwall-API\src\Logiwall.Server\Program.cs:line 35
