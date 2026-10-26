@@ -12,6 +12,7 @@ public static partial class Program
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // Set minimum log level for Microsoft components
             .Enrich.FromLogContext()
+            .WriteTo.Console()
             .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day) // Log to file with daily rotation
             .CreateLogger();
         try
@@ -40,6 +41,7 @@ public static partial class Program
         catch (Exception exc)
         {
             Log.Fatal(exc, "Host terminated unexpectedly");
+            throw;
         }
         finally
         {
