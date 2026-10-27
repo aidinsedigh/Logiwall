@@ -1,70 +1,58 @@
-﻿using System.Net;
-using System.Text;
+﻿using System.Text.Json;
 using Logiwall.Application.Abstractions.Tools;
-using Logiwall.Server.Data;
-using Newtonsoft.Json;
 using Logiwall.Infrastructure.Options;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Logiwall.Infrastructure.Services.Tools;
 public class SMSService : ISMSService
 {
-    private readonly AppDbContext dbContext;
+    private readonly IHttpClientFactory httpClientFactory;
     private readonly SmsOptions smsOptions;
+    private readonly ILogger<SMSService> logger;
 
-    public SMSService(AppDbContext dbContext, IOptions<SmsOptions> smsOptions)
+    public SMSService(IHttpClientFactory httpClientFactory, IOptions<SmsOptions> smsOptions, ILogger<SMSService> logger)
     {
-        this.dbContext = dbContext;
+        this.httpClientFactory = httpClientFactory;
         this.smsOptions = smsOptions.Value;
+        this.logger = logger;
     }
 
-    public class SMSPersiaFavaResult
+    private record PersiaFavaResult(
+        [property: JsonPropertyName("result")] bool Result,
+        [property: JsonPropertyName("error")] string? Error);
+
+    public async Task<string> SendSmsAsync(string message, string destination, CancellationToken cancellationToken = default)
     {
-        public bool result { get; set; }
-        public string error { get; set; }
-
-    }
-    public string SendSMS(string Message, string Destination)
-    {
-        return SendSMSPersiaFava(Message, Destination);
-    }
-
-    public string SendSMSPersiaFava(string Message, string DestinationAddress)
-    {
-        string[] RetValue = new string[2];
-        RetValue[0] = "False";
-        RetValue[1] = "0";
-        var request = (HttpWebRequest)WebRequest.Create(smsOptions.Url);
-
-        var postData = $"api_key={Uri.EscapeDataString(smsOptions.ApiKey)}&receiver_number={Uri.EscapeDataString(DestinationAddress)}&note_arr[]={Uri.EscapeDataString(Message)}&sender_number={Uri.EscapeDataString(smsOptions.SenderNumber)}";
-        var data = Encoding.UTF8.GetBytes(postData);
-
-        request.Method = "POST";
-        request.ContentType = "application/x-www-form-urlencoded";
-        request.ContentLength = data.Length;
-
-        using (var stream = request.GetRequestStream())
-        {
-            stream.Write(data, 0, data.Length);
-        }
-
-        var response = (HttpWebResponse)request.GetResponse();
-        var responseString = new StreamReader(response.GetResponseStream()).ReadToEnd();
-
         try
         {
-            SMSPersiaFavaResult res = JsonConvert.DeserializeObject<SMSPersiaFavaResult>(responseString);
-            RetValue[0] = res.result ? "True" : "False";
-            RetValue[1] = res.error;
+            var client = httpClientFactory.CreateClient("sms");
+            using var content = new FormUrlEncodedContent(new[]
+            {
+                new KeyValuePair<string, string>("api_key", smsOptions.ApiKey),
+                new KeyValuePair<string, string>("receiver_number", destination),
+                new KeyValuePair<string, string>("note_arr[]", message),
+                new KeyValuePair<string, string>("sender_number", smsOptions.SenderNumber),
+            });
+
+            using var response = await client.PostAsync(smsOptions.Url, content, cancellationToken);
+            var body = await response.Content.ReadAsStringAsync(cancellationToken);
+            var result = JsonSerializer.Deserialize<PersiaFavaResult>(body);
+
+            if (result?.Result is true)
+                return "OK";
+
+            return result?.Error ?? $"HTTP {(int)response.StatusCode}";
         }
-        catch (Exception exp)
+        catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
-            RetValue[1] = exp.Message + ";" + responseString;
+            // Never log the message text: it contains the OTP.
+            logger.LogWarning(ex, "SMS send failed for {Destination}", MaskPhone(destination));
+            return "ERROR";
         }
-        if (RetValue[0] == "True")
-            return "OK";
-        else
-            return RetValue[1].ToString();
     }
 
+    /// <summary>Keeps only the last 4 digits, so logs do not hold full phone numbers.</summary>
+    public static string MaskPhone(string? phone)
+        => string.IsNullOrEmpty(phone) || phone.Length <= 4 ? "****" : new string('*', phone.Length - 4) + phone[^4..];
 }

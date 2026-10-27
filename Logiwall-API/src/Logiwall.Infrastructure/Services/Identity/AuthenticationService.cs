@@ -11,6 +11,8 @@ using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Logiwall.Infrastructure.Services.Tools;
 
 namespace Logiwall.Infrastructure.Services.Identity;
 public class AuthenticationService : IAuthenticationService
@@ -24,18 +26,21 @@ public class AuthenticationService : IAuthenticationService
     private readonly ISMSService smsService;
     private readonly IAppSettingService appSettingService;
     private readonly IStringLocalizer<AppStrings> localizer;
+    private readonly ILogger<AuthenticationService> logger;
 
     public AuthenticationService(AppDbContext dbContext,
         UserManager<User> userManager,
         ISMSService smsService,
         IAppSettingService appSettingService,
-        IStringLocalizer<AppStrings> localizer)
+        IStringLocalizer<AppStrings> localizer,
+        ILogger<AuthenticationService> logger)
     {
         this.dbContext = dbContext;
         this.userManager = userManager;
         this.smsService = smsService;
         this.appSettingService = appSettingService;
         this.localizer = localizer;
+        this.logger = logger;
     }
     public async Task<ServiceResponse<bool>> SendOtpCodeAsync([NotNull] SendOtpRequestDto requestDto)
     {
@@ -54,13 +59,12 @@ public class AuthenticationService : IAuthenticationService
                 }
             }
 
-            var code = GenerateRandomCode();
-            var settings = await appSettingService.GetAllSettingsAsync();
-            var message = settings.LoginOtpText?.Replace("{CODE}", code);
-            var response = smsService.SendSMS(message ?? code, requestDto.PhoneNumber);
-            //todo : send code to sms provider
+            if (user is not null && (user.IsArchive || user.Active is false))
+            {
+                return new ServiceResponse<bool> { Data = false, Succuss = false, Message = "Account is disabled." };
+            }
 
-            if (user == null || user.IsArchive)
+            if (user is null)
             {
                 // OTP users have no password; password sign-in (GetToken) is only possible after Person/Register sets one.
                 var createResult = await userManager.CreateAsync(new User
@@ -71,8 +75,9 @@ public class AuthenticationService : IAuthenticationService
                     Active = true
                 });
 
-                if (createResult.Succeeded is false && user is null)
+                if (createResult.Succeeded is false)
                 {
+                    logger.LogWarning("Creating the OTP user failed: {ErrorCodes}", string.Join(", ", createResult.Errors.Select(e => e.Code)));
                     return new ServiceResponse<bool>
                     {
                         Data = false,
@@ -83,6 +88,9 @@ public class AuthenticationService : IAuthenticationService
 
                 user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
             }
+
+            // Store the code before the SMS goes out, so a delivered code always works.
+            var code = GenerateRandomCode();
             var expiryTime = DateTimeOffset.Now.Add(OtpValidity);
             var userOtp = new UserOtp
             {
@@ -98,8 +106,21 @@ public class AuthenticationService : IAuthenticationService
             await userManager.SetAuthenticationTokenAsync(user, "OTP", "otp", code);
             await userManager.SetAuthenticationTokenAsync(user, "OTP", "timestamp", expiryTime.ToString("o"));
             await userManager.SetAuthenticationTokenAsync(user, "OTP", "attempts", "0");
-            //todo: Send the OTP through a communication channel (e.g., email, SMS)
-            // Code to send OTP to the user (e.g., via email, SMS) goes here
+
+            var settings = await appSettingService.GetAllSettingsAsync();
+            var message = settings.LoginOtpText?.Replace("{CODE}", code);
+            var smsResult = await smsService.SendSmsAsync(message ?? code, requestDto.PhoneNumber);
+            if (smsResult != "OK")
+            {
+                logger.LogWarning("OTP SMS was not sent to {Destination}", SMSService.MaskPhone(requestDto.PhoneNumber));
+                return new ServiceResponse<bool>
+                {
+                    Data = false,
+                    Succuss = false,
+                    Message = localizer.GetString(nameof(AppStrings.OtpServiceIsNotConnected))
+                };
+            }
+
             return new ServiceResponse<bool>
             {
                 Data = true,
@@ -109,7 +130,7 @@ public class AuthenticationService : IAuthenticationService
         }
         catch (Exception exc)
         {
-            _ = exc;
+            logger.LogError(exc, "SendOtpCodeAsync failed");
             return new ServiceResponse<bool>
             {
                 Data = false,
@@ -220,7 +241,7 @@ public class AuthenticationService : IAuthenticationService
         }
         catch (Exception exc)
         {
-            _ = exc;
+            logger.LogError(exc, "LogUserLoginAsync failed");
         }
     }
 

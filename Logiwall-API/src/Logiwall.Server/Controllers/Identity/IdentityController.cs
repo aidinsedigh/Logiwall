@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.RateLimiting;
+using Logiwall.Shared.Dtos.Global;
 
 namespace Logiwall.Server.Controllers.Identity;
 
@@ -57,6 +58,9 @@ public partial class IdentityController : AppControllerBase, IIdentityController
         {
             return BadRequest(string.Format(AppStrings.UserNameNotFound, requestDto.PhoneNumber));
         }
+
+        if (user.IsArchive || user.Active is false)
+            return BadRequest(new ServiceResponse<ConfirmationOtpResponseDto> { Succuss = false, Message = "Account is disabled." });
 
         requestDto.Code = Globals.ConvertPersianNumbersToEnglish(requestDto.Code);
         var response = await authenticationService.ConfirmationOtpCodeAsync(requestDto);
@@ -189,6 +193,11 @@ public partial class IdentityController : AppControllerBase, IIdentityController
     public async Task GetToken(SignInRequestDto signInRequest)
     {
         signInManager.AuthenticationScheme = IdentityConstants.BearerScheme;
+
+        // A disabled account gets the bad-password answer, so the response does not reveal that it exists.
+        var existingUser = await userManager.FindByNameAsync(signInRequest.UserName!);
+        if (existingUser is not null && (existingUser.IsArchive || existingUser.Active is false))
+            throw new UnauthorizedException(Localizer.GetString(nameof(AppStrings.InvalidUsernameOrPassword)));
 
         var result = await signInManager.PasswordSignInAsync(signInRequest.UserName!, signInRequest.Password!, isPersistent: false, lockoutOnFailure: true);
 

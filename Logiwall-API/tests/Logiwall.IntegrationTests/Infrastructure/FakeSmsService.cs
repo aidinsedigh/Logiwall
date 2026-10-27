@@ -10,11 +10,14 @@ public partial class FakeSmsService : ISMSService
     private readonly ConcurrentDictionary<string, string> lastMessages = new();
     private readonly ConcurrentDictionary<string, int> counts = new();
 
-    public string SendSMS(string Message, string Destination)
+    /// <summary>The result the next sends return. "OK" means success.</summary>
+    public string NextResult { get; set; } = "OK";
+
+    public Task<string> SendSmsAsync(string message, string destination, CancellationToken cancellationToken = default)
     {
-        lastMessages[Destination] = Message;
-        counts.AddOrUpdate(Destination, 1, (_, count) => count + 1);
-        return "OK";
+        lastMessages[destination] = message;
+        counts.AddOrUpdate(destination, 1, (_, count) => count + 1);
+        return Task.FromResult(NextResult);
     }
 
     public int CountFor(string phone) => counts.TryGetValue(phone, out var count) ? count : 0;
