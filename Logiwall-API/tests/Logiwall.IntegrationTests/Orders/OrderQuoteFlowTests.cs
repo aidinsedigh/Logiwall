@@ -80,6 +80,34 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
         Assert.Contains((int)OrderState.SelectedServiceProvider, statuses);
     }
 
+    [Fact]
+    public async Task Parallel_requotes_leave_one_set_of_options()
+    {
+        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
+        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 2).Select(_ => client.GetAsync($"api/Order/GetOptions?orderId={orderId}")));
+
+        Assert.All(responses, r => r.EnsureSuccessStatusCode());
+        Assert.Equal(2, await OptionCountAsync(orderId)); // FakePostalProvider quotes two options
+    }
+
+    [Fact]
+    public async Task Order_list_shows_the_order_state()
+    {
+        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
+        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+        await fixture.WithDbAsync(db => db.Orders.Where(o => o.Id == orderId)
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.State, (short)OrderState.PaymentPending)));
+
+        var response = await client.PostAsJsonAsync("api/Order/GetOrders", new { });
+
+        response.EnsureSuccessStatusCode();
+        var order = (await ApiClient.ReadJsonAsync(response)).GetProperty("data").EnumerateArray()
+            .Single(o => o.GetProperty("id").GetInt32() == orderId);
+        Assert.Equal((short)OrderState.PaymentPending, order.GetProperty("status").GetInt16());
+    }
+
     [Fact(Skip = "no policy gap to exercise")]
     public Task Register_rolls_back_person_when_password_reset_fails() => Task.CompletedTask;
 }

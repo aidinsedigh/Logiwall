@@ -190,7 +190,9 @@ public class OrderService : IOrderService
             // Re-quoting replaces the previous options instead of appending to them.
             await using (var tx = await appDbContext.Database.BeginTransactionAsync())
             {
-                var old = await appDbContext.OrderInqueryOptions.Where(t => t.OrderId == order.Id).ToListAsync();
+                // Lock the order row, so a parallel re-quote waits and then replaces these options.
+                await appDbContext.Database.ExecuteSqlInterpolatedAsync($"SELECT Id FROM Orders WITH (UPDLOCK, HOLDLOCK) WHERE Id = {order.Id}");
+                var old =await appDbContext.OrderInqueryOptions.Where(t => t.OrderId == order.Id).ToListAsync();
                 appDbContext.OrderInqueryOptions.RemoveRange(old);
                 appDbContext.OrderInqueryOptions.AddRange(newOptions);
                 order.State = (short)OrderState.Created;

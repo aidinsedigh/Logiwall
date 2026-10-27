@@ -7,6 +7,7 @@ namespace Logiwall.Infrastructure.Mapper;
 [Mapper(UseDeepCloning = true)]
 public static partial class OrderMapper
 {
+    [MapProperty(nameof(Order.State), nameof(OrderDto.Status))]
     public static partial OrderDto Map(this Order source);
 
     public static partial Order Map(this CreateOrderRequestDto source);
