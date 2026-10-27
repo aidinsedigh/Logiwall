@@ -34,10 +34,4 @@ public class CommonService : ICommonService
             Message = string.Empty
         };
     }
-
-    public async Task<string?> GetStaticDataByIdAsync(int id)
-    {
-        var result = await appDbContext.StaticDatas.FindAsync(id);
-        return result.Title;
-    }
 }

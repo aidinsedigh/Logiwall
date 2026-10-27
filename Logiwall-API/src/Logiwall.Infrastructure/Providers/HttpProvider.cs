@@ -12,8 +12,6 @@ public sealed class HttpProvider(IHttpClientFactory httpClientFactory, ILogger<H
 {
     private const int DefaultTimeoutSeconds = 30;
 
-    public IEnumerable<(string Key, string? Value)>? DefaultHeaders { get; set; }
-
     public Task<TResponse?> DeleteAsync<TRequest, TResponse, TBody>(HttpProviderRequest<TBody, TRequest> request, Func<HttpResponseMessage, Task>? postCallHandler = null, Func<HttpResponseMessage, Task<TResponse?>>? decodeHandler = null, Func<TRequest?, TResponse?, Task<TResponse?>>? failHandler = null, CancellationToken cancellationToken = default)
         where TRequest : IHttpRequest
         where TResponse : IHttpResponse
@@ -57,14 +55,6 @@ public sealed class HttpProvider(IHttpClientFactory httpClientFactory, ILogger<H
         else if (string.IsNullOrEmpty(request.BaseAddress) is false)
         {
             client.BaseAddress = new Uri(request.BaseAddress);
-        }
-
-        if (DefaultHeaders is not null)
-        {
-            foreach (var header in DefaultHeaders)
-            {
-                client.DefaultRequestHeaders.Add(header.Key, header.Value);
-            }
         }
 
         if (request.HeaderParameters?.Count > 0)

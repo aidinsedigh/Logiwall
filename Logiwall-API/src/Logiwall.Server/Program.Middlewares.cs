@@ -8,8 +8,6 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Localization;
 using Logiwall.Server.Services;
 
-using Microsoft.AspNetCore.Diagnostics.HealthChecks;
-using HealthChecks.UI.Client;
 using Serilog;
 
 namespace Logiwall.Server;
@@ -123,17 +121,7 @@ public static partial class Program
 
         if (healthCheckSettings.EnableHealthChecks)
         {
-            app.MapHealthChecks("/healthz", new HealthCheckOptions
-            {
-                ResponseWriter = UIResponseWriter.WriteHealthCheckUIResponse
-            });
-
-            app.MapHealthChecksUI(options =>
-            {
-                options.UseRelativeApiPath =
-                    options.UseRelativeResourcesPath =
-                        options.UseRelativeWebhookPath = false;
-            });
+            app.MapHealthChecks("/healthz");
         }
 
 

@@ -4,8 +4,6 @@ using Logiwall.Shared.Dtos.Providers;
 namespace Logiwall.Application.Abstractions.Providers;
 public interface IHttpProvider
 {
-    IEnumerable<(string Key, string? Value)>? DefaultHeaders { get; set; }
-
     Task<TResponse?> PostAsync<TRequest, TResponse, TBody>(HttpProviderRequest<TBody, TRequest> request, Func<HttpResponseMessage, Task>? postCallHandler = null, Func<HttpResponseMessage, Task<TResponse?>>? decodeHandler = null, Func<TRequest?, TResponse?, Task<TResponse?>>? failHandler = null, CancellationToken cancellationToken = default)
         where TRequest : IHttpRequest
         where TResponse : IHttpResponse;

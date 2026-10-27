@@ -24,7 +24,7 @@ Scope, in one line each:
 - [x] Task 10 — `OrderDto.Status`; parallel re-quote lock (FR-O3, FR-O15)
 - [x] Task 11 — Used national code; all pending payments; SEP split test (FR-O6-FR-O8)
 - [x] Task 12 — One token signer; new development certificate (FR-O9, FR-O10)
-- [ ] Task 13 — Dead code, `KnownIPNetworks`, remove health-check UI (FR-O11, FR-O12, FR-O16, FR-O17)
+- [x] Task 13 — Dead code, `KnownIPNetworks`, remove health-check UI (FR-O11, FR-O12, FR-O16, FR-O17)
 - [ ] Task 14 — Client loading overlay and unresolved Bit tags (FR-O18, FR-O19)
 - [ ] Task 15 — Final check, self-review, archive the cycle
 

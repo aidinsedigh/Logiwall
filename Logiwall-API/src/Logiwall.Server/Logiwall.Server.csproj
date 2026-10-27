@@ -43,9 +43,6 @@
         <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
         <PackageReference Include="Swashbuckle.AspNetCore" />
         <PackageReference Include="AspNetCore.HealthChecks.System" />
-        <PackageReference Include="AspNetCore.HealthChecks.UI" />
-        <PackageReference Include="AspNetCore.HealthChecks.UI.Client" />
-        <PackageReference Include="AspNetCore.HealthChecks.UI.InMemory.Storage" />
         <PackageReference Include="Riok.Mapperly" />
 
         <Using Include="Microsoft.EntityFrameworkCore.Migrations" />

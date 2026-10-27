@@ -38,7 +38,7 @@ public static partial class Program
             if (configuration.GetValue<bool>("ForwardedHeaders:TrustAllProxies"))
             {
                 // Safe only when the app is reachable exclusively through the platform proxy (e.g. Azure App Service).
-                options.KnownNetworks.Clear();
+                options.KnownIPNetworks.Clear();
                 options.KnownProxies.Clear();
             }
             foreach (var proxy in configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [])
@@ -356,11 +356,6 @@ public static partial class Program
 
         if (healthCheckSettings.EnableHealthChecks is false)
             return;
-
-        services.AddHealthChecksUI(setupSettings: setup =>
-        {
-            setup.AddHealthCheckEndpoint("BPHealthChecks", env.IsDevelopment() ? "http://localhost:5030/healthz" : "/healthz");
-        }).AddInMemoryStorage();
 
         services.AddHealthChecks()
             .AddProcessAllocatedMemoryHealthCheck(maximumMegabytesAllocated: 6 * 1024)

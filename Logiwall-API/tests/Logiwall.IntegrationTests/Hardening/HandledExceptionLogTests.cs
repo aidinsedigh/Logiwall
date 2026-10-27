@@ -17,8 +17,6 @@ public class HandledExceptionLogTests(SqlServerFixture fixture)
 {
     private sealed class ThrowingCommonService(Exception exception) : ICommonService
     {
-        public Task<string?> GetStaticDataByIdAsync(int id) => throw exception;
-
         public Task<ServiceResponse<List<GetStaticDataResponseDto>>> GetStaticDatasAsync(GetStaticDataRequestDto requestDto) => throw exception;
     }
 
