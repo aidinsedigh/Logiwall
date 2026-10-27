@@ -8,7 +8,6 @@ using System.Net;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.OData;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Logiwall.Domain.Entities.Identity;
@@ -82,7 +81,6 @@ public static partial class Program
         services
             .AddControllers()
             //.AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()))
-            .AddOData(options => options.EnableQueryFeatures())
             .AddDataAnnotationsLocalization(options => options.DataAnnotationLocalizerProvider = StringLocalizerProvider.ProvideLocalizer)
             .ConfigureApiBehaviorOptions(options =>
             {
@@ -269,7 +267,6 @@ public static partial class Program
             options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, "Logiwall.Shared.xml"));
 
             //options.SchemaFilter<EnumNameValueSchemaFilter>();
-            options.OperationFilter<ODataOperationFilter>();
             options.AddSecurityDefinition("bearerAuth", new()
             {
                 Name = "Authorization",

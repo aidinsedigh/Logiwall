@@ -11,7 +11,6 @@
     <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="8.0.33" />
     <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="8.0.33" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.33" />
-    <PackageVersion Include="Microsoft.AspNetCore.OData" Version="9.0.0" />
     <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.33" />
     <PackageVersion Include="Microsoft.Extensions.Identity.Stores" Version="8.0.33" />
     <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.7.3" />

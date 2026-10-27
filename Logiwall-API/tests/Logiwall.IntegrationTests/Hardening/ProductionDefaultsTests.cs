@@ -31,6 +31,15 @@ public class ProductionDefaultsTests(SqlServerFixture fixture)
     }
 
     [Fact]
+    public async Task Swagger_is_served_in_development()
+    {
+        // The default test host runs as Development, where appsettings.Development.json enables Swagger.
+        var response = await fixture.CreateApiClient().Anonymous.GetAsync("swagger/v1/swagger.json");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task SignUp_endpoint_is_gone()
     {
         var response = await fixture.CreateApiClient().Anonymous.PostAsync("api/Identity/SignUp",
