@@ -24,7 +24,7 @@ The user asked for plans covering **all** audit findings (15 findings, plus a .N
 | [007](007-rate-limit-otp-and-login.md) | OTP attempt cap, resend cooldown, per-IP rate limits, phone validation | P1 | M | 001, 005 | DONE (per-IP limits are correct only after plan 009 configures forwarded headers) |
 | [008](008-fix-otp-send-path-and-async-sms.md) | Async SMS with timeout, correct OTP ordering, logging, disabled accounts refused | P2 | M | 003, 005, 007 | DONE (product decision to confirm: archived or inactive accounts cannot log in) |
 | [009](009-harden-production-defaults.md) | Swagger flag, sample endpoint and SignUp removed, CORS/forwarded headers configurable, no `ex.Message` leaks | P2 | S | 005 | DONE (operator: set `Cors__AllowedOrigins__0`, `ForwardedHeaders__TrustAllProxies=true` on App Service, `AllowedHosts`) |
-| [010](010-investigate-currency-units.md) | **Investigation**: rial/toman units across quote → payment | P1 | S | — | TODO |
+| [010](010-investigate-currency-units.md) | **Investigation**: rial/toman units across quote → payment | P1 | S | — | DONE (verdict c; see `docs/adr/0001-currency-units.md`) |
 | [011](011-make-order-quote-flow-idempotent-and-stateful.md) | Idempotent quotes, DI-resolved providers, order state and history, transactions | P2 | M | 002, 005, 009 | TODO |
 | [012](012-verify-payments-server-side.md) | Server-side payment verification (Phase A: pending/no client trust; Phase B: SEP verify) | P1 | L | 002, 005, 010, 011 | TODO |
 | [013](013-harden-http-provider-and-cache-settings.md) | HttpProvider timeouts, cancellation, disposal, error bodies; settings and token caching | P2 | M | 003, 005 | TODO |

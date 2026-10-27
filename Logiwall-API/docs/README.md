@@ -24,7 +24,7 @@ task (`NNN-*.md`), so the cycle folder holds those files and a `tasks.md` status
 
 | ADR | Title | Status |
 |---|---|---|
-| 0001 | Currency units (rial/toman) | Reserved. Plan 010 writes `adr/0001-currency-units.md`. |
+| 0001 | Currency units (rial/toman) | Open, verdict (c): provider confirmation required |
 | 0002 | Keep the layered architecture | Accepted |
 
 Give a new ADR the next free number.

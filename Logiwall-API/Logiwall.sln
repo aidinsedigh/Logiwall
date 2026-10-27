@@ -50,6 +50,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{85E0ABC8-8
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "adr", "adr", "{E76C8E57-9D38-4525-A6D5-D0A8FBF89EDE}"
 	ProjectSection(SolutionItems) = preProject
+		docs\adr\0001-currency-units.md = docs\adr\0001-currency-units.md
 		docs\adr\0002-keep-layered-architecture.md = docs\adr\0002-keep-layered-architecture.md
 	EndProjectSection
 EndProject
