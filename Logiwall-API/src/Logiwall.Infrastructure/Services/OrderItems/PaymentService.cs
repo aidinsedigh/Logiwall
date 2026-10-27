@@ -5,18 +5,22 @@ using Logiwall.Server.Data;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.PaymentItems;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Logiwall.Infrastructure.Services.OrderItems;
 public class PaymentService : IPaymentService
 {
     private readonly AppDbContext appDbContext;
     private readonly Func<ProviderType, PostalServiceBase> postalServiceFactory;
+    private readonly ILogger<PaymentService> logger;
 
     public PaymentService(AppDbContext appDbContext,
-        Func<ProviderType, PostalServiceBase> postalServiceFactory)
+        Func<ProviderType, PostalServiceBase> postalServiceFactory,
+        ILogger<PaymentService> logger)
     {
         this.appDbContext = appDbContext;
         this.postalServiceFactory = postalServiceFactory;
+        this.logger = logger;
     }
 
     public async Task<ServiceResponse<PaymentResponseDto>> PaymentOrderStatusAsync(PaymentRequestDto requestDto, int userId)
@@ -82,16 +86,17 @@ public class PaymentService : IPaymentService
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "PaymentOrderStatusAsync failed");
             return new ServiceResponse<PaymentResponseDto>
             {
                 Data = new PaymentResponseDto
                 {
                     OrderId = requestDto.OrderId,
                     Status = PaymentStatus.UnSuccess,
-                    Message = ex.Message
+                    Message = "An unexpected error occurred."
                 },
                 Succuss = false,
-                Message = ex.Message
+                Message = "An unexpected error occurred."
             };
         }
     }

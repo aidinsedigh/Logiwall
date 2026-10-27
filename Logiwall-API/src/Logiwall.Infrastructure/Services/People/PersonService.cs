@@ -6,18 +6,22 @@ using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.People;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Logiwall.Infrastructure.Services.People;
 public class PersonService : IPersonService
 {
     private readonly AppDbContext dbContext;
     private readonly UserManager<User> userManager;
+    private readonly ILogger<PersonService> logger;
 
     public PersonService(AppDbContext dbContext,
-        UserManager<User> userManager)
+        UserManager<User> userManager,
+        ILogger<PersonService> logger)
     {
         this.dbContext = dbContext;
         this.userManager = userManager;
+        this.logger = logger;
     }
     public async Task<ServiceResponse<bool>> CreatePersonAsync(CreatePersonRequestDto requestDto)
     {
@@ -174,11 +178,12 @@ public class PersonService : IPersonService
         }
         catch (Exception exc)
         {
+            logger.LogError(exc, "UpdateUserProfileAsync failed");
             return new ServiceResponse<UserProfileDto>
             {
                 Data = requestDto,
                 Succuss = false,
-                Message = exc.Message
+                Message = "An unexpected error occurred."
             };
         }
         

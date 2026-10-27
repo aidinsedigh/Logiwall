@@ -11,6 +11,7 @@ using Logiwall.Shared.Dtos.Providers.PostalService;
 using Logiwall.Shared.Dtos.Providers.Sep724;
 using Logiwall.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using static Logiwall.Shared.Enums.Constants;
 
 namespace Logiwall.Infrastructure.Services.OrderItems;
@@ -19,14 +20,17 @@ public class OrderService : IOrderService
     private readonly AppDbContext appDbContext;
     private readonly ISep724Provider sep724Provider;
     private readonly IServiceProvider serviceProvider;
+    private readonly ILogger<OrderService> logger;
 
     public OrderService(AppDbContext appDbContext,
         ISep724Provider sep724Provider,
-        IServiceProvider serviceProvider)
+        IServiceProvider serviceProvider,
+        ILogger<OrderService> logger)
     {
         this.appDbContext = appDbContext;
         this.sep724Provider = sep724Provider;
         this.serviceProvider = serviceProvider;
+        this.logger = logger;
     }
 
     public async Task<ServiceResponse<CreateOrderResponseDto>> CreateOrderAsync(CreateOrderRequestDto requestDto, int userId)
@@ -62,11 +66,12 @@ public class OrderService : IOrderService
         }
         catch (Exception ex)
         {
+            logger.LogError(ex, "CreateOrderAsync failed");
             return new ServiceResponse<CreateOrderResponseDto>
             {
                 Data = null,
                 Succuss = false,
-                Message = ex.Message
+                Message = "An unexpected error occurred."
             };
         }
     }

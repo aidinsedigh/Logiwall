@@ -32,8 +32,18 @@ public static partial class Program
 
         services.Configure<ForwardedHeadersOptions>(options =>
         {
-            options.ForwardedHeaders = ForwardedHeaders.All;
-            options.ForwardedHostHeaderName = "X-Host";
+            // Only client IP and scheme are taken from the proxy; Host is never overridden by a header.
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            if (configuration.GetValue<bool>("ForwardedHeaders:TrustAllProxies"))
+            {
+                // Safe only when the app is reachable exclusively through the platform proxy (e.g. Azure App Service).
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
+            }
+            foreach (var proxy in configuration.GetSection("ForwardedHeaders:KnownProxies").Get<string[]>() ?? [])
+            {
+                options.KnownProxies.Add(System.Net.IPAddress.Parse(proxy));
+            }
         });
 
         services.AddResponseCaching();

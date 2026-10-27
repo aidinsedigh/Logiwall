@@ -76,44 +76,6 @@ public partial class IdentityController : AppControllerBase, IIdentityController
         return Ok(response);
     }
 
-    /// <summary>
-    /// By leveraging summary tags in your controller's actions and DTO properties you can make your codes much easier to maintain.
-    /// These comments will also be used in swagger docs and ui.
-    /// </summary>
-    [HttpPost]
-    public async Task SignUp(SignUpRequestDto signUpRequest, CancellationToken cancellationToken)
-    {
-        var existingUser = await userManager.FindByNameAsync(signUpRequest.Email!);
-
-        var userToAdd = signUpRequest.Map();
-
-        if (existingUser is not null)
-        {
-            if (await userManager.IsEmailConfirmedAsync(existingUser))
-            {
-                throw new BadRequestException(Localizer.GetString(nameof(AppStrings.DuplicateEmail), existingUser.Email!));
-            }
-            else
-            {
-                var deleteResult = await userManager.DeleteAsync(existingUser);
-                if (!deleteResult.Succeeded)
-                    throw new ResourceValidationException(deleteResult.Errors.Select(err => new LocalizedString(err.Code, err.Description)).ToArray());
-                //userToAdd.ConfirmationEmailRequestedOn = existingUser.ConfirmationEmailRequestedOn;
-            }
-        }
-
-        userToAdd.LockoutEnabled = true;
-
-        var result = await userManager.CreateAsync(userToAdd, signUpRequest.Password!);
-
-        if (result.Succeeded is false)
-        {
-            throw new ResourceValidationException(result.Errors.Select(e => new LocalizedString(e.Code, e.Description)).ToArray());
-        }
-
-        //await SendConfirmationEmail(new() { Email = userToAdd.Email }, userToAdd, cancellationToken);
-    }
-
     //[HttpPost]
     //public async Task SendConfirmationEmail(SendConfirmationEmailRequestDto sendConfirmationEmailRequest, CancellationToken cancellationToken)
     //{

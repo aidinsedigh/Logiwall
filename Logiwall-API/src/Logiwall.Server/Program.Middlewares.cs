@@ -70,8 +70,19 @@ public static partial class Program
         });
 
         // 0.0.0.0 origins are essential for the proper functioning of BlazorHybrid's WebView, while localhost:4030 is a prerequisite for BlazorWebAssemblyStandalone testing.
-        app.UseCors(options => options.AllowAnyOrigin()
-            .AllowAnyHeader().AllowAnyMethod());
+        var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+        app.UseCors(options =>
+        {
+            if (allowedOrigins.Length > 0)
+                options.WithOrigins(allowedOrigins);
+            else
+                options.AllowAnyOrigin(); // Fallback keeps existing deployments working until Cors:AllowedOrigins is configured.
+            options.AllowAnyHeader().AllowAnyMethod();
+        });
+        if (allowedOrigins.Length == 0 && env.IsDevelopment() is false)
+        {
+            app.Logger.LogWarning("Cors:AllowedOrigins is empty; CORS allows any origin. Configure the frontend origin(s).");
+        }
 
         app.UseAuthentication();
         app.UseAuthorization();
@@ -80,18 +91,15 @@ public static partial class Program
         app.UseAntiforgery();
 
 
-        app.UseSwagger();
-
-        app.UseSwaggerUI(options =>
+        if (configuration.GetValue<bool>("Swagger:Enabled"))
         {
-            options.InjectJavascript($"/swagger/swagger-utils.js?v={Environment.TickCount64}");
-        });
+            app.UseSwagger();
 
-        app.MapGet("/api/minimal-api-sample/{routeParameter}", (string routeParameter, [FromQuery] string queryStringParameter) => new
-        {
-            RouteParameter = routeParameter,
-            QueryStringParameter = queryStringParameter
-        }).WithTags("Test");
+            app.UseSwaggerUI(options =>
+            {
+                options.InjectJavascript($"/swagger/swagger-utils.js?v={Environment.TickCount64}");
+            });
+        }
 
 
         app.MapGet("/.well-known/apple-app-site-association", async () =>
