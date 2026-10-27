@@ -17,7 +17,7 @@ namespace Logiwall.Infrastructure.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.8")
+                .HasAnnotation("ProductVersion", "8.0.33")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -525,6 +525,12 @@ namespace Logiwall.Infrastructure.Data.Migrations
                     b.Property<DateTimeOffset>("CreationDate")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<Guid?>("GatewayReferenceCode")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<long?>("GatewayRequestId")
+                        .HasColumnType("bigint");
+
                     b.Property<int?>("MerchantId")
                         .HasColumnType("int");
 
@@ -549,7 +555,17 @@ namespace Logiwall.Infrastructure.Data.Migrations
                     b.Property<int?>("TerminalId")
                         .HasColumnType("int");
 
+                    b.Property<long?>("VerifiedAmount")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("VerifiedAt")
+                        .HasColumnType("datetimeoffset");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("GatewayReferenceCode")
+                        .IsUnique()
+                        .HasFilter("[GatewayReferenceCode] IS NOT NULL");
 
                     b.HasIndex("OrderId");
 

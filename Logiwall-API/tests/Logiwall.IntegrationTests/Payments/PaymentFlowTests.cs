@@ -1,0 +1,103 @@
+using System.Net;
+using System.Net.Http.Json;
+using Logiwall.IntegrationTests.Infrastructure;
+using Logiwall.Shared.Enums;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace Logiwall.IntegrationTests.Payments;
+
+// Tests for plan 012 Phase A: the server is the only source of payment truth.
+[Collection("api")]
+public class PaymentFlowTests(SqlServerFixture fixture)
+{
+    private static object SelectBody(int orderId, int optionId, string callbackUrl = "https://example.test/cb") =>
+        new { orderId, orderInqueryOptionId = optionId, channel = "pwa", callbackUrl };
+
+    private static async Task<int> QuoteAsync(HttpClient client, int orderId)
+    {
+        var quote = await ApiClient.ReadJsonAsync(await client.GetAsync($"api/Order/GetOptions?orderId={orderId}"));
+        return quote.GetProperty("data")[0].GetProperty("id").GetInt32();
+    }
+
+    private async Task<(HttpClient Client, int OrderId)> PendingPaymentAsync()
+    {
+        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
+        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+        var optionId = await QuoteAsync(client, orderId);
+        (await client.PostAsJsonAsync("api/Order/SelectOption", SelectBody(orderId, optionId))).EnsureSuccessStatusCode();
+        return (client, orderId);
+    }
+
+    private Task<List<(PaymentStatus Status, decimal Amount, Guid? Reference)>> PaymentsAsync(int orderId) =>
+        fixture.WithDbAsync(async db => (await db.OrderPayments.Where(t => t.OrderId == orderId)
+            .Select(t => new { t.Status, t.Amount, t.GatewayReferenceCode }).ToListAsync())
+            .Select(t => (t.Status, t.Amount, t.GatewayReferenceCode)).ToList());
+
+    [Fact]
+    public async Task SelectOption_creates_pending_payment_with_server_amount()
+    {
+        var (_, orderId) = await PendingPaymentAsync();
+
+        var payment = Assert.Single(await PaymentsAsync(orderId));
+        Assert.Equal(PaymentStatus.Pending, payment.Status);
+        Assert.Equal(1100m, payment.Amount); // FakePostalProvider quotes FinalAmount = 1100
+        Assert.NotNull(payment.Reference);
+        Assert.Equal(1100m, fixture.Factory.Services.GetRequiredService<FakeSep724Provider>().LastAmount);
+        var state = await fixture.WithDbAsync(db => db.Orders.Where(t => t.Id == orderId).Select(t => t.State).SingleAsync());
+        Assert.Equal((short)OrderState.PaymentPending, state);
+    }
+
+    [Fact]
+    public async Task Callback_url_outside_allow_list_is_rejected()
+    {
+        await using var factory = fixture.Factory.WithWebHostBuilder(b => b.UseSetting("Payment:AllowedCallbackOrigins:0", "https://app.test"));
+        var gateway = factory.Services.GetRequiredService<FakeSep724Provider>();
+        var (owner, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
+        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+        // Both hosts sign and validate with the same test certificate, so the owner's token works here too.
+        var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = owner.DefaultRequestHeaders.Authorization;
+        var optionId = await QuoteAsync(client, orderId);
+        var callsBefore = gateway.TokenCalls;
+
+        var response = await client.PostAsJsonAsync("api/Order/SelectOption", SelectBody(orderId, optionId, "https://evil.test/cb"));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(callsBefore, gateway.TokenCalls);
+        Assert.Empty(await PaymentsAsync(orderId));
+    }
+
+    [Fact]
+    public async Task Verify_never_marks_success_in_phase_A()
+    {
+        var (client, orderId) = await PendingPaymentAsync();
+
+        var response = await client.PostAsJsonAsync("api/Payment/VerifyPayment", new { orderId });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(PaymentStatus.Pending, Assert.Single(await PaymentsAsync(orderId)).Status);
+    }
+
+    [Fact]
+    public async Task Old_client_status_endpoint_is_gone()
+    {
+        var (client, orderId) = await PendingPaymentAsync();
+
+        var response = await client.PostAsJsonAsync("api/Payment/UpdatePaymentOrderStatus", new { orderId });
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Other_user_cannot_verify()
+    {
+        var (_, orderId) = await PendingPaymentAsync();
+        var (other, _) = await OrderTestData.RegisteredUserAsync(fixture);
+
+        var response = await other.PostAsJsonAsync("api/Payment/VerifyPayment", new { orderId });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+}

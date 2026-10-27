@@ -1,6 +1,5 @@
 ﻿using Logiwall.Application.Abstractions.OrderItems;
-using Logiwall.Infrastructure.Mapper;
-using Logiwall.Infrastructure.Providers.PostalServices;
+using Logiwall.Domain.Entities.OrderItems;
 using Logiwall.Server.Data;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.PaymentItems;
@@ -20,81 +19,65 @@ public class PaymentService : IPaymentService
         this.logger = logger;
     }
 
-    public async Task<ServiceResponse<PaymentResponseDto>> PaymentOrderStatusAsync(PaymentRequestDto requestDto, int userId)
+    public async Task<ServiceResponse<PaymentResponseDto>> VerifyPaymentAsync(VerifyPaymentRequestDto requestDto, int userId, CancellationToken cancellationToken)
     {
         try
         {
-            var order = await appDbContext.Orders.FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId);
+            var order = await appDbContext.Orders.FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId, cancellationToken);
             if (order == null)
             {
-                return new ServiceResponse<PaymentResponseDto>
-                {
-                    Data = new PaymentResponseDto
-                    {
-                        OrderId = requestDto.OrderId,
-                        Status = PaymentStatus.UnSuccess,
-                        Message = AppStrings.InvalidOrder
-                    },
-                    Succuss = false,
-                    Message = AppStrings.InvalidOrder
-                };
+                return Failure(requestDto.OrderId, AppStrings.InvalidOrder);
             }
 
-            //todo Send Payment Request to Gateway
-            var result = new PaymentResponseDto
+            var payment = await appDbContext.OrderPayments
+                .Where(t => t.OrderId == order.Id && t.GatewayReferenceCode != null)
+                .OrderByDescending(t => t.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (payment is null)
             {
-                OrderId = requestDto.OrderId,
-                Status = PaymentStatus.Success,
-                Message = string.Empty,
-            };
-
-            if (result.Status == PaymentStatus.UnSuccess)
-            {
-                return new ServiceResponse<PaymentResponseDto>
-                {
-                    Data = result,
-                    Succuss = false,
-                    Message = result.Message
-                };
-            }
-            //todo Change order state
-            var payment = await appDbContext.OrderPayments.FirstOrDefaultAsync(t => t.PayTrackingCode == requestDto.PayTrackingCode && t.OrderId == order.Id);
-
-            if (payment is not null)
-            {
-                payment.Status = result.Status;
-                appDbContext.Update(payment);
-            }
-            else
-            {
-                payment = requestDto.Map();
-                payment.Status = result.Status;
-
-                await appDbContext.AddAsync(payment);
+                return Failure(order.Id, "No payment to verify");
             }
 
-            await appDbContext.SaveChangesAsync();
-
-            return new ServiceResponse<PaymentResponseDto>
+            // Idempotent: a verified payment returns its stored outcome without calling the gateway again.
+            if (payment.VerifiedAt is not null && payment.Status is PaymentStatus.Success or PaymentStatus.UnSuccess)
             {
-                Data = result,
-                Succuss = true
-            };
+                return Result(order.Id, payment.Status);
+            }
+
+            var verifiedStatus = await VerifyWithGatewayAsync(payment, cancellationToken);
+            if (verifiedStatus is null)
+            {
+                return Failure(order.Id, "Payment verification is not available yet");
+            }
+
+            return Result(order.Id, verifiedStatus.Value);
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "PaymentOrderStatusAsync failed");
-            return new ServiceResponse<PaymentResponseDto>
-            {
-                Data = new PaymentResponseDto
-                {
-                    OrderId = requestDto.OrderId,
-                    Status = PaymentStatus.UnSuccess,
-                    Message = "An unexpected error occurred."
-                },
-                Succuss = false,
-                Message = "An unexpected error occurred."
-            };
+            logger.LogError(ex, "VerifyPaymentAsync failed");
+            return Failure(requestDto.OrderId, "An unexpected error occurred.");
         }
     }
+
+    /// <returns>The verified status, or null when the gateway cannot verify the payment.</returns>
+    private Task<PaymentStatus?> VerifyWithGatewayAsync(OrderPayment payment, CancellationToken cancellationToken)
+    {
+        // Phase B: implement with Sep724Provider.GetPaymentInfoAsync. It is the only place that may set PaymentStatus.Success.
+        _ = payment;
+        _ = cancellationToken;
+        return Task.FromResult<PaymentStatus?>(null);
+    }
+
+    private static ServiceResponse<PaymentResponseDto> Result(int orderId, PaymentStatus status) => new()
+    {
+        Data = new PaymentResponseDto { OrderId = orderId, Status = status, Message = string.Empty },
+        Succuss = status == PaymentStatus.Success,
+    };
+
+    private static ServiceResponse<PaymentResponseDto> Failure(int orderId, string message) => new()
+    {
+        Data = new PaymentResponseDto { OrderId = orderId, Status = PaymentStatus.UnSuccess, Message = message },
+        Succuss = false,
+        Message = message
+    };
 }

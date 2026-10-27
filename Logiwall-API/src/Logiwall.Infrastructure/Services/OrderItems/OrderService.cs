@@ -11,6 +11,8 @@ using Logiwall.Shared.Dtos.Providers.Sep724;
 using Logiwall.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Logiwall.Infrastructure.Options;
+using Microsoft.Extensions.Options;
 using static Logiwall.Shared.Enums.Constants;
 
 namespace Logiwall.Infrastructure.Services.OrderItems;
@@ -20,16 +22,19 @@ public class OrderService : IOrderService
     private readonly ISep724Provider sep724Provider;
     private readonly IEnumerable<PostalServiceBase> postalProviders;
     private readonly ILogger<OrderService> logger;
+    private readonly PaymentOptions paymentOptions;
 
     public OrderService(AppDbContext appDbContext,
         ISep724Provider sep724Provider,
         IEnumerable<PostalServiceBase> postalProviders,
-        ILogger<OrderService> logger)
+        ILogger<OrderService> logger,
+        IOptions<PaymentOptions> paymentOptions)
     {
         this.appDbContext = appDbContext;
         this.sep724Provider = sep724Provider;
         this.postalProviders = postalProviders;
         this.logger = logger;
+        this.paymentOptions = paymentOptions.Value;
     }
 
     public async Task<ServiceResponse<CreateOrderResponseDto>> CreateOrderAsync(CreateOrderRequestDto requestDto, int userId)
@@ -297,6 +302,23 @@ public class OrderService : IOrderService
             };
         }
 
+        // The gateway redirects the customer to this URL, so it must point at our own frontend.
+        if (Uri.TryCreate(requestDto.CallbackUrl, UriKind.Absolute, out var callbackUri) is false)
+        {
+            return new ServiceResponse<SelectOptionResponseDto> { Data = null, Succuss = false, Message = "Invalid callback URL" };
+        }
+        if (paymentOptions.AllowedCallbackOrigins.Length == 0)
+        {
+            logger.LogWarning("Payment:AllowedCallbackOrigins is empty; any callback URL is accepted.");
+        }
+        else if (paymentOptions.AllowedCallbackOrigins.Contains(callbackUri.GetLeftPart(UriPartial.Authority), StringComparer.OrdinalIgnoreCase) is false)
+        {
+            return new ServiceResponse<SelectOptionResponseDto> { Data = null, Succuss = false, Message = "Invalid callback URL" };
+        }
+
+        // TODO(plan 010): unit unconfirmed (ADR-0001 verdict c), so the quote goes to the gateway unconverted.
+        var expectedGatewayAmount = (long)decimal.Round(orderInquiry.FinalAmount, MidpointRounding.AwayFromZero);
+
         // Record the accepted quote before the gateway call, so later steps know what the customer chose.
         var orderOptions = await appDbContext.OrderInqueryOptions.Where(t => t.OrderId == order.Id).ToListAsync();
         foreach (var option in orderOptions)
@@ -323,7 +345,7 @@ public class OrderService : IOrderService
 
         var result = await sep724Provider.GetPaymentTokenAsync(new PaymentTokenRequestDto
         {
-            Amount = orderInquiry.FinalAmount,
+            Amount = expectedGatewayAmount,
             PhoneNumber = person.PhoneNumber,
             Channel = requestDto.Channel,
             CallbackUrl = requestDto.CallbackUrl,
@@ -340,6 +362,30 @@ public class OrderService : IOrderService
                 Message = result?.Title ?? "Error"
             };
         }
+
+        // The server-computed amount is the only truth; verification later compares the gateway against it.
+        appDbContext.OrderPayments.Add(new OrderPayment
+        {
+            OrderId = order.Id,
+            Amount = expectedGatewayAmount,
+            PaymentType = PaymentType.BankGateway,
+            Status = PaymentStatus.Pending,
+            PayTrackingCode = data.RequestId.ToString(CultureInfo.InvariantCulture),
+            PayDate = DateTimeOffset.Now,
+            GatewayRequestId = data.RequestId,
+            GatewayReferenceCode = data.ReferenceCode,
+        });
+        order.State = (short)OrderState.PaymentPending;
+        order.ModificationDate = DateTimeOffset.Now;
+        appDbContext.OrderStatuses.Add(new OrderStatus
+        {
+            OrderId = order.Id,
+            Status = (int)OrderState.PaymentPending,
+            ServiceProviderId = orderInquiry.ServiceProviderId,
+            CityId = order.OriginCity,
+            Description = "Payment link issued"
+        });
+        await appDbContext.SaveChangesAsync();
 
         return new ServiceResponse<SelectOptionResponseDto>
         {

@@ -56,7 +56,6 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
         var quote = await ApiClient.ReadJsonAsync(await client.GetAsync($"api/Order/GetOptions?orderId={orderId}"));
         var chosenId = quote.GetProperty("data")[0].GetProperty("id").GetInt32();
 
-        // The gateway has no credentials in tests, so the call itself fails; the selection is saved first.
         await client.PostAsJsonAsync("api/Order/SelectOption", new
         {
             orderId,
@@ -69,13 +68,14 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
         {
             var options = await db.OrderInqueryOptions.Where(t => t.OrderId == orderId).Select(t => new { t.Id, t.Choosen }).ToListAsync();
             var state = await db.Orders.Where(t => t.Id == orderId).Select(t => t.State).SingleAsync();
-            var statuses = await db.OrderStatuses.CountAsync(t => t.OrderId == orderId);
+            var statuses = await db.OrderStatuses.Where(t => t.OrderId == orderId).Select(t => t.Status).ToListAsync();
             return (options, state, statuses);
         });
         Assert.True(options.Single(t => t.Id == chosenId).Choosen);
         Assert.False(options.Single(t => t.Id != chosenId).Choosen);
-        Assert.Equal((short)OrderState.SelectedServiceProvider, state);
-        Assert.Equal(1, statuses);
+        // The fake gateway issues a link, so the order moves on to PaymentPending (plan 012).
+        Assert.Equal((short)OrderState.PaymentPending, state);
+        Assert.Contains((int)OrderState.SelectedServiceProvider, statuses);
     }
 
     [Fact(Skip = "no policy gap to exercise")]
