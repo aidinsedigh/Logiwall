@@ -39,6 +39,17 @@ public class PersonService : IPersonService
             };
         }
 
+        // The unique index stays the last guard; this check gives a clear answer instead of HTTP 500.
+        if (await dbContext.PersonalInfos.AnyAsync(p => p.NationalCode == requestDto.NationalCode))
+        {
+            return new ServiceResponse<bool>
+            {
+                Data = false,
+                Succuss = false,
+                Message = localizer[nameof(AppStrings.NationalCodeIsTaken)]
+            };
+        }
+
         person = new Person
         {
             Name = requestDto.Name,
