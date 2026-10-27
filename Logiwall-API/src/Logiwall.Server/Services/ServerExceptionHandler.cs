@@ -29,7 +29,8 @@ public partial class ServerExceptionHandler : IExceptionHandler
         var statusCode = (int)(exception is RestException restExp ? restExp.StatusCode : HttpStatusCode.InternalServerError);
 
         // The only log of a handled exception: .NET 10 ExceptionHandlerMiddleware does not log when TryHandleAsync returns true.
-        var path = httpContext.Request.Path.Value;
+        // UseExceptionHandler("/") has already changed Request.Path; the feature keeps the original path.
+        var path = httpContext.Features.Get<IExceptionHandlerFeature>()?.Path ?? httpContext.Request.Path.Value;
         if (knownException is not null)
             logger.LogWarning(exception, "[ServerException][Handle][{Path}][{ExceptionType}][{StatusCode}] Request failed with a known exception.", path, exception.GetType().Name, statusCode);
         else

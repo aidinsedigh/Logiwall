@@ -42,6 +42,7 @@ public class HandledExceptionLogTests(SqlServerFixture fixture)
         var entry = Assert.Single(entries);
         Assert.Equal(LogEventLevel.Error, entry.Level);
         Assert.StartsWith("[ServerException][Handle]", entry.MessageTemplate.Text);
+        Assert.Equal("\"/api/Common/GetStaticDatas\"", entry.Properties["Path"].ToString());
     }
 
     [Fact]
