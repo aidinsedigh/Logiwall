@@ -109,6 +109,9 @@ public static partial class Program
         }).ExcludeFromDescription();
 
 
+        // .NET 10 serves _framework/blazor.web.js as a static web asset, so UseStaticFiles alone no longer finds it.
+        app.MapStaticAssets();
+
         app.MapControllers().RequireAuthorization();
 
         var appSettings = configuration.GetSection(nameof(AppSettings)).Get<AppSettings>()!;

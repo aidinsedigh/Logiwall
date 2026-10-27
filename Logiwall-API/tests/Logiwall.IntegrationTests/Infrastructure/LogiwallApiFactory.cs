@@ -30,6 +30,8 @@ public class LogiwallApiFactory : WebApplicationFactory<Logiwall.Server.AppSetti
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+        // Development MapStaticAssets adds a GET-only {**path:file} fallback, so unknown POSTs get 405. Production has no such route.
+        builder.UseSetting("ReloadStaticAssetsAtRuntime", "false");
         builder.UseSetting("ConnectionStrings:SqlServerConnectionString", connectionString);
         if (relaxRateLimits)
         {
