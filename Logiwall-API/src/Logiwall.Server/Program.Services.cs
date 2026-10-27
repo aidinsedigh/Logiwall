@@ -313,28 +313,11 @@ public static partial class Program
             setup.AddHealthCheckEndpoint("BPHealthChecks", env.IsDevelopment() ? "http://localhost:5030/healthz" : "/healthz");
         }).AddInMemoryStorage();
 
-        var healthChecksBuilder = services.AddHealthChecks()
+        services.AddHealthChecks()
             .AddProcessAllocatedMemoryHealthCheck(maximumMegabytesAllocated: 6 * 1024)
             .AddDiskStorageHealthCheck(opt =>
                 opt.AddDrive(Path.GetPathRoot(Directory.GetCurrentDirectory())!, minimumFreeMegabytes: 5 * 1024))
             .AddDbContextCheck<AppDbContext>();
-
-        var emailSettings = appSettings.EmailSettings;
-
-        if (emailSettings.UseLocalFolderForEmails is false)
-        {
-            healthChecksBuilder
-                .AddSmtpHealthCheck(options =>
-                {
-                    options.Host = emailSettings.Host;
-                    options.Port = emailSettings.Port;
-
-                    if (emailSettings.HasCredential)
-                    {
-                        options.LoginWith(emailSettings.UserName, emailSettings.Password);
-                    }
-                });
-        }
     }
 
 }
