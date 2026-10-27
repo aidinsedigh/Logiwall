@@ -50,7 +50,11 @@ public partial class UserController : AppControllerBase, IUserController
         var user = await userManager.Users.FirstOrDefaultAsync(user => user.Id == userId, cancellationToken)
                     ?? throw new ResourceNotFoundException();
 
-        var result = await userManager.DeleteAsync(user);
+        // Archive, never delete: orders and payments keep their customer.
+        // A bearer token issued before this call stays valid until it expires.
+        user.IsArchive = true;
+        user.Active = false;
+        var result = await userManager.UpdateAsync(user);
         if (!result.Succeeded)
             throw new ResourceValidationException(result.Errors.Select(err => new LocalizedString(err.Code, err.Description)).ToArray());
     }
