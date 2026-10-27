@@ -48,7 +48,7 @@ public partial class PersonController : AppControllerBase, IPersonController
         {
             return BadRequest(new ServiceResponse<bool>
             {
-                Message = AppStrings.AnErrorOccurrdWhileRegisteration
+                Message = Localizer[nameof(AppStrings.AnErrorOccurrdWhileRegisteration)]
             });
         }
 
@@ -81,7 +81,7 @@ public partial class PersonController : AppControllerBase, IPersonController
             {
                 Data = requestDto,
                 Succuss = false,
-                Message = "UserId is not correct"
+                Message = Localizer[nameof(AppStrings.InvalidUserId)]
             });
         }
         requestDto.UserId = userId;

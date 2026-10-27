@@ -14,14 +14,17 @@ public class PersonService : IPersonService
     private readonly AppDbContext dbContext;
     private readonly UserManager<User> userManager;
     private readonly ILogger<PersonService> logger;
+    private readonly IStringLocalizer<AppStrings> localizer;
 
     public PersonService(AppDbContext dbContext,
         UserManager<User> userManager,
-        ILogger<PersonService> logger)
+        ILogger<PersonService> logger,
+        IStringLocalizer<AppStrings> localizer)
     {
         this.dbContext = dbContext;
         this.userManager = userManager;
         this.logger = logger;
+        this.localizer = localizer;
     }
     public async Task<ServiceResponse<bool>> CreatePersonAsync(CreatePersonRequestDto requestDto)
     {
@@ -32,7 +35,7 @@ public class PersonService : IPersonService
             {
                 Data = false,
                 Succuss = false,
-                Message = AppStrings.YouRegisteredBefore
+                Message = localizer[nameof(AppStrings.YouRegisteredBefore)]
             };
         }
 
@@ -71,7 +74,7 @@ public class PersonService : IPersonService
             {
                 Data = null,
                 Succuss = false,
-                Message = "User is not registered"
+                Message = localizer[nameof(AppStrings.UserIsNotRegistered)]
             };
         }
         var person = await dbContext.People.Include(t => t.PersonalInfo).FirstOrDefaultAsync(t => t.UserId == userId);
@@ -82,7 +85,7 @@ public class PersonService : IPersonService
             {
                 Data = null,
                 Succuss = false,
-                Message = "User is not registered"
+                Message = localizer[nameof(AppStrings.UserIsNotRegistered)]
             };
         }
 
@@ -120,7 +123,7 @@ public class PersonService : IPersonService
             {
                 Data = requestDto,
                 Succuss = false,
-                Message = "User Not Found"
+                Message = localizer[nameof(AppStrings.UserNotFound)]
             };
         }
         try
@@ -131,7 +134,7 @@ public class PersonService : IPersonService
             var setEmail = await userManager.SetEmailAsync(user, requestDto.Email);
             if (setEmail.Succeeded is false)
             {
-                return new ServiceResponse<UserProfileDto> { Data = requestDto, Succuss = false, Message = "Invalid email" };
+                return new ServiceResponse<UserProfileDto> { Data = requestDto, Succuss = false, Message = localizer[nameof(AppStrings.EmailAddressAttribute_ValidationError), localizer[nameof(AppStrings.Email)]] };
             }
 
             var person = await dbContext.People.Include(t => t.PersonalInfo).FirstOrDefaultAsync(t => t.UserId == requestDto.UserId);
@@ -141,7 +144,7 @@ public class PersonService : IPersonService
                 {
                     Data = null,
                     Succuss = false,
-                    Message = "User is not registered"
+                    Message = localizer[nameof(AppStrings.UserIsNotRegistered)]
                 };
             }
 
@@ -179,7 +182,7 @@ public class PersonService : IPersonService
             {
                 Data = requestDto,
                 Succuss = true,
-                Message = "Profile is updated"
+                Message = localizer[nameof(AppStrings.ProfileIsUpdated)]
             };
         }
         catch (Exception exc)
@@ -189,7 +192,7 @@ public class PersonService : IPersonService
             {
                 Data = requestDto,
                 Succuss = false,
-                Message = "An unexpected error occurred."
+                Message = localizer[nameof(AppStrings.UnknownException)]
             };
         }
         

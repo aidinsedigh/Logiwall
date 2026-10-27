@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Logiwall.IntegrationTests.Infrastructure;
+using Logiwall.Shared.Resources;
 using Logiwall.Shared.Enums;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -65,6 +66,7 @@ public class PaymentFlowTests(SqlServerFixture fixture)
         var response = await client.PostAsJsonAsync("api/Order/SelectOption", SelectBody(orderId, optionId, "https://evil.test/cb"));
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.InvalidCallbackUrl));
         Assert.Equal(callsBefore, gateway.TokenCalls);
         Assert.Empty(await PaymentsAsync(orderId));
     }
@@ -77,6 +79,9 @@ public class PaymentFlowTests(SqlServerFixture fixture)
         var response = await client.PostAsJsonAsync("api/Payment/VerifyPayment", new { orderId });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await ApiClient.ReadJsonAsync(response);
+        PersianAssert.HasMessage(body, nameof(AppStrings.PaymentVerificationUnavailable));
+        PersianAssert.HasMessage(body.GetProperty("data"), nameof(AppStrings.PaymentVerificationUnavailable));
         Assert.Equal(PaymentStatus.Pending, Assert.Single(await PaymentsAsync(orderId)).Status);
     }
 
@@ -99,5 +104,27 @@ public class PaymentFlowTests(SqlServerFixture fixture)
         var response = await other.PostAsJsonAsync("api/Payment/VerifyPayment", new { orderId });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.InvalidOrder));
+    }
+
+    [Fact]
+    public async Task Gateway_failure_returns_own_message_not_provider_text()
+    {
+        var gateway = fixture.Factory.Services.GetRequiredService<FakeSep724Provider>();
+        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
+        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+        var optionId = await QuoteAsync(client, orderId);
+        gateway.FailWithTitle = "Provider internal text";
+        try
+        {
+            var response = await client.PostAsJsonAsync("api/Order/SelectOption", SelectBody(orderId, optionId));
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.PaymentLinkFailed));
+        }
+        finally
+        {
+            gateway.FailWithTitle = null;
+        }
     }
 }

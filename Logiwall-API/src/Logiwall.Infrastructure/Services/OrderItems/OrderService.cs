@@ -23,18 +23,21 @@ public class OrderService : IOrderService
     private readonly IEnumerable<PostalServiceBase> postalProviders;
     private readonly ILogger<OrderService> logger;
     private readonly PaymentOptions paymentOptions;
+    private readonly IStringLocalizer<AppStrings> localizer;
 
     public OrderService(AppDbContext appDbContext,
         ISep724Provider sep724Provider,
         IEnumerable<PostalServiceBase> postalProviders,
         ILogger<OrderService> logger,
-        IOptions<PaymentOptions> paymentOptions)
+        IOptions<PaymentOptions> paymentOptions,
+        IStringLocalizer<AppStrings> localizer)
     {
         this.appDbContext = appDbContext;
         this.sep724Provider = sep724Provider;
         this.postalProviders = postalProviders;
         this.logger = logger;
         this.paymentOptions = paymentOptions.Value;
+        this.localizer = localizer;
     }
 
     public async Task<ServiceResponse<CreateOrderResponseDto>> CreateOrderAsync(CreateOrderRequestDto requestDto, int userId)
@@ -49,7 +52,7 @@ public class OrderService : IOrderService
                 {
                     Data = null,
                     Succuss = false,
-                    Message = "No Custmer"
+                    Message = localizer[nameof(AppStrings.CustomerNotFound)]
                 };
             }
             order.CustomerId = person.CustomerId;
@@ -75,7 +78,7 @@ public class OrderService : IOrderService
             {
                 Data = null,
                 Succuss = false,
-                Message = "An unexpected error occurred."
+                Message = localizer[nameof(AppStrings.UnknownException)]
             };
         }
     }
@@ -91,7 +94,7 @@ public class OrderService : IOrderService
                 {
                     Data = null,
                     Succuss = false,
-                    Message = "Invalid OrderId"
+                    Message = localizer[nameof(AppStrings.InvalidOrder)]
                 };
             }
 
@@ -101,7 +104,7 @@ public class OrderService : IOrderService
                 {
                     Data = null,
                     Succuss = false,
-                    Message = "Order can no longer be re-quoted."
+                    Message = localizer[nameof(AppStrings.OrderCannotBeRequoted)]
                 };
             }
 
@@ -180,7 +183,7 @@ public class OrderService : IOrderService
                 {
                     Data = null,
                     Succuss = false,
-                    Message = "عدم دریافت سرویس از سرویس دهنده"
+                    Message = localizer[nameof(AppStrings.ProviderServiceUnavailable)]
                 };
             }
 
@@ -221,7 +224,7 @@ public class OrderService : IOrderService
             {
                 Data = null,
                 Succuss = false,
-                Message = "عدم دریافت سرویس از سرویس دهنده"
+                Message = localizer[nameof(AppStrings.ProviderServiceUnavailable)]
             };
         }
     }
@@ -251,7 +254,7 @@ public class OrderService : IOrderService
             {
                 Data = null,
                 Succuss = false,
-                Message = "There is no customer"
+                Message = localizer[nameof(AppStrings.CustomerNotFound)]
             };
         }
 
@@ -289,7 +292,7 @@ public class OrderService : IOrderService
             {
                 Data = null,
                 Succuss = false,
-                Message = "User is not registered"
+                Message = localizer[nameof(AppStrings.UserIsNotRegistered)]
             };
         }
 
@@ -301,7 +304,7 @@ public class OrderService : IOrderService
             {
                 Data = null,
                 Succuss = false,
-                Message = "Invalid OrderId"
+                Message = localizer[nameof(AppStrings.InvalidOrder)]
             };
         }
 
@@ -312,7 +315,7 @@ public class OrderService : IOrderService
             {
                 Data = null,
                 Succuss = false,
-                Message = "Invalid OrderInqueryOptionId"
+                Message = localizer[nameof(AppStrings.InvalidOrderOption)]
             };
         }
 
@@ -322,14 +325,14 @@ public class OrderService : IOrderService
             {
                 Data = null,
                 Succuss = false,
-                Message = "Order is already paid."
+                Message = localizer[nameof(AppStrings.OrderIsAlreadyPaid)]
             };
         }
 
         // The gateway redirects the customer to this URL, so it must point at our own frontend.
         if (Uri.TryCreate(requestDto.CallbackUrl, UriKind.Absolute, out var callbackUri) is false)
         {
-            return new ServiceResponse<SelectOptionResponseDto> { Data = null, Succuss = false, Message = "Invalid callback URL" };
+            return new ServiceResponse<SelectOptionResponseDto> { Data = null, Succuss = false, Message = localizer[nameof(AppStrings.InvalidCallbackUrl)] };
         }
         if (paymentOptions.AllowedCallbackOrigins.Length == 0)
         {
@@ -337,7 +340,7 @@ public class OrderService : IOrderService
         }
         else if (paymentOptions.AllowedCallbackOrigins.Contains(callbackUri.GetLeftPart(UriPartial.Authority), StringComparer.OrdinalIgnoreCase) is false)
         {
-            return new ServiceResponse<SelectOptionResponseDto> { Data = null, Succuss = false, Message = "Invalid callback URL" };
+            return new ServiceResponse<SelectOptionResponseDto> { Data = null, Succuss = false, Message = localizer[nameof(AppStrings.InvalidCallbackUrl)] };
         }
 
         // TODO(plan 010): unit unconfirmed (ADR-0001 verdict c), so the quote goes to the gateway unconverted.
@@ -379,11 +382,13 @@ public class OrderService : IOrderService
 
         if (result is null || data is null)
         {
+            // Provider text goes to the log only (ADR-0003).
+            logger.LogWarning("[Order][SelectOptionAndPayment][{OrderId}][{ProviderMessage}] Payment link was not created.", order.Id, result?.Title ?? result?.Message);
             return new ServiceResponse<SelectOptionResponseDto>
             {
                 Data = null,
                 Succuss = false,
-                Message = result?.Title ?? "Error"
+                Message = localizer[nameof(AppStrings.PaymentLinkFailed)]
             };
         }
 
@@ -420,7 +425,7 @@ public class OrderService : IOrderService
                 PaymentLink = data.PaymentLink
             },
             Succuss = true,
-            Message = result.Message ?? string.Empty,
+            Message = localizer[nameof(AppStrings.PaymentLinkCreated)],
         };
     }
 }

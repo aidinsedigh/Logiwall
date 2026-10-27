@@ -4,7 +4,7 @@ using Logiwall.Shared.Dtos.Providers.Sep724;
 
 namespace Logiwall.IntegrationTests.Infrastructure;
 
-/// <summary>A payment gateway that always issues a link and records what it was asked to charge.</summary>
+/// <summary>A payment gateway that issues a link (unless told to fail) and records what it was asked to charge.</summary>
 public class FakeSep724Provider : ISep724Provider
 {
     private int tokenCalls;
@@ -13,10 +13,16 @@ public class FakeSep724Provider : ISep724Provider
 
     public decimal? LastAmount { get; private set; }
 
+    /// <summary>When set, the gateway issues no link and returns this provider text as its title.</summary>
+    public string? FailWithTitle { get; set; }
+
     public Task<SepResponseBase<GetPaymentTokenResponseDto>> GetPaymentTokenAsync(PaymentTokenRequestDto requestDto)
     {
         Interlocked.Increment(ref tokenCalls);
         LastAmount = requestDto.Amount;
+
+        if (FailWithTitle is not null)
+            return Task.FromResult(new SepResponseBase<GetPaymentTokenResponseDto> { Title = FailWithTitle });
 
         return Task.FromResult(new SepResponseBase<GetPaymentTokenResponseDto>
         {

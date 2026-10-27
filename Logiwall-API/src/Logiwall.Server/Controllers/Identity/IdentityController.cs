@@ -40,11 +40,12 @@ public partial class IdentityController : AppControllerBase, IIdentityController
         var user = await userManager.FindByNameAsync(requestDto.PhoneNumber);
         if (user is null)
         {
-            return BadRequest(string.Format(AppStrings.UserNameNotFound, requestDto.PhoneNumber));
+            // Same answer as a wrong code, so the response does not reveal which numbers exist.
+            return BadRequest(new ServiceResponse<ConfirmationOtpResponseDto> { Succuss = false, Message = Localizer[nameof(AppStrings.OtpCodeIsNotCorrect)] });
         }
 
         if (user.IsArchive || user.Active is false)
-            return BadRequest(new ServiceResponse<ConfirmationOtpResponseDto> { Succuss = false, Message = "Account is disabled." });
+            return BadRequest(new ServiceResponse<ConfirmationOtpResponseDto> { Succuss = false, Message = Localizer[nameof(AppStrings.AccountIsDisabled)] });
 
         requestDto.Code = Globals.ConvertPersianNumbersToEnglish(requestDto.Code);
         var response = await authenticationService.ConfirmationOtpCodeAsync(requestDto);

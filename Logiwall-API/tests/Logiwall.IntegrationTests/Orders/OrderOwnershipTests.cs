@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Http.Json;
 using Logiwall.Domain.Entities.OrderItems;
 using Logiwall.IntegrationTests.Infrastructure;
+using Logiwall.Shared.Resources;
 using Microsoft.EntityFrameworkCore;
 
 namespace Logiwall.IntegrationTests.Orders;
@@ -24,7 +25,7 @@ public class OrderOwnershipTests(SqlServerFixture fixture)
         var response = await other.GetAsync($"api/Order/GetOptions?orderId={orderId}");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal("Invalid OrderId", (await ApiClient.ReadJsonAsync(response)).GetProperty("message").GetString());
+        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.InvalidOrder));
     }
 
     [Fact]
@@ -57,6 +58,6 @@ public class OrderOwnershipTests(SqlServerFixture fixture)
         });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal("Invalid OrderInqueryOptionId", (await ApiClient.ReadJsonAsync(response)).GetProperty("message").GetString());
+        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.InvalidOrderOption));
     }
 }

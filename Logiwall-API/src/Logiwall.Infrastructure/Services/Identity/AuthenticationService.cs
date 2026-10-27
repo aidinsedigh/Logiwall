@@ -55,13 +55,13 @@ public class AuthenticationService : IAuthenticationService
                 if (DateTimeOffset.TryParse(lastTimestamp, CultureInfo.InvariantCulture, out var lastExpiry)
                     && lastExpiry - OtpValidity + OtpResendCooldown > DateTimeOffset.Now)
                 {
-                    return new ServiceResponse<bool> { Data = false, Succuss = false, Message = "Please wait before requesting a new code." };
+                    return new ServiceResponse<bool> { Data = false, Succuss = false, Message = localizer.GetString(nameof(AppStrings.OtpResendCooldown)) };
                 }
             }
 
             if (user is not null && (user.IsArchive || user.Active is false))
             {
-                return new ServiceResponse<bool> { Data = false, Succuss = false, Message = "Account is disabled." };
+                return new ServiceResponse<bool> { Data = false, Succuss = false, Message = localizer.GetString(nameof(AppStrings.AccountIsDisabled)) };
             }
 
             if (user is null)
@@ -143,6 +143,15 @@ public class AuthenticationService : IAuthenticationService
     public async Task<ServiceResponse<ConfirmationOtpResponseDto>> ConfirmationOtpCodeAsync(ConfirmaionOtpRequestDto requestDto)
     {
         var user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
+        if (user is null)
+        {
+            // Same answer as a wrong code, so the response does not reveal which numbers exist.
+            return new ServiceResponse<ConfirmationOtpResponseDto>
+            {
+                Succuss = false,
+                Message = localizer.GetString(nameof(AppStrings.OtpCodeIsNotCorrect))
+            };
+        }
         //var otp = await dbContext.UserOtps.Where(t => t.UserId == user.Id);
         //if (requestDto.Code != otp.Code)
         //{

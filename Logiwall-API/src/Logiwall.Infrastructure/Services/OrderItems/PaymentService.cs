@@ -11,12 +11,15 @@ public class PaymentService : IPaymentService
 {
     private readonly AppDbContext appDbContext;
     private readonly ILogger<PaymentService> logger;
+    private readonly IStringLocalizer<AppStrings> localizer;
 
     public PaymentService(AppDbContext appDbContext,
-        ILogger<PaymentService> logger)
+        ILogger<PaymentService> logger,
+        IStringLocalizer<AppStrings> localizer)
     {
         this.appDbContext = appDbContext;
         this.logger = logger;
+        this.localizer = localizer;
     }
 
     public async Task<ServiceResponse<PaymentResponseDto>> VerifyPaymentAsync(VerifyPaymentRequestDto requestDto, int userId, CancellationToken cancellationToken)
@@ -26,7 +29,7 @@ public class PaymentService : IPaymentService
             var order = await appDbContext.Orders.FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId, cancellationToken);
             if (order == null)
             {
-                return Failure(requestDto.OrderId, AppStrings.InvalidOrder);
+                return Failure(requestDto.OrderId, nameof(AppStrings.InvalidOrder));
             }
 
             var payment = await appDbContext.OrderPayments
@@ -35,7 +38,7 @@ public class PaymentService : IPaymentService
                 .FirstOrDefaultAsync(cancellationToken);
             if (payment is null)
             {
-                return Failure(order.Id, "No payment to verify");
+                return Failure(order.Id, nameof(AppStrings.NoPaymentToVerify));
             }
 
             // Idempotent: a verified payment returns its stored outcome without calling the gateway again.
@@ -47,7 +50,7 @@ public class PaymentService : IPaymentService
             var verifiedStatus = await VerifyWithGatewayAsync(payment, cancellationToken);
             if (verifiedStatus is null)
             {
-                return Failure(order.Id, "Payment verification is not available yet");
+                return Failure(order.Id, nameof(AppStrings.PaymentVerificationUnavailable));
             }
 
             return Result(order.Id, verifiedStatus.Value);
@@ -55,7 +58,7 @@ public class PaymentService : IPaymentService
         catch (Exception ex)
         {
             logger.LogError(ex, "VerifyPaymentAsync failed");
-            return Failure(requestDto.OrderId, "An unexpected error occurred.");
+            return Failure(requestDto.OrderId, nameof(AppStrings.UnknownException));
         }
     }
 
@@ -74,10 +77,14 @@ public class PaymentService : IPaymentService
         Succuss = status == PaymentStatus.Success,
     };
 
-    private static ServiceResponse<PaymentResponseDto> Failure(int orderId, string message) => new()
+    private ServiceResponse<PaymentResponseDto> Failure(int orderId, string messageKey)
     {
-        Data = new PaymentResponseDto { OrderId = orderId, Status = PaymentStatus.UnSuccess, Message = message },
-        Succuss = false,
-        Message = message
-    };
+        string message = localizer[messageKey];
+        return new()
+        {
+            Data = new PaymentResponseDto { OrderId = orderId, Status = PaymentStatus.UnSuccess, Message = message },
+            Succuss = false,
+            Message = message
+        };
+    }
 }

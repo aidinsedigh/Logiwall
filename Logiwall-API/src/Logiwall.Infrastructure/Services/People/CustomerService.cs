@@ -9,10 +9,13 @@ namespace Logiwall.Infrastructure.Services.People;
 public class CustomerService : ICustomerService
 {
     private readonly AppDbContext appDbContext;
+    private readonly IStringLocalizer<AppStrings> localizer;
 
-    public CustomerService(AppDbContext appDbContext)
+    public CustomerService(AppDbContext appDbContext,
+        IStringLocalizer<AppStrings> localizer)
     {
         this.appDbContext = appDbContext;
+        this.localizer = localizer;
     }
     public async Task<ServiceResponse<bool>> CreateCustomerContactAsync(CreateCustomerContactRequestDto requestDto)
     {
@@ -23,7 +26,7 @@ public class CustomerService : ICustomerService
             {
                 Data = false,
                 Succuss = false,
-                Message = "User is not registered"
+                Message = localizer[nameof(AppStrings.UserIsNotRegistered)]
             };
         }
 
@@ -62,7 +65,7 @@ public class CustomerService : ICustomerService
             {
                 Data = null,
                 Succuss = false,
-                Message = "There is not contact info with this id"
+                Message = localizer[nameof(AppStrings.ContactInfoNotFound)]
             };
         }
         var result = new CustomerContactResponseDto
@@ -98,7 +101,7 @@ public class CustomerService : ICustomerService
             {
                 Data = null,
                 Succuss = false,
-                Message = "User is not registered"
+                Message = localizer[nameof(AppStrings.UserIsNotRegistered)]
             };
         }
         var contactList = await appDbContext.CustomerContacts.Where(t => t.CustomerId == person.CustomerId)
@@ -133,7 +136,7 @@ public class CustomerService : ICustomerService
             {
                 Data = false,
                 Succuss = false,
-                Message = "There is not contact info with this id"
+                Message = localizer[nameof(AppStrings.ContactInfoNotFound)]
             };
         }
         contactInfo.Title = requestDto.Title;

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Logiwall.IntegrationTests.Infrastructure;
+using Logiwall.Shared.Resources;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,6 +27,7 @@ public class OtpSendPathTests(SqlServerFixture fixture)
             var response = await SendOtpAsync(client, phone);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.OtpServiceIsNotConnected));
             var otpTokens = await fixture.WithDbAsync(async db =>
             {
                 var userId = await db.Users.Where(u => u.UserName == phone).Select(u => u.Id).SingleAsync();
@@ -51,6 +53,7 @@ public class OtpSendPathTests(SqlServerFixture fixture)
         var response = await SendOtpAsync(api.Anonymous, phone);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.AccountIsDisabled));
         Assert.Equal(smsBefore, Sms.CountFor(phone));
     }
 
@@ -67,5 +70,6 @@ public class OtpSendPathTests(SqlServerFixture fixture)
             new { userName = phone, password = "Strong-Pass-1", channel = "pwa", loginProvider = 20 });
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.InvalidUsernameOrPassword));
     }
 }

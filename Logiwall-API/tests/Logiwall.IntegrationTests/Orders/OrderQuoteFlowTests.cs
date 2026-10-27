@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Logiwall.IntegrationTests.Infrastructure;
+using Logiwall.Shared.Resources;
 using Logiwall.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -40,6 +41,7 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
             var response = await client.GetAsync($"api/Order/GetOptions?orderId={orderId}");
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.ProviderServiceUnavailable));
             Assert.Equal(2, await OptionCountAsync(orderId));
         }
         finally

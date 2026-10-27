@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Logiwall.IntegrationTests.Infrastructure;
+using Logiwall.Shared.Resources;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -31,7 +32,9 @@ public class OtpThrottlingTests(SqlServerFixture fixture)
         for (var i = 0; i < 5; i++)
             Assert.Equal(HttpStatusCode.BadRequest, (await ConfirmAsync(client, phone, WrongCodeFor(code))).StatusCode);
 
-        Assert.Equal(HttpStatusCode.BadRequest, (await ConfirmAsync(client, phone, code)).StatusCode);
+        var last = await ConfirmAsync(client, phone, code);
+        Assert.Equal(HttpStatusCode.BadRequest, last.StatusCode);
+        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(last), nameof(AppStrings.OtpCodeIsNotCorrect));
 
         var otpTokens = await fixture.WithDbAsync(async db =>
         {
@@ -75,6 +78,7 @@ public class OtpThrottlingTests(SqlServerFixture fixture)
         var second = await SendOtpAsync(client, phone);
 
         Assert.Equal(HttpStatusCode.BadRequest, second.StatusCode);
+        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(second), nameof(AppStrings.OtpResendCooldown));
         Assert.Equal(1, Sms.CountFor(phone));
     }
 
@@ -100,6 +104,20 @@ public class OtpThrottlingTests(SqlServerFixture fixture)
         var response = await SendOtpAsync(client, "12345");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        PersianAssert.HasPersianMessage(await ApiClient.ReadJsonAsync(response));
         Assert.Equal(0, Sms.CountFor("12345"));
+    }
+
+    [Fact]
+    public async Task Confirm_for_unknown_phone_gets_the_wrong_code_answer()
+    {
+        var client = fixture.CreateApiClient().Anonymous;
+
+        var response = await ConfirmAsync(client, ApiClient.NewPhone(), "12345");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await ApiClient.ReadJsonAsync(response);
+        Assert.False(body.GetProperty("succuss").GetBoolean());
+        PersianAssert.HasMessage(body, nameof(AppStrings.OtpCodeIsNotCorrect));
     }
 }

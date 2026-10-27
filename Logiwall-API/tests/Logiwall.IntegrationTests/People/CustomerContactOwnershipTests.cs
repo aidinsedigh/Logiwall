@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using Logiwall.IntegrationTests.Infrastructure;
+using Logiwall.Shared.Resources;
 using Microsoft.EntityFrameworkCore;
 
 namespace Logiwall.IntegrationTests.People;
@@ -49,7 +50,7 @@ public class CustomerContactOwnershipTests(SqlServerFixture fixture)
 
         // This action returns the ModelState problem shape, not ServiceResponse.
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Contains("There is not contact info with this id", await response.Content.ReadAsStringAsync());
+        Assert.Contains(PersianAssert.Text(nameof(AppStrings.ContactInfoNotFound)), PersianAssert.Strings(await ApiClient.ReadJsonAsync(response)));
     }
 
     [Fact]
