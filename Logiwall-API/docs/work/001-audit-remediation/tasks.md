@@ -30,7 +30,7 @@ The user asked for plans covering **all** audit findings (15 findings, plus a .N
 | [013](013-harden-http-provider-and-cache-settings.md) | HttpProvider timeouts, cancellation, disposal, error bodies; settings and token caching | P2 | M | 003, 005 | DONE |
 | [014](014-page-and-validate-order-list.md) | Order list: async, bounded, ordered, type-safe allow-listed filters | P3 | S | 005 | DONE |
 | [015](015-remove-dead-code-and-template-leftovers.md) | Remove unused packages, OData, dead middleware, commented code; namespace rename | P3 | S–M | 005, 008, 012 (run after 001–014) | DONE (24 migrations before and after; `src/Client` untouched) |
-| [016](016-migrate-server-to-net10.md) | Server-side projects to .NET 10 LTS (clients stay net8) | P2 | L | 004, 005, 015 | DONE (operator: confirm `DOTNETCORE|10.0` with `az webapp list-runtimes`; clients stay net8 and need the client decision; SSH.NET High removed with `AspNetCore.HealthChecks.Network` and the unused SMTP health check; KubernetesClient Moderate remains via `AspNetCore.HealthChecks.UI`) |
+| [016](016-migrate-server-to-net10.md) | Server-side projects to .NET 10 LTS (extended on request: Shared and the clients too, Bit 8.10 → 10.7.0) | P2 | L | 004, 005, 015 | DONE (operator: confirm `DOTNETCORE|10.0` with `az webapp list-runtimes`; `MapStaticAssets()` added, `blazor.web.js` returned 302 since the server moved to net10; MAUI retargeted but not built (no MAUI workload); SSH.NET High removed with `AspNetCore.HealthChecks.Network`; KubernetesClient Moderate remains via `AspNetCore.HealthChecks.UI`) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -59,7 +59,7 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 
 - **Archived or inactive accounts** cannot log in (plan 008 default). Confirm, or request "re-register archived numbers" as a feature.
 - **Auth model**: OTP-only, or OTP plus password? The frontend calls `api/Person/ChangePassword`, which doesn't exist.
-- **Blazor/MAUI clients**: keep them, or go API-only? This blocks the client side of the .NET 10 migration (016) and the template-DTO cleanup (015).
+- **Blazor/MAUI clients**: keep them, or go API-only? This blocks the template-DTO cleanup (015). The clients are on .NET 10 and Bit 10 now (016).
 - **Frontend/API contract gaps**: the frontend calls `/api/Order/SelectPaymentType` and `/odata/Tipax/DspContractTrackings/...`, and neither exists. `use-query-orders.ts` calls the POST-only `GetOrders` with GET.
 
 ## Direction (not planned; options for the maintainer)

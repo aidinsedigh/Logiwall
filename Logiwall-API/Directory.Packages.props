@@ -8,7 +8,7 @@
 
   <ItemGroup Label="ASP.NET Core and Identity">
     <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="8.0.33" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="10.0.14" />
     <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.14" />
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.14" />
     <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.14" />
@@ -26,12 +26,12 @@
   </ItemGroup>
 
   <ItemGroup Label="Microsoft.Extensions">
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.2" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="8.0.1" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.14" />
-    <PackageVersion Include="Microsoft.Extensions.Localization" Version="8.0.33" />
+    <PackageVersion Include="Microsoft.Extensions.Localization" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup Label="Health checks">
@@ -53,29 +53,29 @@
   </ItemGroup>
 
   <ItemGroup Label="bit platform">
-    <PackageVersion Include="Bit.BlazorUI" Version="8.10.0" />
-    <PackageVersion Include="Bit.BlazorUI.Assets" Version="8.10.0" />
-    <PackageVersion Include="Bit.BlazorUI.Extras" Version="8.10.0" />
-    <PackageVersion Include="Bit.BlazorUI.Icons" Version="8.10.0" />
-    <PackageVersion Include="Bit.Bswup" Version="8.10.0" />
-    <PackageVersion Include="Bit.Butil" Version="8.10.0" />
-    <PackageVersion Include="Bit.CodeAnalyzers" Version="8.10.0" />
-    <PackageVersion Include="Bit.SourceGenerators" Version="8.10.0" />
+    <PackageVersion Include="Bit.BlazorUI" Version="10.7.0" />
+    <PackageVersion Include="Bit.BlazorUI.Assets" Version="10.7.0" />
+    <PackageVersion Include="Bit.BlazorUI.Extras" Version="10.7.0" />
+    <PackageVersion Include="Bit.BlazorUI.Icons" Version="10.7.0" />
+    <PackageVersion Include="Bit.Bswup" Version="10.7.0" />
+    <PackageVersion Include="Bit.Butil" Version="10.7.0" />
+    <PackageVersion Include="Bit.CodeAnalyzers" Version="10.7.0" />
+    <PackageVersion Include="Bit.SourceGenerators" Version="10.7.0" />
   </ItemGroup>
 
   <ItemGroup Label="Blazor clients">
-    <PackageVersion Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.33" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="8.0.33" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.33" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.33" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Authorization" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.14" />
     <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup Label="MAUI client">
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="8.0.82" />
-    <PackageVersion Include="Microsoft.Maui.Controls" Version="8.0.82" />
-    <PackageVersion Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.82" />
-    <PackageVersion Include="Microsoft.Maui.Essentials" Version="8.0.82" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.120" />
+    <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.120" />
+    <PackageVersion Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.120" />
+    <PackageVersion Include="Microsoft.Maui.Essentials" Version="10.0.120" />
     <PackageVersion Include="Oscore.Maui.AppStoreInfo" Version="1.0.7" />
     <PackageVersion Include="Plugin.StoreReview" Version="6.2.0" />
   </ItemGroup>

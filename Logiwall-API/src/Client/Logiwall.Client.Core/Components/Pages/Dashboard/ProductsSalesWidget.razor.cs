@@ -8,19 +8,17 @@ public partial class ProductsSalesWidget : AppComponentBase
 
     private bool isLoading;
     private BitChart? chart;
-    private BitChartBarConfig config = default!;
+    private BitChartConfig config = default!;
 
     protected override async Task OnInitAsync()
     {
-        config = new BitChartBarConfig
+        config = new BitChartConfig
         {
-            Options = new BitChartBarOptions
+            Type = BitChartType.Bar,
+            Options = new BitChartOptions
             {
                 Responsive = true,
-                Legend = new BitChartLegend()
-                {
-                    Display = false,
-                },
+                Plugins = new() { Legend = new() { Display = false } },
             }
         };
 
@@ -35,8 +33,8 @@ public partial class ProductsSalesWidget : AppComponentBase
 
             var data = await dashboardController.GetProductsSalesStats(CurrentCancellationToken);
 
-            BitChartBarDataset<decimal> chartDataSet = [.. data.Select(d => d.SaleAmount)];
-            chartDataSet.BackgroundColor = data.Select(d => d.CategoryColor ?? string.Empty).ToArray();
+            BitChartDataset chartDataSet = new() { Data = [.. data.Select(d => (double?)d.SaleAmount)] };
+            chartDataSet.BackgroundColors = [.. data.Select(d => d.CategoryColor ?? string.Empty)];
             config.Data.Datasets.Add(chartDataSet);
             config.Data.Labels.AddRange(data.Select(d => d.ProductName ?? string.Empty));
         }

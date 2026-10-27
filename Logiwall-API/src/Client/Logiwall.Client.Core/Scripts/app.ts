@@ -5,9 +5,9 @@
     }
 }
 
-declare class BitTheme { static init(options: any): void; };
+declare const BitBlazorUI: { Theme: { init(options: any): void } };
 
-BitTheme.init({
+BitBlazorUI.Theme.init({
     system: true,
     onChange: (newTheme: string, oldThem: string) => {
         if (newTheme === 'dark') {

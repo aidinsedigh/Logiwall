@@ -57,7 +57,7 @@
                 <BitTextField @bind-Value="signUpModel.Email"
                               Label="@Localizer[nameof(AppStrings.Email)]"
                               Placeholder="@Localizer[nameof(AppStrings.Email)]"
-                              Type="BitTextFieldType.Email" />
+                              Type="BitInputType.Email" />
                 <ValidationMessage For="@(() => signUpModel.Email)" />
             </div>
 
@@ -65,7 +65,7 @@
                 <BitTextField @bind-Value="signUpModel.Password"
                               Label="@Localizer[nameof(AppStrings.Password)]"
                               AutoComplete="new-password"
-                              Type="BitTextFieldType.Password"
+                              Type="BitInputType.Password"
                               CanRevealPassword="true"
                               Placeholder="@Localizer[nameof(AppStrings.Password)]" />
                 <ValidationMessage For="@(() => signUpModel.Password)" />

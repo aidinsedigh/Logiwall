@@ -15,8 +15,8 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           global-json-file: Logiwall-API/global.json
-      # Client.Web (net8, WasmBuildNative) needs the .NET 8 WASM tools under the .NET 10 SDK.
-      - run: dotnet workload install wasm-tools-net8
+      # Client.Web (WasmBuildNative) needs the WASM tools workload.
+      - run: dotnet workload install wasm-tools
       - run: dotnet build Logiwall.Server.slnf -c Release
       - run: dotnet test tests/Logiwall.UnitTests -c Release --no-build
       - run: dotnet test tests/Logiwall.IntegrationTests -c Release --no-build

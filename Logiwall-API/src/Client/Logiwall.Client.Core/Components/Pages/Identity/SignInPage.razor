@@ -21,14 +21,14 @@
             <BitTextField @bind-Value="signInModel.UserName"
                           Label="@Localizer[nameof(AppStrings.Email)]"
                           Placeholder="@Localizer[nameof(AppStrings.Email)]"
-                          Type="BitTextFieldType.Email" />
+                          Type="BitInputType.Email" />
             <ValidationMessage For="@(() => signInModel.UserName)" />
         </div>
 
         <div class="form-input-container">
             <BitTextField @bind-Value="signInModel.Password"
                           Label="@Localizer[nameof(AppStrings.Password)]"
-                          Type="BitTextFieldType.Password"
+                          Type="BitInputType.Password"
                           AutoComplete="current-password"
                           CanRevealPassword="true"
                           Placeholder="@Localizer[nameof(AppStrings.Password)]" />
