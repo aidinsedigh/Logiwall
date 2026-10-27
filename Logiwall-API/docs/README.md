@@ -16,7 +16,7 @@ range, not in full.
 | Cycle | Area | Status | Folder |
 |---|---|---|---|
 | 1 | Audit remediation: 16 independent plans (security, tests/CI, .NET 10, cleanup) | In progress — see its `tasks.md` | `work/001-audit-remediation/` |
-| 017 | Persian client messages, structured logs, open items from cycle 1 | Not started — see its `tasks.md` | `work/017-persian-messages-and-structured-logs/` |
+| 017 | Persian client messages, structured logs, open items from cycle 1 | Done 2026-10-28 — archived; results in its `tasks.md` | `archive/cycles/017-persian-messages-and-structured-logs/` |
 
 Cycle 1 has no `spec.md` or `plan.md`. The audit produced one self-contained plan file for each
 task (`NNN-*.md`), so the cycle folder holds those files and a `tasks.md` status table.

@@ -1,5 +1,27 @@
 # Cycle 017 — plan
 
+## Contents
+
+- L30 Git workflow
+- L36 Drift check (run first, from `Logiwall-API/`)
+- L46 STOP conditions
+- L53 Commands
+  - L68 Task 1: Write the two decisions (FR-D1-FR-D4)
+  - L83 Task 2: Persian culture and complete Persian resources (FR-M2, FR-M4)
+  - L106 Task 3: Client messages from resource keys (FR-M1, FR-M3, FR-M5, FR-M9)
+  - L128 Task 4: Persian framework errors (FR-M6, FR-M7, FR-M8)
+  - L148 Task 5: Correlation ID and Serilog configuration (FR-L2, FR-L3, FR-L4, FR-L6, FR-L8)
+  - L167 Task 6: Log each handled exception once (FR-L5)
+  - L185 Task 7: Refactor every log call (FR-L1, FR-L7)
+  - L200 Task 8: Account delete archives the user (FR-O1)
+  - L212 Task 9: OTP fixes (FR-O2, FR-O4, FR-O5, FR-O14)
+  - L225 Task 10: Order fixes (FR-O3, FR-O15)
+  - L235 Task 11: People and payment fixes (FR-O6, FR-O7, FR-O8)
+  - L247 Task 12: One token signer and a valid dev certificate (FR-O9, FR-O10)
+  - L259 Task 13: Dead code and package hygiene (FR-O11, FR-O12, FR-O16, FR-O17)
+  - L267 Task 14: Client defects (FR-O18, FR-O19)
+  - L280 Task 15: Final check and close the cycle
+
 > **Executor instructions**: Read `tasks.md`, then this whole file, then `spec.md` sections as each
 > task names them. Do the tasks in order. Run each verification and confirm the expected result
 > before the next task. If a STOP condition occurs, stop and report; do not improvise. After each

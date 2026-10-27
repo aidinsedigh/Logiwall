@@ -1,5 +1,37 @@
 # Cycle 017 — Persian client messages, structured logs, open items: spec
 
+## Contents
+
+- L49 1. Glossary
+- L63 2. Goals and non-goals
+  - L65 Goals
+  - L74 Non-goals
+- L91 3. Requirements
+  - L95 3.1 Client messages (decision ADR-0003)
+  - L109 3.2 Logs (decision ADR-0004)
+  - L122 3.3 Durable decisions
+  - L131 3.4 Open items
+  - L155 3.5 Non-functional requirements
+- L167 4. Design: client messages
+  - L169 4.1 Where client messages come from now
+  - L182 4.2 Culture
+  - L204 4.3 Model binding and JSON errors
+  - L216 4.4 Message inventory and new keys
+  - L265 4.5 How a test checks FR-M1
+- L273 5. Design: logs
+  - L275 5.1 The log template
+  - L291 5.2 Target template for each current log call
+  - L343 5.3 Correlation ID and Serilog configuration
+- L399 6. Design: durable decisions
+- L406 7. Design: open items
+- L436 8. Decision records to write (Task 1)
+  - L441 8.1 `docs/adr/0003-persian-client-messages.md`
+  - L452 8.2 `docs/adr/0004-structured-log-format.md`
+  - L461 8.3 Convention and rulebook changes
+- L475 9. Assumptions
+- L485 10. Open questions
+- L490 11. Traceability
+
 Status: approved for implementation on 2026-10-27. Read `tasks.md` first, then `plan.md`. Read
 this file by section when a task points at it.
 

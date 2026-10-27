@@ -95,10 +95,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "001-audit-remediation", "00
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "017-persian-messages-and-structured-logs", "017-persian-messages-and-structured-logs", "{4B7D2E61-9C3A-4F58-A1D6-3E0F8B92C517}"
 	ProjectSection(SolutionItems) = preProject
-		docs\work\017-persian-messages-and-structured-logs\plan.md = docs\work\017-persian-messages-and-structured-logs\plan.md
-		docs\work\017-persian-messages-and-structured-logs\spec.md = docs\work\017-persian-messages-and-structured-logs\spec.md
-		docs\work\017-persian-messages-and-structured-logs\tasks.md = docs\work\017-persian-messages-and-structured-logs\tasks.md
+		docs\archive\cycles\017-persian-messages-and-structured-logs\plan.md = docs\archive\cycles\017-persian-messages-and-structured-logs\plan.md
+		docs\archive\cycles\017-persian-messages-and-structured-logs\spec.md = docs\archive\cycles\017-persian-messages-and-structured-logs\spec.md
+		docs\archive\cycles\017-persian-messages-and-structured-logs\tasks.md = docs\archive\cycles\017-persian-messages-and-structured-logs\tasks.md
 	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "archive", "archive", "{A3C5E1D7-2B64-4F09-8E1A-7D3B9C4F6A21}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "cycles", "cycles", "{B8E2F4A6-3C71-4D5E-9F2B-6A1C8D3E7B54}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{6F90DD43-5CC0-4E2B-B99F-FFCED52C8D2B}"
 EndProject
@@ -172,7 +176,9 @@ Global
 		{E7801A35-69BB-434B-A62C-B11B47F7DB96} = {85E0ABC8-83D5-40C7-B23D-486A8940B99A}
 		{6FC1DEBB-0234-4579-9CEB-2050562FE0C5} = {85E0ABC8-83D5-40C7-B23D-486A8940B99A}
 		{9D612A33-A039-44A4-9CEE-8A052A3E018F} = {6FC1DEBB-0234-4579-9CEB-2050562FE0C5}
-		{4B7D2E61-9C3A-4F58-A1D6-3E0F8B92C517} = {6FC1DEBB-0234-4579-9CEB-2050562FE0C5}
+		{A3C5E1D7-2B64-4F09-8E1A-7D3B9C4F6A21} = {85E0ABC8-83D5-40C7-B23D-486A8940B99A}
+		{B8E2F4A6-3C71-4D5E-9F2B-6A1C8D3E7B54} = {A3C5E1D7-2B64-4F09-8E1A-7D3B9C4F6A21}
+		{4B7D2E61-9C3A-4F58-A1D6-3E0F8B92C517} = {B8E2F4A6-3C71-4D5E-9F2B-6A1C8D3E7B54}
 		{0BB5BDD1-4838-4035-8CC1-10C0DE176757} = {6F90DD43-5CC0-4E2B-B99F-FFCED52C8D2B}
 		{22732B24-420E-414E-800F-4625160669FC} = {6F90DD43-5CC0-4E2B-B99F-FFCED52C8D2B}
 	EndGlobalSection
