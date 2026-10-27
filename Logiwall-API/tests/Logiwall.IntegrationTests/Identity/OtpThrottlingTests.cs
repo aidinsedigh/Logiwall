@@ -104,7 +104,7 @@ public class OtpThrottlingTests(SqlServerFixture fixture)
         var response = await SendOtpAsync(client, "12345");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        PersianAssert.HasPersianMessage(await ApiClient.ReadJsonAsync(response));
+        PersianAssert.AllMessagesArePersian(await ApiClient.ReadJsonAsync(response));
         Assert.Equal(0, Sms.CountFor("12345"));
     }
 

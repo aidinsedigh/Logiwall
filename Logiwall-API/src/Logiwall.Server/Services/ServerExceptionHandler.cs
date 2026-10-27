@@ -8,7 +8,6 @@ namespace Logiwall.Server.Services;
 
 public partial class ServerExceptionHandler : IExceptionHandler
 {
-    [AutoInject] private IWebHostEnvironment webHostEnvironment = default!;
     [AutoInject] private IStringLocalizer<AppStrings> localizer = default!;
     [AutoInject] private JsonSerializerOptions jsonSerializerOptions = default!;
 
@@ -20,9 +19,9 @@ public partial class ServerExceptionHandler : IExceptionHandler
         var exception = UnWrapException(e);
         var knownException = exception as KnownException;
 
-        // The details of all of the exceptions are returned only in dev mode. in any other modes like production, only the details of the known exceptions are returned.
+        // Only known exceptions return their own message; an unknown one never shows its details, Development too (ADR-0003).
         var key = knownException?.Key ?? nameof(UnknownException);
-        var message = knownException?.Message ?? (webHostEnvironment.IsDevelopment() ? exception.Message : localizer[nameof(UnknownException)]);
+        var message = knownException?.Message ?? localizer[nameof(UnknownException)];
 
         var statusCode = (int)(exception is RestException restExp ? restExp.StatusCode : HttpStatusCode.InternalServerError);
 

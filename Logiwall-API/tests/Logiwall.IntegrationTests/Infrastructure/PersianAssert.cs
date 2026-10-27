@@ -29,6 +29,22 @@ public static class PersianAssert
         Assert.Equal(Text(key), body.GetProperty("message").GetString());
     }
 
+    /// <summary>Asserts each <c>message</c> property in a body, the <c>RestErrorInfo.Payload</c> errors too.</summary>
+    public static void AllMessagesArePersian(JsonElement body)
+    {
+        var messages = Messages(body).ToList();
+        Assert.NotEmpty(messages);
+        Assert.All(messages, IsPersian);
+    }
+
+    private static IEnumerable<string?> Messages(JsonElement element) => element.ValueKind switch
+    {
+        JsonValueKind.Array => element.EnumerateArray().SelectMany(Messages),
+        JsonValueKind.Object => element.EnumerateObject().SelectMany(p =>
+            p.NameEquals("message") && p.Value.ValueKind == JsonValueKind.String ? [p.Value.GetString()] : Messages(p.Value)),
+        _ => []
+    };
+
     /// <summary>Every string value in a body, for shapes without a <c>message</c> property (ModelState).</summary>
     public static IEnumerable<string> Strings(JsonElement element) => element.ValueKind switch
     {

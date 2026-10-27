@@ -14,6 +14,8 @@ using Logiwall.Domain.Entities.Identity;
 using Logiwall.Infrastructure.Services;
 using Microsoft.AspNetCore.RateLimiting;
 using System.Threading.RateLimiting;
+using System.Text.Json;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Logiwall.Server;
 
@@ -67,6 +69,23 @@ public static partial class Program
         services.AddRateLimiter(options =>
         {
             options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.OnRejected = async (context, cancellationToken) =>
+            {
+                var httpContext = context.HttpContext;
+                var requestServices = httpContext.RequestServices;
+                var policy = httpContext.GetEndpoint()?.Metadata.GetMetadata<EnableRateLimitingAttribute>()?.PolicyName;
+                requestServices.GetRequiredService<ILoggerFactory>().CreateLogger("RateLimit")
+                    .LogWarning("[RateLimit][Reject][{Path}][{Policy}] Request was rate limited.", httpContext.Request.Path.Value, policy);
+
+                var localizer = requestServices.GetRequiredService<IStringLocalizer<AppStrings>>();
+                var jsonSerializerOptions = requestServices.GetRequiredService<JsonSerializerOptions>();
+                await httpContext.Response.WriteAsJsonAsync(new RestErrorInfo
+                {
+                    Key = nameof(TooManyRequestsExceptions),
+                    Message = localizer[nameof(TooManyRequestsExceptions)],
+                    ExceptionType = typeof(TooManyRequestsExceptions).FullName
+                }, jsonSerializerOptions.GetTypeInfo<RestErrorInfo>(), cancellationToken: cancellationToken);
+            };
             options.AddPolicy("otp-send", ctx => RateLimitPartition.GetFixedWindowLimiter(
                 ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = configuration.GetValue("RateLimits:OtpSendPerMinute", 5), Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
@@ -79,14 +98,31 @@ public static partial class Program
         
     
         services
-            .AddControllers()
+            .AddControllers(options =>
+            {
+                // Resource keys without placeholders: the placeholders are English property names (ADR-0003).
+                var messages = options.ModelBindingMessageProvider;
+                messages.SetMissingBindRequiredValueAccessor(_ => nameof(AppStrings.ModelBindingValueIsRequired));
+                messages.SetMissingKeyOrValueAccessor(() => nameof(AppStrings.ModelBindingValueIsRequired));
+                messages.SetMissingRequestBodyRequiredValueAccessor(() => nameof(AppStrings.ModelBindingValueIsRequired));
+                messages.SetValueMustNotBeNullAccessor(_ => nameof(AppStrings.ModelBindingValueIsRequired));
+                messages.SetAttemptedValueIsInvalidAccessor((_, _) => nameof(AppStrings.ModelBindingValueIsInvalid));
+                messages.SetNonPropertyAttemptedValueIsInvalidAccessor(_ => nameof(AppStrings.ModelBindingValueIsInvalid));
+                messages.SetUnknownValueIsInvalidAccessor(_ => nameof(AppStrings.ModelBindingValueIsInvalid));
+                messages.SetNonPropertyUnknownValueIsInvalidAccessor(() => nameof(AppStrings.ModelBindingValueIsInvalid));
+                messages.SetValueIsInvalidAccessor(_ => nameof(AppStrings.ModelBindingValueIsInvalid));
+                messages.SetValueMustBeANumberAccessor(_ => nameof(AppStrings.ModelBindingValueIsInvalid));
+                messages.SetNonPropertyValueMustBeANumberAccessor(() => nameof(AppStrings.ModelBindingValueIsInvalid));
+            })
             //.AddJsonOptions(options => options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()))
+            .AddJsonOptions(options => options.AllowInputFormatterExceptionMessages = false)
             .AddDataAnnotationsLocalization(options => options.DataAnnotationLocalizerProvider = StringLocalizerProvider.ProvideLocalizer)
             .ConfigureApiBehaviorOptions(options =>
             {
                 options.InvalidModelStateResponseFactory = context =>
                 {
-                    throw new ResourceValidationException(context.ModelState.Select(ms => (ms.Key, ms.Value!.Errors.Select(e => new LocalizedString(e.ErrorMessage, e.ErrorMessage)).ToArray())).ToArray());
+                    var localizer = context.HttpContext.RequestServices.GetRequiredService<IStringLocalizer<AppStrings>>();
+                    throw new ResourceValidationException(context.ModelState.Select(ms => (ms.Key, ms.Value!.Errors.Select(e => ToPersianError(e, localizer)).ToArray())).ToArray());
                 };
             });
 
@@ -144,6 +180,19 @@ public static partial class Program
 
         AddBlazor(builder);
 
+    }
+
+    /// <summary>
+    /// A model error as a Persian message (ADR-0003). A JSON-format error gets <c>InvalidRequestFormat</c>.
+    /// Text that is not Persian (an attribute without a resource key, framework text) gets <c>ModelBindingValueIsInvalid</c>.
+    /// </summary>
+    private static LocalizedString ToPersianError(ModelError error, IStringLocalizer<AppStrings> localizer)
+    {
+        if (error.Exception is not null || string.IsNullOrEmpty(error.ErrorMessage))
+            return localizer[nameof(AppStrings.InvalidRequestFormat)];
+
+        var message = localizer[error.ErrorMessage];
+        return message.Value.Any(char.IsAsciiLetter) ? localizer[nameof(AppStrings.ModelBindingValueIsInvalid)] : message;
     }
 
     private static void AddBlazor(WebApplicationBuilder builder)
