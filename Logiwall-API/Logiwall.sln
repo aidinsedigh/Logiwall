@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.31611.283
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -9,6 +9,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".SolutionItems", ".Solution
 		Clean.bat = Clean.bat
 		src\Directory.Build.props = src\Directory.Build.props
 		global.json = global.json
+		AGENTS.md = AGENTS.md
+		CLAUDE.md = CLAUDE.md
+		instruction.md = instruction.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Client", "Client", "{248D8229-BABD-4F0A-A9C6-0417B464507B}"
@@ -38,6 +41,53 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Logiwall.Infrastructure", "src\Logiwall.Infrastructure\Logiwall.Infrastructure.csproj", "{981FE285-BA45-4860-ABD8-270F6B522D0E}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Logiwall.Application", "src\Logiwall.Application\Logiwall.Application.csproj", "{44FA8B14-31D2-4A1B-B22E-75AFE1E1DC4B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "docs", "docs", "{85E0ABC8-83D5-40C7-B23D-486A8940B99A}"
+	ProjectSection(SolutionItems) = preProject
+		docs\README.md = docs\README.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "adr", "adr", "{E76C8E57-9D38-4525-A6D5-D0A8FBF89EDE}"
+	ProjectSection(SolutionItems) = preProject
+		docs\adr\0002-keep-layered-architecture.md = docs\adr\0002-keep-layered-architecture.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "conventions", "conventions", "{E7801A35-69BB-434B-A62C-B11B47F7DB96}"
+	ProjectSection(SolutionItems) = preProject
+		docs\conventions\api-design.md = docs\conventions\api-design.md
+		docs\conventions\async-and-di.md = docs\conventions\async-and-di.md
+		docs\conventions\auth-and-security.md = docs\conventions\auth-and-security.md
+		docs\conventions\dotnet-and-deploy.md = docs\conventions\dotnet-and-deploy.md
+		docs\conventions\ef-core.md = docs\conventions\ef-core.md
+		docs\conventions\errors.md = docs\conventions\errors.md
+		docs\conventions\explaining-output.md = docs\conventions\explaining-output.md
+		docs\conventions\git-and-code-quality.md = docs\conventions\git-and-code-quality.md
+		docs\conventions\logging-and-observability.md = docs\conventions\logging-and-observability.md
+		docs\conventions\testing-and-qa.md = docs\conventions\testing-and-qa.md
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "work", "work", "{6FC1DEBB-0234-4579-9CEB-2050562FE0C5}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "001-audit-remediation", "001-audit-remediation", "{9D612A33-A039-44A4-9CEE-8A052A3E018F}"
+	ProjectSection(SolutionItems) = preProject
+		docs\work\001-audit-remediation\001-remove-shared-default-password.md = docs\work\001-audit-remediation\001-remove-shared-default-password.md
+		docs\work\001-audit-remediation\002-enforce-resource-ownership.md = docs\work\001-audit-remediation\002-enforce-resource-ownership.md
+		docs\work\001-audit-remediation\003-remove-committed-secrets-and-redact-logs.md = docs\work\001-audit-remediation\003-remove-committed-secrets-and-redact-logs.md
+		docs\work\001-audit-remediation\004-patch-dotnet8-and-vulnerable-packages.md = docs\work\001-audit-remediation\004-patch-dotnet8-and-vulnerable-packages.md
+		docs\work\001-audit-remediation\005-establish-test-and-ci-baseline.md = docs\work\001-audit-remediation\005-establish-test-and-ci-baseline.md
+		docs\work\001-audit-remediation\006-add-agent-and-setup-docs.md = docs\work\001-audit-remediation\006-add-agent-and-setup-docs.md
+		docs\work\001-audit-remediation\007-rate-limit-otp-and-login.md = docs\work\001-audit-remediation\007-rate-limit-otp-and-login.md
+		docs\work\001-audit-remediation\008-fix-otp-send-path-and-async-sms.md = docs\work\001-audit-remediation\008-fix-otp-send-path-and-async-sms.md
+		docs\work\001-audit-remediation\009-harden-production-defaults.md = docs\work\001-audit-remediation\009-harden-production-defaults.md
+		docs\work\001-audit-remediation\010-investigate-currency-units.md = docs\work\001-audit-remediation\010-investigate-currency-units.md
+		docs\work\001-audit-remediation\011-make-order-quote-flow-idempotent-and-stateful.md = docs\work\001-audit-remediation\011-make-order-quote-flow-idempotent-and-stateful.md
+		docs\work\001-audit-remediation\012-verify-payments-server-side.md = docs\work\001-audit-remediation\012-verify-payments-server-side.md
+		docs\work\001-audit-remediation\013-harden-http-provider-and-cache-settings.md = docs\work\001-audit-remediation\013-harden-http-provider-and-cache-settings.md
+		docs\work\001-audit-remediation\014-page-and-validate-order-list.md = docs\work\001-audit-remediation\014-page-and-validate-order-list.md
+		docs\work\001-audit-remediation\015-remove-dead-code-and-template-leftovers.md = docs\work\001-audit-remediation\015-remove-dead-code-and-template-leftovers.md
+		docs\work\001-audit-remediation\016-migrate-server-to-net10.md = docs\work\001-audit-remediation\016-migrate-server-to-net10.md
+		docs\work\001-audit-remediation\tasks.md = docs\work\001-audit-remediation\tasks.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -92,6 +142,11 @@ Global
 		{22816913-64D5-4AE8-9B34-6F188B71FAD1} = {248D8229-BABD-4F0A-A9C6-0417B464507B}
 		{3E577755-186F-4E63-8153-B8DE890015C9} = {5CF43F76-BB71-4B5B-B4DF-1C753E042A8F}
 		{2347E3B2-FDDE-427E-A0AE-E4DCD47C2989} = {3E577755-186F-4E63-8153-B8DE890015C9}
+		{85E0ABC8-83D5-40C7-B23D-486A8940B99A} = {5CF43F76-BB71-4B5B-B4DF-1C753E042A8F}
+		{E76C8E57-9D38-4525-A6D5-D0A8FBF89EDE} = {85E0ABC8-83D5-40C7-B23D-486A8940B99A}
+		{E7801A35-69BB-434B-A62C-B11B47F7DB96} = {85E0ABC8-83D5-40C7-B23D-486A8940B99A}
+		{6FC1DEBB-0234-4579-9CEB-2050562FE0C5} = {85E0ABC8-83D5-40C7-B23D-486A8940B99A}
+		{9D612A33-A039-44A4-9CEE-8A052A3E018F} = {6FC1DEBB-0234-4579-9CEB-2050562FE0C5}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		RESX_NeutralResourcesLanguage = en-US
