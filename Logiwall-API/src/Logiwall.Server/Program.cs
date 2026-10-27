@@ -37,7 +37,7 @@ public static partial class Program
 
             await app.RunAsync();
         }
-        catch (Exception exc)
+        catch (Exception exc) when (exc is not HostAbortedException)
         {
             Log.Fatal(exc, "Host terminated unexpectedly");
         }
