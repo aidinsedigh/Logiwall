@@ -14,7 +14,6 @@ using Microsoft.EntityFrameworkCore;
 namespace Logiwall.Infrastructure.Services.Identity;
 public class AuthenticationService : IAuthenticationService
 {
-    private readonly string? defaultPassword = "123456";
     private readonly AppDbContext dbContext;
     private readonly UserManager<User> userManager;
     private readonly ISMSService smsService;
@@ -47,13 +46,25 @@ public class AuthenticationService : IAuthenticationService
 
             if (user == null || user.IsArchive)
             {
-                var result = await userManager.CreateAsync(new User
+                // OTP users have no password; password sign-in (GetToken) is only possible after Person/Register sets one.
+                var createResult = await userManager.CreateAsync(new User
                 {
                     UserName = requestDto.PhoneNumber,
                     NormalizedUserName = requestDto.PhoneNumber,
                     PhoneNumber = requestDto.PhoneNumber,
                     Active = true
-                }, defaultPassword!);
+                });
+
+                if (createResult.Succeeded is false && user is null)
+                {
+                    return new ServiceResponse<bool>
+                    {
+                        Data = false,
+                        Succuss = false,
+                        Message = localizer.GetString(nameof(AppStrings.OtpServiceIsNotConnected))
+                    };
+                }
+
                 user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
             }
             var expiryTime = DateTimeOffset.Now.AddMinutes(2);
