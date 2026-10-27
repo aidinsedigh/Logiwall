@@ -18,7 +18,7 @@ The user asked for plans covering **all** audit findings (15 findings, plus a .N
 | [001](001-remove-shared-default-password.md) | OTP-created accounts have no password; existing shared default passwords cleared | P1 | S | — | DONE (migration `ClearSharedDefaultPasswords`; manual DB check skipped, no local SQL Server) |
 | [002](002-enforce-resource-ownership.md) | Contacts, orders, options and payments resolve only for their owner (IDOR) | P1 | S | — | DONE |
 | [003](003-remove-committed-secrets-and-redact-logs.md) | Credentials out of source, migrations and logs; config-based options | P1 | M | — | DONE (operator: rotate credentials, set `Providers:*` and `Sms:PersiaFava:*` incl. the SMS `Url`) |
-| [004](004-patch-dotnet8-and-vulnerable-packages.md) | SDK roll-forward and 8.0.x patch bumps; no High/Critical advisories | P1 | S | — | TODO |
+| [004](004-patch-dotnet8-and-vulnerable-packages.md) | SDK roll-forward and 8.0.x patch bumps; no High/Critical advisories | P1 | S | — | DONE (8.0.33; exception: transitive SSH.NET 2023.0.0 High via `AspNetCore.HealthChecks.Network`, fix only in 2026.0.0 major; KubernetesClient Moderate) |
 | [005](005-establish-test-and-ci-baseline.md) | xUnit + Testcontainers SQL Server harness, regression tests, GitHub Actions CI | P1 | M | 001, 002, 004 | TODO |
 | [006](006-add-agent-and-setup-docs.md) | README, CLAUDE.md, AGENTS.md | P2 | S | 003, 004, 005 | TODO (CLAUDE.md, AGENTS.md, instruction.md and docs/ exist since 2026-10-27; README and commands after 005 remain — see the plan's amendment) |
 | [007](007-rate-limit-otp-and-login.md) | OTP attempt cap, resend cooldown, per-IP rate limits, phone validation | P1 | M | 001, 005 | TODO |
