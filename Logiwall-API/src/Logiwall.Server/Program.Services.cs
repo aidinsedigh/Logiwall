@@ -237,7 +237,7 @@ public static partial class Program
         var certificatePath = Path.Combine(AppContext.BaseDirectory, "IdentityCertificate.pfx");
         var certificate = X509CertificateLoader.LoadPkcs12FromFile(certificatePath, appSettings.IdentitySettings.IdentityCertificatePassword, OperatingSystem.IsWindows() ? X509KeyStorageFlags.EphemeralKeySet : X509KeyStorageFlags.DefaultKeySet);
 
-        bool isTestCertificate = certificate.Thumbprint is "55140A8C935AB5202949071E5781E6946CD60606"; // The default test certificate is still in use
+        bool isTestCertificate = certificate.Thumbprint is "8C8176BAD0AEB08C998EE7D41512940AABA837AA"; // The committed development certificate is still in use
         if (isTestCertificate && env.IsDevelopment() is false)
         {
             throw new InvalidOperationException(@"The default test certificate is still in use. Please replace it with a new one by running the 'dotnet dev-certs https --export-path IdentityCertificate.pfx --password P@ssw0rdP@ssw0rd' command (or your preferred method for generating PFX files) in the server project's folder.");

@@ -26,9 +26,6 @@ public class LogiwallApiFactory : WebApplicationFactory<Logiwall.Server.AppSetti
         // Program.Services.cs reads the connection string while it builds the host,
         // so the override must also be visible as an environment variable.
         Environment.SetEnvironmentVariable("ConnectionStrings__SqlServerConnectionString", connectionString);
-
-        TestCertificate.EnsureWritten(AppContext.BaseDirectory);
-        Environment.SetEnvironmentVariable("AppSettings__IdentitySettings__IdentityCertificatePassword", TestCertificate.Password);
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
