@@ -108,7 +108,7 @@ public partial class PersonController : AppControllerBase, IPersonController
     [HttpGet]
     public async Task<ActionResult> GetCustomerContact([FromQuery] int id, CancellationToken cancellationToken)
     {
-        var result = await customerService.GetCustomerContactByIdAsync(id);
+        var result = await customerService.GetCustomerContactByIdAsync(id, User.GetUserId());
 
         if (!result.Succuss)
         {
@@ -135,7 +135,7 @@ public partial class PersonController : AppControllerBase, IPersonController
     [HttpPost]
     public async Task<ActionResult> UpdateCustomerContact(UpdateCustomerContactRequestDto requestDto, CancellationToken cancellationToken)
     {
-        var result = await customerService.UpdateCustomerContactAsync(requestDto);
+        var result = await customerService.UpdateCustomerContactAsync(requestDto, User.GetUserId());
 
         if (!result.Succuss)
         {

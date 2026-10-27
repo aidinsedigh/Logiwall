@@ -23,7 +23,7 @@ public class PaymentService : IPaymentService
     {
         try
         {
-            var order = await appDbContext.Orders.FirstOrDefaultAsync(t => t.Id == requestDto.OrderId);
+            var order = await appDbContext.Orders.FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId);
             if (order == null)
             {
                 return new ServiceResponse<PaymentResponseDto>
@@ -57,7 +57,7 @@ public class PaymentService : IPaymentService
                 };
             }
             //todo Change order state
-            var payment = await appDbContext.OrderPayments.FirstOrDefaultAsync(t => t.PayTrackingCode == requestDto.PayTrackingCode);
+            var payment = await appDbContext.OrderPayments.FirstOrDefaultAsync(t => t.PayTrackingCode == requestDto.PayTrackingCode && t.OrderId == order.Id);
 
             if (payment is not null)
             {

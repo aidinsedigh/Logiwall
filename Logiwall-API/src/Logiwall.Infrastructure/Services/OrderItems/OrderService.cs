@@ -71,11 +71,20 @@ public class OrderService : IOrderService
         }
     }
 
-    public async Task<ServiceResponse<IList<OrderInqueryOptionsDto>>> GetOptionsAsync(GetOptionnsRequestDto requestDto)
+    public async Task<ServiceResponse<IList<OrderInqueryOptionsDto>>> GetOptionsAsync(GetOptionnsRequestDto requestDto, int userId)
     {
         try
         {
-            var order = await appDbContext.Orders.Include(t => t.OrderParcels).FirstOrDefaultAsync(t => t.Id == requestDto.OrderId);
+            var order = await appDbContext.Orders.Include(t => t.OrderParcels).FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId);
+            if (order is null)
+            {
+                return new ServiceResponse<IList<OrderInqueryOptionsDto>>
+                {
+                    Data = null,
+                    Succuss = false,
+                    Message = "Invalid OrderId"
+                };
+            }
 
             var postalServiceBase = typeof(PostalServiceBase);
             var postalProviders = Assembly.GetAssembly(postalServiceBase).GetTypes()
@@ -208,7 +217,7 @@ public class OrderService : IOrderService
             };
         }
 
-        var order = await appDbContext.Orders.FirstOrDefaultAsync(t => t.Id == requestDto.OrderId);
+        var order = await appDbContext.Orders.FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId);
 
         if (order is null)
         {
@@ -220,7 +229,16 @@ public class OrderService : IOrderService
             };
         }
 
-        var orderInquiry = await appDbContext.OrderInqueryOptions.FirstOrDefaultAsync(t => t.Id == requestDto.OrderInqueryOptionId);
+        var orderInquiry = await appDbContext.OrderInqueryOptions.FirstOrDefaultAsync(t => t.Id == requestDto.OrderInqueryOptionId && t.OrderId == order.Id);
+        if (orderInquiry is null)
+        {
+            return new ServiceResponse<SelectOptionResponseDto>
+            {
+                Data = null,
+                Succuss = false,
+                Message = "Invalid OrderInqueryOptionId"
+            };
+        }
 
         var result = await sep724Provider.GetPaymentTokenAsync(new PaymentTokenRequestDto
         {

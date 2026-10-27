@@ -16,7 +16,7 @@ The user asked for plans covering **all** audit findings (15 findings, plus a .N
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
 | [001](001-remove-shared-default-password.md) | OTP-created accounts have no password; existing shared default passwords cleared | P1 | S | — | DONE (migration `ClearSharedDefaultPasswords`; manual DB check skipped, no local SQL Server) |
-| [002](002-enforce-resource-ownership.md) | Contacts, orders, options and payments resolve only for their owner (IDOR) | P1 | S | — | TODO |
+| [002](002-enforce-resource-ownership.md) | Contacts, orders, options and payments resolve only for their owner (IDOR) | P1 | S | — | DONE |
 | [003](003-remove-committed-secrets-and-redact-logs.md) | Credentials out of source, migrations and logs; config-based options | P1 | M | — | TODO |
 | [004](004-patch-dotnet8-and-vulnerable-packages.md) | SDK roll-forward and 8.0.x patch bumps; no High/Critical advisories | P1 | S | — | TODO |
 | [005](005-establish-test-and-ci-baseline.md) | xUnit + Testcontainers SQL Server harness, regression tests, GitHub Actions CI | P1 | M | 001, 002, 004 | TODO |
