@@ -186,7 +186,7 @@ public static partial class Program
         var settings = appSettings.IdentitySettings;
 
         var certificatePath = Path.Combine(AppContext.BaseDirectory, "IdentityCertificate.pfx");
-        var certificate = new X509Certificate2(certificatePath, appSettings.IdentitySettings.IdentityCertificatePassword, OperatingSystem.IsWindows() ? X509KeyStorageFlags.EphemeralKeySet : X509KeyStorageFlags.DefaultKeySet);
+        var certificate = X509CertificateLoader.LoadPkcs12FromFile(certificatePath, appSettings.IdentitySettings.IdentityCertificatePassword, OperatingSystem.IsWindows() ? X509KeyStorageFlags.EphemeralKeySet : X509KeyStorageFlags.DefaultKeySet);
 
         bool isTestCertificate = certificate.Thumbprint is "55140A8C935AB5202949071E5781E6946CD60606"; // The default test certificate is still in use
         if (isTestCertificate && env.IsDevelopment() is false)

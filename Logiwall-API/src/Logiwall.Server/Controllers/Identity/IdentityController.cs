@@ -94,7 +94,7 @@ public partial class IdentityController : AppControllerBase, IIdentityController
         var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
 
         var certificatePath = Path.Combine(AppContext.BaseDirectory, "IdentityCertificate.pfx");
-        var certificate = new X509Certificate2(certificatePath, AppSettings.IdentitySettings.IdentityCertificatePassword, OperatingSystem.IsWindows() ? X509KeyStorageFlags.EphemeralKeySet : X509KeyStorageFlags.DefaultKeySet);
+        var certificate = X509CertificateLoader.LoadPkcs12FromFile(certificatePath, AppSettings.IdentitySettings.IdentityCertificatePassword, OperatingSystem.IsWindows() ? X509KeyStorageFlags.EphemeralKeySet : X509KeyStorageFlags.DefaultKeySet);
 
         var issuer = AppSettings.IdentitySettings.Issuer;
         var audience = AppSettings.IdentitySettings.Audience;
