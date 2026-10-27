@@ -131,7 +131,7 @@ script) against each environment before you deploy code that needs a new migrati
 |---|---|
 | `src/Logiwall.Server` | ASP.NET Core host: controllers (`api/[controller]/[action]`), Identity and bearer auth, Swagger, Serilog file logs (`Logs/`) |
 | `src/Logiwall.Application` | Service interfaces only (`Abstractions/**`) |
-| `src/Logiwall.Infrastructure` | `AppDbContext` (namespace `Logiwall.Server.Data`), migrations, services, providers (SEP, MyTipax, SMS), Mapperly mappers, options |
+| `src/Logiwall.Infrastructure` | `AppDbContext`, migrations, services, providers (SEP, MyTipax, SMS), Mapperly mappers, options |
 | `src/Logiwall.Domain` | EF entities |
 | `src/Logiwall.Shared` | DTOs, enums, resources, exceptions (shared with the clients) |
 | `src/Client/*` | bit-bp template Blazor/MAUI clients. The server hosts `Logiwall.Client.Web` |

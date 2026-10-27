@@ -52,8 +52,8 @@
         <Using Include="Microsoft.EntityFrameworkCore.Migrations" />
         <Using Include="Microsoft.EntityFrameworkCore.Metadata.Builders" />
         <Using Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" />
-        <Using Include="Logiwall.Server.Data" />
-        <Using Include="Logiwall.Server.Mappers" />
+        <Using Include="Logiwall.Infrastructure.Data" />
+        <Using Include="Logiwall.Infrastructure.Mapper" />
         <Using Include="Microsoft.AspNetCore.Identity" />
         <Using Include="Microsoft.EntityFrameworkCore" />
         <Using Include="Microsoft.AspNetCore.Mvc" />

@@ -1,5 +1,5 @@
 ﻿using Logiwall.Application.Abstractions.Global;
-using Logiwall.Server.Data;
+using Logiwall.Infrastructure.Data;
 using Logiwall.Shared.Dtos.Global;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;

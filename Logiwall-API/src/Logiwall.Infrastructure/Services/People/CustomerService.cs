@@ -1,6 +1,6 @@
 ﻿using Logiwall.Application.Abstractions.People;
 using Logiwall.Domain.Entities.People;
-using Logiwall.Server.Data;
+using Logiwall.Infrastructure.Data;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.People;
 using Microsoft.EntityFrameworkCore;

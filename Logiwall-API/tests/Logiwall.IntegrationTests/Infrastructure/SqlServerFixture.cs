@@ -1,4 +1,4 @@
-using Logiwall.Server.Data;
+using Logiwall.Infrastructure.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;

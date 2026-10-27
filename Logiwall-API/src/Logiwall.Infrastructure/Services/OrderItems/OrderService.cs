@@ -3,7 +3,7 @@ using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Domain.Entities.OrderItems;
 using Logiwall.Infrastructure.Mapper;
 using Logiwall.Infrastructure.Providers.PostalServices;
-using Logiwall.Server.Data;
+using Logiwall.Infrastructure.Data;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.OrderItems;
 using Logiwall.Shared.Dtos.Providers.PostalService;

@@ -75,9 +75,9 @@ Logiwall.Server          → Application, Infrastructure, Shared, Client.Web
 
 * Do not make `Domain`, `Application` or `Shared` reference `Infrastructure` or `Server`.
 * Do not add business logic to `Logiwall.Server`. Controllers call a service and shape the HTTP result.
-* `AppDbContext` is in `src/Logiwall.Infrastructure/Data/`, but its namespace is
-  `Logiwall.Server.Data` (a template leftover). Do not rename it outside plan 015.
-* Do not add features to `Client/*` unless the task asks for it. Plan 015 decides their future.
+* `AppDbContext` is in `src/Logiwall.Infrastructure/Data/`, namespace `Logiwall.Infrastructure.Data`
+  (plan 015 renamed it from the template's `Logiwall.Server.Data`).
+* Do not add features to `Client/*` unless the task asks for it. Their future is an open product decision.
 
 Do not migrate to a modular monolith, Minimal APIs or MediatR. A change of
 architecture needs its own ADR and the user's decision (`docs/adr/0002-keep-layered-architecture.md`).

@@ -6,7 +6,7 @@ using Logiwall.Application.Abstractions.Identity;
 using Logiwall.Application.Abstractions.Tools;
 using Logiwall.Domain.Entities.Identity;
 using Logiwall.Domain.Entities.People;
-using Logiwall.Server.Data;
+using Logiwall.Infrastructure.Data;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.Identity;
 using Microsoft.AspNetCore.Identity;

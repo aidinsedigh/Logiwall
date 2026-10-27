@@ -1,6 +1,6 @@
 ﻿using Logiwall.Application.Abstractions.OrderItems;
 using Logiwall.Domain.Entities.OrderItems;
-using Logiwall.Server.Data;
+using Logiwall.Infrastructure.Data;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.PaymentItems;
 using Microsoft.EntityFrameworkCore;
