@@ -126,4 +126,61 @@
   <data name="UserNotInRole" xml:space="preserve">
     <value>کاربر دارای نقش {0} نمیباشد</value>
   </data>
+  <data name="DefaultError" xml:space="preserve">
+    <value>خطای ناشناخته‌ای رخ داد.</value>
+  </data>
+  <data name="DuplicateEmail" xml:space="preserve">
+    <value>ایمیل «{0}» قبلاً ثبت شده است.</value>
+  </data>
+  <data name="DuplicateRoleName" xml:space="preserve">
+    <value>نام نقش «{0}» قبلاً ثبت شده است.</value>
+  </data>
+  <data name="DuplicateUserName" xml:space="preserve">
+    <value>نام کاربری «{0}» قبلاً ثبت شده است.</value>
+  </data>
+  <data name="InvalidEmail" xml:space="preserve">
+    <value>ایمیل «{0}» معتبر نیست.</value>
+  </data>
+  <data name="InvalidRoleName" xml:space="preserve">
+    <value>نام نقش «{0}» معتبر نیست.</value>
+  </data>
+  <data name="InvalidToken" xml:space="preserve">
+    <value>توکن معتبر نیست.</value>
+  </data>
+  <data name="InvalidUserName" xml:space="preserve">
+    <value>نام کاربری «{0}» معتبر نیست و فقط می‌تواند حرف یا رقم داشته باشد.</value>
+  </data>
+  <data name="LoginAlreadyAssociated" xml:space="preserve">
+    <value>کاربری با این ورود از قبل وجود دارد.</value>
+  </data>
+  <data name="PasswordRequiresDigit" xml:space="preserve">
+    <value>رمز عبور باید دست‌کم یک رقم داشته باشد.</value>
+  </data>
+  <data name="PasswordRequiresLower" xml:space="preserve">
+    <value>رمز عبور باید دست‌کم یک حرف کوچک لاتین داشته باشد.</value>
+  </data>
+  <data name="PasswordRequiresNonAlphanumeric" xml:space="preserve">
+    <value>رمز عبور باید دست‌کم یک نویسهٔ غیرحرفی و غیررقمی داشته باشد.</value>
+  </data>
+  <data name="PasswordRequiresUpper" xml:space="preserve">
+    <value>رمز عبور باید دست‌کم یک حرف بزرگ لاتین داشته باشد.</value>
+  </data>
+  <data name="PasswordTooShort" xml:space="preserve">
+    <value>رمز عبور باید دست‌کم {0} نویسه باشد.</value>
+  </data>
+  <data name="RecoveryCodeRedemptionFailed" xml:space="preserve">
+    <value>استفاده از کد بازیابی ناموفق بود.</value>
+  </data>
+  <data name="UserAlreadyHasPassword" xml:space="preserve">
+    <value>کاربر از قبل رمز عبور دارد.</value>
+  </data>
+  <data name="UserAlreadyInRole" xml:space="preserve">
+    <value>کاربر از قبل نقش «{0}» را دارد.</value>
+  </data>
+  <data name="UserLockoutNotEnabled" xml:space="preserve">
+    <value>قفل‌شدن حساب برای این کاربر فعال نیست.</value>
+  </data>
+  <data name="PasswordRequiresUniqueChars" xml:space="preserve">
+    <value>رمز عبور باید دست‌کم {0} نویسهٔ متفاوت داشته باشد.</value>
+  </data>
 </root>

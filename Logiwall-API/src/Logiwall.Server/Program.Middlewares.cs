@@ -5,6 +5,7 @@ using System.Web;
 using Logiwall.Client.Core.Services;
 using Microsoft.AspNetCore.Components.Endpoints;
 using Microsoft.AspNetCore.Http.Extensions;
+using Microsoft.AspNetCore.Localization;
 
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using HealthChecks.UI.Client;
@@ -25,16 +26,15 @@ public static partial class Program
         app.UseSerilogRequestLogging();
         app.UseForwardedHeaders();
 
-        if (AppRenderMode.MultilingualEnabled)
+        var persian = CultureInfoManager.CreateCultureInfo("fa-IR");
+        app.UseRequestLocalization(new RequestLocalizationOptions
         {
-            var supportedCultures = CultureInfoManager.SupportedCultures.Select(sc => CultureInfoManager.CreateCultureInfo(sc.code)).ToArray();
-            app.UseRequestLocalization(new RequestLocalizationOptions
-            {
-                SupportedCultures = supportedCultures,
-                SupportedUICultures = supportedCultures,
-                ApplyCurrentCultureToResponseHeaders = true
-            }.SetDefaultCulture(CultureInfoManager.DefaultCulture.code));
-        }
+            DefaultRequestCulture = new RequestCulture(persian),
+            SupportedCultures = [persian],
+            SupportedUICultures = [persian],
+            RequestCultureProviders = [], // Persian only (ADR-0003): ignore Accept-Language, cookie and query.
+            ApplyCurrentCultureToResponseHeaders = true
+        });
 
         app.UseExceptionHandler("/", createScopeForErrors: true);
 
