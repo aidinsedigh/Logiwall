@@ -6,6 +6,7 @@ using Logiwall.Client.Core.Services;
 using Microsoft.AspNetCore.Components.Endpoints;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Localization;
+using Logiwall.Server.Services;
 
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using HealthChecks.UI.Client;
@@ -23,7 +24,9 @@ public static partial class Program
         var configuration = app.Configuration;
         var env = app.Environment;
 
-        app.UseSerilogRequestLogging();
+        app.UseMiddleware<CorrelationIdMiddleware>();
+        app.UseSerilogRequestLogging(options =>
+            options.MessageTemplate = "[Request][Complete][{RequestMethod}][{RequestPath}][{StatusCode}][{Elapsed}] Request completed.");
         app.UseForwardedHeaders();
 
         var persian = CultureInfoManager.CreateCultureInfo("fa-IR");

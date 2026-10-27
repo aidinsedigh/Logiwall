@@ -16,7 +16,7 @@ Scope, in one line each:
 - [x] Task 2 — `fa-IR` for every request; complete Persian resources; completeness test (FR-M2, FR-M4)
 - [x] Task 3 — Client messages from resource keys; no provider text (FR-M1, FR-M3, FR-M5, FR-M9, FR-O13)
 - [x] Task 4 — Persian binding, JSON, 429 and unknown-error messages (FR-M6-FR-M8)
-- [ ] Task 5 — Correlation ID middleware; Serilog from `appsettings.json` (FR-L2-FR-L4, FR-L6, FR-L8)
+- [x] Task 5 — Correlation ID middleware; Serilog from `appsettings.json` (FR-L2-FR-L4, FR-L6, FR-L8)
 - [ ] Task 6 — `ServerExceptionHandler` logs each handled exception once (FR-L5)
 - [ ] Task 7 — Refactor the 20 log calls to the template (FR-L1, FR-L7)
 - [ ] Task 8 — Account delete archives the user (FR-O1)

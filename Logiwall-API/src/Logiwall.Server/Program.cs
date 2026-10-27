@@ -1,5 +1,4 @@
 ﻿
-using Serilog.Events;
 using Serilog;
 
 namespace Logiwall.Server;
@@ -8,19 +7,19 @@ public static partial class Program
 {
     public static async Task Main(string[] args)
     {
-        // Configure Serilog
+        // Bootstrap logger for start-up and fatal errors; UseSerilog replaces it with the configured one.
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // Set minimum log level for Microsoft components
-            .Enrich.FromLogContext()
-            .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day) // Log to file with daily rotation
-            .CreateLogger();
+            .WriteTo.Console()
+            .CreateBootstrapLogger();
         try
         {
             Log.Information("Starting web host");
 
             var builder = WebApplication.CreateBuilder(args);
-            // Add Serilog to logging
-            builder.Host.UseSerilog();
+            // Levels and sinks come from the Serilog section of appsettings.json (ADR-0004).
+            builder.Host.UseSerilog((context, services, configuration) => configuration
+                .ReadFrom.Configuration(context.Configuration)
+                .ReadFrom.Services(services));
             builder.Configuration.AddClientConfigurations();
 
             // The following line (using the * in the URL), allows the emulators and mobile devices to access the app using the host IP address.

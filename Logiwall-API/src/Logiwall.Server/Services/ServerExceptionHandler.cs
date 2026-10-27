@@ -13,8 +13,10 @@ public partial class ServerExceptionHandler : IExceptionHandler
 
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception e, CancellationToken cancellationToken)
     {
-        // Using the Request-Id header, one can find the log for server-related exceptions
+        // Using the Request-Id header, one can find the log for server-related exceptions.
+        // UseExceptionHandler cleared the headers, so X-Correlation-Id is set again (ADR-0004).
         httpContext.Response.Headers.Append(HeaderNames.RequestId, httpContext.TraceIdentifier);
+        httpContext.Response.Headers[CorrelationIdMiddleware.HeaderName] = httpContext.TraceIdentifier;
 
         var exception = UnWrapException(e);
         var knownException = exception as KnownException;
