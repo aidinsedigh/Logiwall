@@ -1,0 +1,16 @@
+{
+  "solution": {
+    "path": "Logiwall.sln",
+    "projects": [
+      "src\\Client\\Logiwall.Client.Core\\Logiwall.Client.Core.csproj",
+      "src\\Client\\Logiwall.Client.Web\\Logiwall.Client.Web.csproj",
+      "src\\Logiwall.Application\\Logiwall.Application.csproj",
+      "src\\Logiwall.Domain\\Logiwall.Domain.csproj",
+      "src\\Logiwall.Infrastructure\\Logiwall.Infrastructure.csproj",
+      "src\\Logiwall.Server\\Logiwall.Server.csproj",
+      "src\\Logiwall.Shared\\Logiwall.Shared.csproj",
+      "tests\\Logiwall.IntegrationTests\\Logiwall.IntegrationTests.csproj",
+      "tests\\Logiwall.UnitTests\\Logiwall.UnitTests.csproj"
+    ]
+  }
+}
