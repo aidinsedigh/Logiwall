@@ -32,14 +32,17 @@ template leftovers that the server still hosts.
 | Purpose | Command | Notes |
 |---|---|---|
 | Build the server | `dotnet build src/Logiwall.Server/Logiwall.Server.csproj` | Builds 7 projects. Verified 2026-10-27: 0 errors. |
+| Build server and tests | `dotnet build Logiwall.Server.slnf` | Every project except MAUI and IaC. CI builds this. |
+| Unit tests | `dotnet test tests/Logiwall.UnitTests` | |
+| Integration tests | `dotnet test tests/Logiwall.IntegrationTests` | Needs Docker (Testcontainers SQL Server) |
 | Run | `dotnet run --project src/Logiwall.Server` | `http://localhost:5030`, Swagger at `/swagger` |
 | EF tool | `cd src/Logiwall.Server && dotnet tool restore` | |
 | Add a migration | `dotnet ef migrations add <Name> --project ../Logiwall.Infrastructure --startup-project . --output-dir Data/Migrations` | Run from `src/Logiwall.Server` |
 | Update the database | `dotnet ef database update --project ../Logiwall.Infrastructure --startup-project .` | Run from `src/Logiwall.Server` |
 
 Do not build `Logiwall.sln` or `Logiwall.Web.slnf`. Both contain `Logiwall.Client.Maui`, which
-needs MAUI workloads. There are no test projects yet. Plan 005 in
-`docs/work/001-audit-remediation/` adds them and a `Logiwall.Server.slnf`.
+needs MAUI workloads. The tests and `Logiwall.Server.slnf` came with plan 005. CI is
+`../.github/workflows/api-ci.yml` (at the git root).
 
 ---
 

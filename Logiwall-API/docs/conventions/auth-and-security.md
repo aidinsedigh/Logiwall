@@ -29,10 +29,14 @@ Do not tell the caller that the row exists. Plan 002 applies this rule to the ex
 
 * Never put credentials in code, migrations, `appsettings*.json` or log output.
 * Read secrets from configuration: user-secrets in development, Key Vault in Azure
-  (`src/Logiwall.Iac/`). Plan 003 moves the existing credentials there.
+  (`src/Logiwall.Iac/`). Put a new provider credential in an options class in
+  `src/Logiwall.Infrastructure/Options/` (`Providers:Sep724:*`, `Providers:MyTipax:*`,
+  `Sms:PersiaFava:*`). Never put it in an `AppSettings` row or a migration (plan 003).
 * Never reintroduce a shared default password for accounts (plan 001).
 * `src/Logiwall.Server/IdentityCertificate.pfx` is the template's public test certificate. It is
-  accepted only in Development. Production supplies its own certificate.
+  accepted only in Development. Production supplies its own certificate. The committed
+  certificate expired in January 2025, so bearer tokens fail with `IDX10249` until you replace
+  it locally. The integration tests write their own certificate (`TestCertificate.cs`).
 * Do not commit a local connection string with a password. Check `git diff` for
   `appsettings.json` before each commit.
 
