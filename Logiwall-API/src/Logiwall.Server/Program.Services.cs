@@ -80,7 +80,7 @@ public static partial class Program
         services.Configure<AppSettings>(configuration.GetSection(nameof(AppSettings)));
 
         services.TryAddTransient(sp => sp.GetRequiredService<IOptionsSnapshot<AppSettings>>().Value);
-        services.AddInfrastructure();
+        services.AddInfrastructure(configuration);
         services.AddEndpointsApiExplorer();
 
         AddSwaggerGen(builder);

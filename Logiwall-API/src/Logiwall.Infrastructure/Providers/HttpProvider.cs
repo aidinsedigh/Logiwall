@@ -1,5 +1,4 @@
 ﻿using System.Net.Http.Json;
-using System.Text.Json;
 using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.Providers;
@@ -287,24 +286,16 @@ public sealed class HttpProvider(IHttpClientFactory httpClientFactory) : IHttpPr
     private void LogRequestDetails<TBody, TRequest>(HttpProviderRequest<TBody, TRequest> request)
     where TRequest : IHttpRequest
     {
-        Log.Information("Request to {Uri} with headers: {Headers}",
-            request.Uri, request.HeaderParameters != null ?
-            string.Join(", ", request.HeaderParameters.Select(h => $"{h.Key}: {h.Value}")): string.Empty);
-
-        if (request.Body != null)
-        {
-            Log.Information("Request body: {Body}", JsonSerializer.Serialize(request.Body));
-        }
+        // Never log header values or bodies: they carry provider credentials and tokens.
+        Log.Information("Outbound request to {BaseAddress}{Uri} with header names: {HeaderNames}",
+            request.BaseAddress, request.Uri,
+            request.HeaderParameters is null ? string.Empty : string.Join(", ", request.HeaderParameters.Select(h => h.Key)));
     }
 
-    private async Task LogResponseDetails(HttpResponseMessage response)
+    private Task LogResponseDetails(HttpResponseMessage response)
     {
-        var responseBody = await response.Content.ReadAsStringAsync();
-
-        Log.Information("Response from {Uri}: Status Code: {StatusCode}, Headers: {Headers}, Body: {Body}",
-            response.RequestMessage?.RequestUri,
-            response.StatusCode,
-            response.Headers,
-            responseBody);
+        Log.Information("Outbound response from {Uri}: {StatusCode}",
+            response.RequestMessage?.RequestUri, (int)response.StatusCode);
+        return Task.CompletedTask;
     }
 }

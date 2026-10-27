@@ -2,6 +2,8 @@
 using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Shared.Dtos.Providers;
 using Logiwall.Shared.Dtos.Providers.Sep724;
+using Logiwall.Infrastructure.Options;
+using Microsoft.Extensions.Options;
 
 namespace Logiwall.Infrastructure.Providers;
 public class Sep724Provider : ISep724Provider
@@ -10,15 +12,17 @@ public class Sep724Provider : ISep724Provider
     private const short maxTryToGetToken = 3;
     private string getToken = "token";
     private string grantType = "password";
-    private readonly string? terminal = "14385420";
     private readonly IAppSettingService appSettingService;
     private readonly IHttpProvider httpProvider;
+    private readonly Sep724Options options;
 
     public Sep724Provider(IAppSettingService appSettingService,
-        IHttpProvider httpProvider)
+        IHttpProvider httpProvider,
+        IOptions<Sep724Options> sep724Options)
     {
         this.appSettingService = appSettingService;
         this.httpProvider = httpProvider;
+        this.options = sep724Options.Value;
     }
 
     public async Task<SepResponseBase<GetPaymentTokenResponseDto>> GetPaymentTokenAsync(PaymentTokenRequestDto requestDto)
@@ -46,7 +50,7 @@ public class Sep724Provider : ISep724Provider
         {
             Amount = amount,
             MobileNo = requestDto.PhoneNumber,
-            Terminal = terminal,
+            Terminal = options.Terminal,
             Channel = requestDto.Channel,
             CallbackUrl = requestDto.CallbackUrl,
             Extensions = new GetPaymentTokenExtensionDto
@@ -81,19 +85,22 @@ public class Sep724Provider : ISep724Provider
 
     private async Task<string?> GetTokenAsync()
     {
+        if (string.IsNullOrEmpty(options.Username) || string.IsNullOrEmpty(options.Password) || string.IsNullOrEmpty(options.BasicAuthorization))
+            throw new InvalidOperationException("Providers:Sep724 credentials are not configured.");
+
         var appSettings = await appSettingService.GetAllSettingsAsync();
         var header = new List<(string, string)>
         {
-            new ("Authorization", $"Basic {appSettings.SepConnectAuthorization}")
+            new ("Authorization", $"Basic {options.BasicAuthorization}")
         };
 
         var body = new List<KeyValuePair<string, string>>
         {
             new ("grant_type", grantType),
-            new ("username" , appSettings.SepConnectUsername),
-            new ("password" , appSettings.SepConnectPassword),
+            new ("username" , options.Username),
+            new ("password" , options.Password),
             new ("scope" , appSettings.SepConnectScope),
-            new ("client" , appSettings.SepConnectClient),
+            new ("client" , options.Client),
         };
         var result = await httpProvider.PostAsync<GetTokenRequestDto, GetTokenResponseDto, List<KeyValuePair<string, string>>>(
             new HttpProviderRequest<List<KeyValuePair<string, string>>, GetTokenRequestDto>

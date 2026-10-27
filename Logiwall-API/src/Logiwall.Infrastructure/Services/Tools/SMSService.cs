@@ -3,16 +3,19 @@ using System.Text;
 using Logiwall.Application.Abstractions.Tools;
 using Logiwall.Server.Data;
 using Newtonsoft.Json;
-using RestSharp;
+using Logiwall.Infrastructure.Options;
+using Microsoft.Extensions.Options;
 
 namespace Logiwall.Infrastructure.Services.Tools;
 public class SMSService : ISMSService
 {
     private readonly AppDbContext dbContext;
+    private readonly SmsOptions smsOptions;
 
-    public SMSService(AppDbContext dbContext)
+    public SMSService(AppDbContext dbContext, IOptions<SmsOptions> smsOptions)
     {
         this.dbContext = dbContext;
+        this.smsOptions = smsOptions.Value;
     }
 
     public class SMSPersiaFavaResult
@@ -26,48 +29,14 @@ public class SMSService : ISMSService
         return SendSMSPersiaFava(Message, Destination);
     }
 
-    public string SendSMSIPPanel(string Message, string Destination)
-    {
-        //var client = new RestClient("http://188.0.240.110/api/select");
-        //var request = new RestRequest(Method.POST);
-        //request.AddHeader("cache-control", "no-cache");
-        //request.AddHeader("Content-Type", "application/json");
-        //request.AddParameter("undefined", "{\"op\" : \"pattern\"" +
-        //    ",\"user\" : \"fsamin\"" +
-        //    ",\"pass\":  \"F.samin@123\"" +
-        //    ",\"fromNum\" : \"+983000505\"" +
-        //    ",\"toNum\": \"09125189131\"" +
-        //    ",\"patternCode\": \"nqx8akt8g4\"" +
-        //    ",\"inputData\" : [{\"validation_code\": \"13131\"}]}"
-        //    , ParameterType.RequestBody);
-        //IRestResponse response = client.Execute(request);
-        //return response.Content;
-
-
-        var client = new RestClient("http://188.0.240.110/api/select");
-        var request = new RestRequest(string.Empty, method: Method.Post);
-        request.AddHeader("cache-control", "no-cache");
-        request.AddHeader("Content-Type", "application/json");
-        request.AddParameter("undefined", "{\"op\" : \"send\"" +
-            ",\"uname\" : \"fsamin\"" +
-            ",\"pass\":  \"F.samin@123\"" +
-            ",\"message\" : \"{{Message}}}\"" +
-            ",\"from\": \"+983000505\"" +
-            ",\"to\" : [\"09125189131\"]}"
-            , ParameterType.RequestBody);
-        var response = client.Execute(request);
-        return response.Content;
-
-    }
-
     public string SendSMSPersiaFava(string Message, string DestinationAddress)
     {
         string[] RetValue = new string[2];
         RetValue[0] = "False";
         RetValue[1] = "0";
-        var request = (HttpWebRequest)WebRequest.Create("http://sms.persiafava.com/webservice/rest/sms_send?");
+        var request = (HttpWebRequest)WebRequest.Create(smsOptions.Url);
 
-        var postData = string.Format("api_key=309:65336955f26ea&receiver_number={0}&note_arr[]={1}&sender_number={2}", DestinationAddress, Message, "300084571");
+        var postData = $"api_key={Uri.EscapeDataString(smsOptions.ApiKey)}&receiver_number={Uri.EscapeDataString(DestinationAddress)}&note_arr[]={Uri.EscapeDataString(Message)}&sender_number={Uri.EscapeDataString(smsOptions.SenderNumber)}";
         var data = Encoding.UTF8.GetBytes(postData);
 
         request.Method = "POST";
@@ -97,28 +66,5 @@ public class SMSService : ISMSService
         else
             return RetValue[1].ToString();
     }
-
-
-    //public async Task SaveSMSLog(string mobileNo, string message, string smsSate, string contractCode, string branchName, string retValue1, string retValue2, string sourceDestination)
-    //{
-    //    using (IDependencyResolver dependencyResolver = dependencyManager.CreateChildDependencyResolver())
-    //    {
-    //        IRepository<SmsLog> smsLogRepository = dependencyResolver.Resolve<IRepository<SmsLog>>();
-    //        var unit = dependencyResolver.Resolve<IUnitOfWork>();
-    //        SmsLog _smsLog = new SmsLog();
-    //        _smsLog.MobileNo = mobileNo;
-    //        _smsLog.Message = message;
-    //        _smsLog.State = smsSate;
-    //        _smsLog.ContractCode = contractCode;
-    //        _smsLog.BranchName = branchName;
-    //        _smsLog.RetValue1 = retValue1;
-    //        _smsLog.RetValue2 = retValue2;
-    //        _smsLog.InternalTime = DateTimeOffset.Now;
-    //        _smsLog.SourceNumber = sourceDestination;
-
-    //        await smsLogRepository.AddAsync(_smsLog, CancellationToken.None);
-    //        unit.CommitWork();
-    //    }
-    //}
 
 }

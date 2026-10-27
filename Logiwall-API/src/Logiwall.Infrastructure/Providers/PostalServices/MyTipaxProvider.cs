@@ -4,6 +4,8 @@ using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Shared.Dtos.Providers;
 using Logiwall.Shared.Dtos.Providers.PostalService;
 using Logiwall.Shared.Dtos.Providers.PostalService.MyTipax;
+using Logiwall.Infrastructure.Options;
+using Microsoft.Extensions.Options;
 
 namespace Logiwall.Infrastructure.Providers.PostalServices;
 public class MyTipaxProvider : PostalServiceBase
@@ -12,10 +14,13 @@ public class MyTipaxProvider : PostalServiceBase
     private readonly string loginUrl = "/api/v1/accounts/login";
     private readonly string inquiryUrl = "/api/v1/orders/inquiry";
     private string token = string.Empty;
+    private readonly MyTipaxOptions options;
 
     public MyTipaxProvider(IAppSettingService appSettingService,
-        IHttpProvider httpProvider) : base(appSettingService, httpProvider)
+        IHttpProvider httpProvider,
+        IOptions<MyTipaxOptions> myTipaxOptions) : base(appSettingService, httpProvider)
     {
+        this.options = myTipaxOptions.Value;
     }
 
     public override async Task<List<OrderInquiryOptionDto>> GetOrderInquiryAsync(OrderInquiryRequestDto requestDto)
@@ -47,11 +52,12 @@ public class MyTipaxProvider : PostalServiceBase
     {
         if (!string.IsNullOrEmpty(token))
             return token;
+        EnsureCredentialsConfigured(options.TokenUsername, options.TokenPassword);
         var appSettings = await AppSettingService.GetAllSettingsAsync();
         var request = new MyTipaxGetTokenRequestDto
         {
-            Username = appSettings.MyTipaxUsernameToken,
-            Password = appSettings.MyTipaxPasswordToken,
+            Username = options.TokenUsername,
+            Password = options.TokenPassword,
         };
         var response = await HttpProvider.PostAsync<MyTipaxGetTokenRequestDto, MyTipaxGetTokenResponseDto, MyTipaxGetTokenRequestDto>
             (new HttpProviderRequest<MyTipaxGetTokenRequestDto, MyTipaxGetTokenRequestDto>
@@ -67,14 +73,15 @@ public class MyTipaxProvider : PostalServiceBase
 
     private async Task<string?> LoginAsync()
     {
+        EnsureCredentialsConfigured(options.LoginUsername, options.LoginPassword);
         var header = await GetHeaderAsync();
         var appSettings = await AppSettingService.GetAllSettingsAsync();
         var request = new MyTipaxLoginRequestDto
         {
             Account = new MyTipaxLoginAccountDto
             {
-                CellPhoneNumber = appSettings.MyTipaxUsernameLogin,
-                Password = appSettings.MyTipaxPasswordLogin
+                CellPhoneNumber = options.LoginUsername,
+                Password = options.LoginPassword
             },
         };
 
@@ -98,5 +105,11 @@ public class MyTipaxProvider : PostalServiceBase
         {
             new ("Authorization",token ?? string.Empty)
         };
+    }
+
+    private static void EnsureCredentialsConfigured(string username, string password)
+    {
+        if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            throw new InvalidOperationException("Providers:MyTipax credentials are not configured.");
     }
 }

@@ -11,13 +11,18 @@ using Logiwall.Infrastructure.Services.Global;
 using Logiwall.Infrastructure.Services.Identity;
 using Logiwall.Infrastructure.Services.OrderItems;
 using Logiwall.Infrastructure.Services.People;
+using Logiwall.Infrastructure.Options;
 using Logiwall.Infrastructure.Services.Tools;
 
 namespace Logiwall.Infrastructure.Services;
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<Sep724Options>(configuration.GetSection(Sep724Options.SectionName));
+        services.Configure<MyTipaxOptions>(configuration.GetSection(MyTipaxOptions.SectionName));
+        services.Configure<SmsOptions>(configuration.GetSection(SmsOptions.SectionName));
+
         //services.TryAddTransient<IPostalServiceBase, PostalServiceBase>();//todo
         services.TryAddTransient<MyTipaxProvider>();
         services.AddTransient<Func<ProviderType, PostalServiceBase>>(serviceProvider => ProviderType =>
