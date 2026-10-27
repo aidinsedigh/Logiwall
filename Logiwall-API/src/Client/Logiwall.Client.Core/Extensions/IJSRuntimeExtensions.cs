@@ -6,4 +6,10 @@ public static class IJSRuntimeExtensions
     {
         await jsRuntime.InvokeVoidAsync("App.applyBodyElementClasses", cssClasses, cssVariables);
     }
+
+    /// <summary>Removes the host page's loading overlay (App.razor) once the client is interactive.</summary>
+    public static async Task RemoveLoading(this IJSRuntime jsRuntime)
+    {
+        await jsRuntime.InvokeVoidAsync("App.removeLoading");
+    }
 }

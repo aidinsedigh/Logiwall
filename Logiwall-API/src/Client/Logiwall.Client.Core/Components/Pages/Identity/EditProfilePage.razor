@@ -8,10 +8,10 @@
     <div class="content-container profile-panel">
         @if (string.IsNullOrEmpty(editProfileMessage) is false)
         {
-            <BitMessageBar Class="form-message-bar"
+            <BitMessage Class="form-message-bar"
                            OnDismiss="() => editProfileMessage = null">
                 @editProfileMessage
-            </BitMessageBar>
+            </BitMessage>
         }
 
         <h1 class="page-title">
@@ -21,7 +21,7 @@
         @if (isLoading)
         {
             <div class="loading-container">
-                <BitSpinner Size="BitSpinnerSize.Large"></BitSpinner>
+                <BitSpinnerLoading Size="BitSize.Large" />
             </div>
         }
         else

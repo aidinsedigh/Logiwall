@@ -34,7 +34,10 @@
 
     @if (AppRenderMode.PrerenderEnabled is false || noPrerender)
     {
-        <LoadingComponent />
+        @* MainLayout removes this overlay after the client starts (App.removeLoading). *@
+        <div id="app-loading">
+            <LoadingComponent />
+        </div>
     }
     <Routes @rendermode=renderMode />
 
