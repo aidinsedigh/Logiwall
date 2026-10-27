@@ -20,7 +20,7 @@ Scope, in one line each:
 - [x] Task 6 — `ServerExceptionHandler` logs each handled exception once (FR-L5)
 - [x] Task 7 — Refactor the 20 log calls to the template (FR-L1, FR-L7)
 - [x] Task 8 — Account delete archives the user (FR-O1)
-- [ ] Task 9 — Atomic OTP attempts; SMS failure; login key; code range (FR-O2, FR-O4, FR-O5, FR-O14)
+- [x] Task 9 — Atomic OTP attempts; SMS failure; login key; code range (FR-O2, FR-O4, FR-O5, FR-O14)
 - [ ] Task 10 — `OrderDto.Status`; parallel re-quote lock (FR-O3, FR-O15)
 - [ ] Task 11 — Used national code; all pending payments; SEP split test (FR-O6-FR-O8)
 - [ ] Task 12 — One token signer; new development certificate (FR-O9, FR-O10)

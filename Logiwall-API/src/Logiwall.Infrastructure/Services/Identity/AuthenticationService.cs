@@ -113,6 +113,8 @@ public class AuthenticationService : IAuthenticationService
             if (smsResult != "OK")
             {
                 logger.LogWarning("[Authentication][SendOtpCode][{Destination}] OTP SMS was not sent.", SMSService.MaskPhone(requestDto.PhoneNumber));
+                // No SMS went out, so the resend cooldown must not start.
+                await userManager.RemoveAuthenticationTokenAsync(user, "OTP", "timestamp");
                 return new ServiceResponse<bool>
                 {
                     Data = false,
@@ -162,19 +164,18 @@ public class AuthenticationService : IAuthenticationService
         //    };
         //}
         var storedOTP = await userManager.GetAuthenticationTokenAsync(user, "OTP", "otp");
-        var attemptsText = await userManager.GetAuthenticationTokenAsync(user, "OTP", "attempts");
-        _ = int.TryParse(attemptsText, out var attempts);
+        // Raise the counter before the compare, in one statement, so parallel guesses each get their own count.
+        var attempts = storedOTP is null ? 0 : await RaiseOtpAttemptsAsync(user.Id);
 
-        if (storedOTP is null || attempts >= MaxOtpAttempts || CodesEqual(storedOTP, requestDto.Code) is false)
+        if (storedOTP is null || attempts > MaxOtpAttempts || CodesEqual(storedOTP, requestDto.Code) is false)
         {
-            attempts++;
             if (storedOTP is not null && attempts >= MaxOtpAttempts)
             {
                 // Too many wrong guesses: burn the code so the remaining keyspace can't be searched.
-                await userManager.RemoveAuthenticationTokenAsync(user, "OTP", "otp");
-                await userManager.RemoveAuthenticationTokenAsync(user, "OTP", "timestamp");
+                await dbContext.UserTokens
+                    .Where(t => t.UserId == user.Id && t.LoginProvider == "OTP" && (t.Name == "otp" || t.Name == "timestamp"))
+                    .ExecuteDeleteAsync();
             }
-            await userManager.SetAuthenticationTokenAsync(user, "OTP", "attempts", attempts.ToString(CultureInfo.InvariantCulture));
 
             return new ServiceResponse<ConfirmationOtpResponseDto>
             {
@@ -239,7 +240,7 @@ public class AuthenticationService : IAuthenticationService
             var userlogin = new UserLogin
             {
                 Channel = requestDto.Channel,
-                ProviderKey = DateTimeOffset.Now.ToString(),
+                ProviderKey = Guid.NewGuid().ToString(),
                 ProviderDisplayName = string.Empty,
                 UserId = user.Id,
                 LoginProvider = Enum.GetName(requestDto.LoginProvider) 
@@ -254,12 +255,24 @@ public class AuthenticationService : IAuthenticationService
         }
     }
 
+    /// <returns>The new attempt count; a missing counter counts as over the cap.</returns>
+    private async Task<int> RaiseOtpAttemptsAsync(int userId)
+    {
+        var values = await dbContext.Database.SqlQuery<string>($"""
+            UPDATE UserTokens SET Value = CAST(ISNULL(TRY_CAST(Value AS int), 0) + 1 AS nvarchar(10))
+            OUTPUT inserted.Value
+            WHERE UserId = {userId} AND LoginProvider = 'OTP' AND Name = 'attempts'
+            """).ToListAsync();
+
+        return values.Count == 1 ? int.Parse(values[0], CultureInfo.InvariantCulture) : MaxOtpAttempts + 1;
+    }
+
     private static bool CodesEqual(string expected, string? actual)
         => actual is not null && CryptographicOperations.FixedTimeEquals(
                Encoding.UTF8.GetBytes(expected), Encoding.UTF8.GetBytes(actual));
 
     private static string GenerateRandomCode()
     {
-        return RandomNumberGenerator.GetInt32(10000, 99999).ToString();
+        return RandomNumberGenerator.GetInt32(10000, 100000).ToString();
     }
 }

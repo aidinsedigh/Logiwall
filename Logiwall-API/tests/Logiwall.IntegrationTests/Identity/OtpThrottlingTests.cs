@@ -45,6 +45,19 @@ public class OtpThrottlingTests(SqlServerFixture fixture)
     }
 
     [Fact]
+    public async Task Parallel_wrong_guesses_cannot_pass_the_cap()
+    {
+        var client = fixture.CreateApiClient().Anonymous;
+        var phone = ApiClient.NewPhone();
+        (await SendOtpAsync(client, phone)).EnsureSuccessStatusCode();
+        var code = Sms.LastCodeFor(phone);
+
+        await Task.WhenAll(Enumerable.Range(0, 20).Select(_ => ConfirmAsync(client, phone, WrongCodeFor(code))));
+
+        Assert.Equal(HttpStatusCode.BadRequest, (await ConfirmAsync(client, phone, code)).StatusCode);
+    }
+
+    [Fact]
     public async Task Correct_code_within_attempts_succeeds_and_resets_counter()
     {
         var client = fixture.CreateApiClient().Anonymous;

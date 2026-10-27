@@ -42,6 +42,46 @@ public class OtpSendPathTests(SqlServerFixture fixture)
     }
 
     [Fact]
+    public async Task Sms_failure_does_not_start_the_cooldown()
+    {
+        var client = fixture.CreateApiClient().Anonymous;
+        var phone = ApiClient.NewPhone();
+        Sms.NextResult = "ERROR";
+        try
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, (await SendOtpAsync(client, phone)).StatusCode);
+        }
+        finally
+        {
+            Sms.NextResult = "OK";
+        }
+
+        var retry = await SendOtpAsync(client, phone);
+
+        Assert.Equal(HttpStatusCode.OK, retry.StatusCode);
+    }
+
+    [Fact]
+    public async Task Logins_in_the_same_second_each_get_a_login_row()
+    {
+        var api = fixture.CreateApiClient();
+        var phone = ApiClient.NewPhone();
+        var token = await api.LoginWithOtpAsync(phone);
+        await ApiClient.RegisterAsync(api.Authed(token), "Strong-Pass-1");
+
+        var responses = await Task.WhenAll(Enumerable.Range(0, 2).Select(_ => api.Anonymous.PostAsJsonAsync("api/Identity/GetToken",
+            new { userName = phone, password = "Strong-Pass-1", channel = "pwa", loginProvider = 20 })));
+
+        Assert.All(responses, r => Assert.Equal(HttpStatusCode.OK, r.StatusCode));
+        var rows = await fixture.WithDbAsync(async db =>
+        {
+            var userId = await db.Users.Where(u => u.UserName == phone).Select(u => u.Id).SingleAsync();
+            return await db.UserLogins.CountAsync(l => l.UserId == userId);
+        });
+        Assert.Equal(3, rows); // one OTP login and two password logins
+    }
+
+    [Fact]
     public async Task Archived_user_cannot_request_otp()
     {
         var api = fixture.CreateApiClient();
