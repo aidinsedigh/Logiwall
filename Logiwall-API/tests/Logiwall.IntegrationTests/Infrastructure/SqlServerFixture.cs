@@ -30,6 +30,13 @@ public class SqlServerFixture : IAsyncLifetime
         using var scope = Factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         await db.Database.MigrateAsync();
+
+        // OrderService finds a carrier's ServiceProviders row by its class name.
+        if (await db.ServiceProviders.AnyAsync(t => t.Name == nameof(FakePostalProvider)) is false)
+        {
+            db.ServiceProviders.Add(new Logiwall.Domain.Entities.OrderItems.ServiceProvider { Name = nameof(FakePostalProvider), Title = "Fake courier" });
+            await db.SaveChangesAsync();
+        }
     }
 
     public async Task DisposeAsync()

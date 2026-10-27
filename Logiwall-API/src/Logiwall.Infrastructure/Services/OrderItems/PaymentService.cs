@@ -11,15 +11,12 @@ namespace Logiwall.Infrastructure.Services.OrderItems;
 public class PaymentService : IPaymentService
 {
     private readonly AppDbContext appDbContext;
-    private readonly Func<ProviderType, PostalServiceBase> postalServiceFactory;
     private readonly ILogger<PaymentService> logger;
 
     public PaymentService(AppDbContext appDbContext,
-        Func<ProviderType, PostalServiceBase> postalServiceFactory,
         ILogger<PaymentService> logger)
     {
         this.appDbContext = appDbContext;
-        this.postalServiceFactory = postalServiceFactory;
         this.logger = logger;
     }
 

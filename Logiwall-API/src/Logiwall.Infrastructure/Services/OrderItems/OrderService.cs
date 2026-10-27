@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Logiwall.Application.Abstractions.OrderItems;
+﻿using Logiwall.Application.Abstractions.OrderItems;
 using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Domain.Entities.OrderItems;
 using Logiwall.Infrastructure.Mapper;
@@ -19,17 +18,17 @@ public class OrderService : IOrderService
 {
     private readonly AppDbContext appDbContext;
     private readonly ISep724Provider sep724Provider;
-    private readonly IServiceProvider serviceProvider;
+    private readonly IEnumerable<PostalServiceBase> postalProviders;
     private readonly ILogger<OrderService> logger;
 
     public OrderService(AppDbContext appDbContext,
         ISep724Provider sep724Provider,
-        IServiceProvider serviceProvider,
+        IEnumerable<PostalServiceBase> postalProviders,
         ILogger<OrderService> logger)
     {
         this.appDbContext = appDbContext;
         this.sep724Provider = sep724Provider;
-        this.serviceProvider = serviceProvider;
+        this.postalProviders = postalProviders;
         this.logger = logger;
     }
 
@@ -91,65 +90,107 @@ public class OrderService : IOrderService
                 };
             }
 
-            var postalServiceBase = typeof(PostalServiceBase);
-            var postalProviders = Assembly.GetAssembly(postalServiceBase).GetTypes()
-                .Where(t => t.IsClass && !t.IsAbstract && postalServiceBase.IsAssignableFrom(t)).ToList();
-
-            var lst = new List<OrderInqueryOptionsDto>();
-            var dataMapper = appDbContext.StaticDataMappers
-                .Where(t => t.StaticDataId == order.OriginCity || t.StaticDataId == order.DestinationCity
-                    || t.StaticDataId == order.DestinationCountry);
-            foreach (var postalProvider in postalProviders)
+            if (order.State is (short)OrderState.Paid or (short)OrderState.PaymentPending)
             {
-                var constructor = postalProvider.GetConstructors().FirstOrDefault();
-                var parameters = constructor.GetParameters();
-                var parameterInstances = parameters.Select(param => serviceProvider.GetService(param.ParameterType)).ToArray();
-
-                var instance = (PostalServiceBase)Activator.CreateInstance(postalProvider, parameterInstances);
-                var options = await instance.GetOrderInquiryAsync(new OrderInquiryRequestDto
+                return new ServiceResponse<IList<OrderInqueryOptionsDto>>
                 {
-                    CountryId = (await dataMapper.FirstOrDefaultAsync(t => t.StaticDataId == order.DestinationCountry))?.Code, //todo check providerType
-                    OriginCity = (await dataMapper.FirstOrDefaultAsync(t => t.StaticDataId == order.OriginCity))?.Code,
-                    DestinationCity = (await dataMapper.FirstOrDefaultAsync(t => t.StaticDataId == order.DestinationCity))?.Code,
-                    Parcels = order.OrderParcels.Select(t => new OrderInquiryParcelDto
-                    {
-                        Height = (int)t.Height, //todo
-                        Weight = ((int)t.Weight).ToString(),
-                        Width = (int)t.Width,
-                        Length = (int)t.Length,
-                        Value = (t.ParcelValue/10).ToString(),
-                        ParcelType = Enum.GetName(typeof(ParcelType), t.ParcelTypeId).ToUpper(),
-                        NeedPacking = t.PackageTypeId == 0 ? "0" : "1",
-                        LockerSupport = "0"
-                    }).ToList(),
-                });
-
-                //todo add to database
-                if (options is not null)
-                {
-                    var serviceProvider = await appDbContext.ServiceProviders.FirstOrDefaultAsync(t => t.Name == postalProvider.Name);
-                    appDbContext.AddRange(options.Select(t => new OrderInqueryOption
-                    {
-                        ServiceAmount = decimal.Parse(t.SpecialService, CultureInfo.InvariantCulture),
-                        Tax = decimal.Parse(t.Tax, CultureInfo.InvariantCulture),
-                        PackagingAmount = decimal.Parse(t.PackageService, CultureInfo.InvariantCulture),
-                        FinalAmount = decimal.Parse(t.FinalAmount, CultureInfo.InvariantCulture),
-                        OrderId = requestDto.OrderId,
-                        ServiceProviderId = serviceProvider.Id,
-                        Choosen = false,
-                        ServiceType = 0,
-                        ServiceSLA = 0,
-                        InsuranceAmount = 0,
-                        DelivereDate = t.DelivereDate
-                    }));
-                    await appDbContext.SaveChangesAsync();
-
-
-                }
-
+                    Data = null,
+                    Succuss = false,
+                    Message = "Order can no longer be re-quoted."
+                };
             }
 
-            lst = await appDbContext.OrderInqueryOptions.Include(t => t.ServiceProvider).Where(t => t.OrderId == requestDto.OrderId).Select(t =>
+            var staticDataIds = new int[] { order.OriginCity, order.DestinationCity, order.DestinationCountry ?? -1 };
+            var mapperCodes = await appDbContext.StaticDataMappers
+                .Where(t => staticDataIds.Contains(t.StaticDataId))
+                .Select(t => new { t.StaticDataId, t.ProviderType, t.Code })
+                .ToListAsync();
+
+            var newOptions = new List<OrderInqueryOption>();
+            var anyProviderSucceeded = false;
+            foreach (var provider in postalProviders)
+            {
+                string? CodeFor(int? staticDataId) => mapperCodes
+                    .FirstOrDefault(t => t.StaticDataId == staticDataId && t.ProviderType == provider.ProviderType)?.Code;
+
+                List<OrderInquiryOptionDto>? options;
+                try
+                {
+                    options = await provider.GetOrderInquiryAsync(new OrderInquiryRequestDto
+                    {
+                        CountryId = CodeFor(order.DestinationCountry),
+                        OriginCity = CodeFor(order.OriginCity),
+                        DestinationCity = CodeFor(order.DestinationCity),
+                        Parcels = order.OrderParcels.Select(t => new OrderInquiryParcelDto
+                        {
+                            Height = (int)t.Height, //todo
+                            Weight = ((int)t.Weight).ToString(),
+                            Width = (int)t.Width,
+                            Length = (int)t.Length,
+                            Value = (t.ParcelValue/10).ToString(),
+                            ParcelType = Enum.GetName(typeof(ParcelType), t.ParcelTypeId).ToUpper(),
+                            NeedPacking = t.PackageTypeId == 0 ? "0" : "1",
+                            LockerSupport = "0"
+                        }).ToList(),
+                    });
+                }
+                catch (Exception ex)
+                {
+                    // One failing carrier must not fail the whole quote.
+                    logger.LogWarning(ex, "Quote from {Provider} failed", provider.GetType().Name);
+                    continue;
+                }
+
+                if (options is null)
+                    continue;
+
+                var serviceProvider = await appDbContext.ServiceProviders.FirstOrDefaultAsync(t => t.Name == provider.GetType().Name);
+                if (serviceProvider is null)
+                {
+                    logger.LogWarning("No ServiceProviders row for {Provider}; its options are skipped", provider.GetType().Name);
+                    continue;
+                }
+
+                anyProviderSucceeded = true;
+                newOptions.AddRange(options.Select(t => new OrderInqueryOption
+                {
+                    ServiceAmount = decimal.Parse(t.SpecialService, CultureInfo.InvariantCulture),
+                    Tax = decimal.Parse(t.Tax, CultureInfo.InvariantCulture),
+                    PackagingAmount = decimal.Parse(t.PackageService, CultureInfo.InvariantCulture),
+                    FinalAmount = decimal.Parse(t.FinalAmount, CultureInfo.InvariantCulture),
+                    OrderId = order.Id,
+                    ServiceProviderId = serviceProvider.Id,
+                    Choosen = false,
+                    ServiceType = 0,
+                    ServiceSLA = 0,
+                    InsuranceAmount = 0,
+                    DelivereDate = t.DelivereDate
+                }));
+            }
+
+            if (anyProviderSucceeded is false)
+            {
+                // Keep the previous quotes: the customer may still select one of them.
+                return new ServiceResponse<IList<OrderInqueryOptionsDto>>
+                {
+                    Data = null,
+                    Succuss = false,
+                    Message = "عدم دریافت سرویس از سرویس دهنده"
+                };
+            }
+
+            // Re-quoting replaces the previous options instead of appending to them.
+            await using (var tx = await appDbContext.Database.BeginTransactionAsync())
+            {
+                var old = await appDbContext.OrderInqueryOptions.Where(t => t.OrderId == order.Id).ToListAsync();
+                appDbContext.OrderInqueryOptions.RemoveRange(old);
+                appDbContext.OrderInqueryOptions.AddRange(newOptions);
+                order.State = (short)OrderState.Created;
+                await appDbContext.SaveChangesAsync();
+                await tx.CommitAsync();
+            }
+
+            var lst = await appDbContext.OrderInqueryOptions.Include(t => t.ServiceProvider).Where(t => t.OrderId == requestDto.OrderId).Select(t =>
             new OrderInqueryOptionsDto
             {
                 Id = t.Id,
@@ -170,6 +211,7 @@ public class OrderService : IOrderService
         }
         catch (Exception exc)
         {
+            logger.LogError(exc, "GetOptionsAsync failed");
             return new ServiceResponse<IList<OrderInqueryOptionsDto>>
             {
                 Data = null,
@@ -244,6 +286,40 @@ public class OrderService : IOrderService
                 Message = "Invalid OrderInqueryOptionId"
             };
         }
+
+        if (order.State == (short)OrderState.Paid)
+        {
+            return new ServiceResponse<SelectOptionResponseDto>
+            {
+                Data = null,
+                Succuss = false,
+                Message = "Order is already paid."
+            };
+        }
+
+        // Record the accepted quote before the gateway call, so later steps know what the customer chose.
+        var orderOptions = await appDbContext.OrderInqueryOptions.Where(t => t.OrderId == order.Id).ToListAsync();
+        foreach (var option in orderOptions)
+            option.Choosen = option.Id == orderInquiry.Id;
+
+        order.ServiceAmount = orderInquiry.ServiceAmount;
+        order.PackagingAmount = orderInquiry.PackagingAmount;
+        order.InsuranceAmount = orderInquiry.InsuranceAmount;
+        order.Tax = orderInquiry.Tax;
+        order.ServiceType = orderInquiry.ServiceType;
+        order.ServiceSLA = orderInquiry.ServiceSLA;
+        order.ServiceProviderId = orderInquiry.ServiceProviderId;
+        order.State = (short)OrderState.SelectedServiceProvider;
+        order.ModificationDate = DateTimeOffset.Now;
+        appDbContext.OrderStatuses.Add(new OrderStatus
+        {
+            OrderId = order.Id,
+            Status = (int)OrderState.SelectedServiceProvider,
+            ServiceProviderId = orderInquiry.ServiceProviderId,
+            CityId = order.OriginCity,
+            Description = "Service option selected"
+        });
+        await appDbContext.SaveChangesAsync();
 
         var result = await sep724Provider.GetPaymentTokenAsync(new PaymentTokenRequestDto
         {

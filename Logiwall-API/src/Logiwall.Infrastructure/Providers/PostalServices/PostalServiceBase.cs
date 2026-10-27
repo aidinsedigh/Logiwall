@@ -6,9 +6,11 @@ using Logiwall.Shared.Dtos.Providers.PostalService;
 
 namespace Logiwall.Infrastructure.Providers.PostalServices;
 
-//todo should be abstract
 public abstract class PostalServiceBase : IPostalServiceBase
 {
+    /// <summary>Selects this carrier's <c>StaticDataMapper</c> codes.</summary>
+    public abstract ProviderType ProviderType { get; }
+
     protected PostalServiceBase(IAppSettingService appSettingService,
         IHttpProvider httpProvider)
     {

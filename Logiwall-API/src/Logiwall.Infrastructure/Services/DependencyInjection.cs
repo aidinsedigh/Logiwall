@@ -25,16 +25,8 @@ public static class DependencyInjection
         // The user waits on the OTP request, so the SMS gateway gets a short timeout.
         services.AddHttpClient("sms", c => c.Timeout = TimeSpan.FromSeconds(10));
 
-        //services.TryAddTransient<IPostalServiceBase, PostalServiceBase>();//todo
-        services.TryAddTransient<MyTipaxProvider>();
-        services.AddTransient<Func<ProviderType, PostalServiceBase>>(serviceProvider => ProviderType =>
-        {
-            return ProviderType switch
-            {
-                ProviderType.MyTipax => serviceProvider.GetService<MyTipaxProvider>(),
-                _ => throw new ArgumentException("Invalid Postal Service type", nameof(ProviderType)),
-            };
-        });
+        // Every carrier is one PostalServiceBase; OrderService queries all of them.
+        services.TryAddEnumerable(ServiceDescriptor.Transient<PostalServiceBase, MyTipaxProvider>());
         services.TryAddTransient<IAuthenticationService, AuthenticationService>();
         services.TryAddTransient<IPersonService, PersonService>();
         services.TryAddTransient<ICustomerService, CustomerService>();

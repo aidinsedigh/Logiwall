@@ -16,6 +16,8 @@ public class MyTipaxProvider : PostalServiceBase
     private string token = string.Empty;
     private readonly MyTipaxOptions options;
 
+    public override ProviderType ProviderType => ProviderType.MyTipax;
+
     public MyTipaxProvider(IAppSettingService appSettingService,
         IHttpProvider httpProvider,
         IOptions<MyTipaxOptions> myTipaxOptions) : base(appSettingService, httpProvider)

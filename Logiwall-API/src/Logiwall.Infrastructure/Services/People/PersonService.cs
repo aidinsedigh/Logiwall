@@ -125,9 +125,14 @@ public class PersonService : IPersonService
         }
         try
         {
-            user.Email = requestDto.Email;
-            user.NormalizedEmail = requestDto.Email?.Normalize();
-            await userManager.UpdateAsync(user);
+            // The email change and the person rows are saved together; disposing without a commit rolls back.
+            await using var tx = await dbContext.Database.BeginTransactionAsync();
+
+            var setEmail = await userManager.SetEmailAsync(user, requestDto.Email);
+            if (setEmail.Succeeded is false)
+            {
+                return new ServiceResponse<UserProfileDto> { Data = requestDto, Succuss = false, Message = "Invalid email" };
+            }
 
             var person = await dbContext.People.Include(t => t.PersonalInfo).FirstOrDefaultAsync(t => t.UserId == requestDto.UserId);
             if (person is null)
@@ -168,6 +173,7 @@ public class PersonService : IPersonService
                 dbContext.Update(personalInfo);
             }
             await dbContext.SaveChangesAsync();
+            await tx.CommitAsync();
 
             return new ServiceResponse<UserProfileDto>
             {

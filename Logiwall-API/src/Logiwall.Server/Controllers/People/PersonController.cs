@@ -24,6 +24,9 @@ public partial class PersonController : AppControllerBase, IPersonController
         if (user is null)
             throw new ResourceNotFoundException();
 
+        // The person row and the password must be saved together; disposing without a commit rolls back.
+        await using var tx = await DbContext.Database.BeginTransactionAsync(cancellationToken);
+
         var response = await personService.CreatePersonAsync(new CreatePersonRequestDto
         {
             Name = requestDto.Name,
@@ -49,6 +52,7 @@ public partial class PersonController : AppControllerBase, IPersonController
             });
         }
 
+        await tx.CommitAsync(cancellationToken);
         return Ok(response);
     }
 
