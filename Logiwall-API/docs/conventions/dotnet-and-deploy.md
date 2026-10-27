@@ -5,7 +5,7 @@
 
 ## 13.1 .NET
 
-* The projects target `net8.0`. `global.json` pins the SDK with `rollForward: disable`.
+* Domain, Application, Infrastructure, Server, Iac and the tests target `net10.0`. `Shared` and the Blazor/MAUI clients stay on `net8.0` (Bit 8). `global.json` selects SDK 10.0.100 with `rollForward: latestFeature`. Building the net8 WASM client needs the `wasm-tools-net8` workload.
 * .NET 8 support ends on 2026-11-10. Plan 004 patches .NET 8, and plan 016 moves the server-side
   projects to .NET 10. Do not change the target framework outside those plans.
 * Shared build settings are in `src/Directory.Build.props` (C# 12, nullable enabled).

@@ -14,9 +14,9 @@ in `../Logiwall-Front/`. It calls the `Identity`, `Person`, `Order` and `Common`
 
 The stack (versions from the `*.csproj` files and `global.json`):
 
-* .NET 8 (`net8.0`), C# 12, SDK pinned in `global.json` with `rollForward: disable`
-* ASP.NET Core 8 MVC controllers
-* Entity Framework Core 8 with Microsoft SQL Server
+* .NET 10 (`net10.0`) for Domain, Application, Infrastructure, Server, Iac and tests; `Shared` and the `Client/*` projects stay on `net8.0`. C# 12. `global.json` selects SDK 10.0.100 with `rollForward: latestFeature`
+* ASP.NET Core 10 MVC controllers
+* Entity Framework Core 10 with Microsoft SQL Server
 * ASP.NET Core Identity with bearer tokens
 * Serilog (file sink, `src/Logiwall.Server/Logs/`)
 * Riok.Mapperly for mapping

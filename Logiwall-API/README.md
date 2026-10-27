@@ -10,7 +10,7 @@ The real UI is the React app in `../Logiwall-Front/`. Agents: read `CLAUDE.md` a
 
 ## Prerequisites
 
-* .NET 8 SDK 8.0.301 or a later 8.0 SDK. `global.json` rolls forward inside .NET 8 only.
+* .NET 10 SDK 10.0.100 or a later 10.0 SDK (`global.json` rolls forward inside .NET 10), plus the `wasm-tools-net8` workload (`dotnet workload install wasm-tools-net8`) for the net8 Blazor client.
 * Docker. You need it for a local SQL Server and for the integration tests.
 * Optional: SQL Server LocalDB or a local SQL Server instead of Docker.
 
