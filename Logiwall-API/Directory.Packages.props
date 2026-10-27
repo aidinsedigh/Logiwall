@@ -13,7 +13,7 @@
     <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.14" />
     <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.14" />
     <PackageVersion Include="Microsoft.Extensions.Identity.Stores" Version="10.0.14" />
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.7.3" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="9.0.6" />
   </ItemGroup>
 
   <ItemGroup Label="Entity Framework Core">
@@ -21,6 +21,8 @@
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.14" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.14" />
+    <!-- Pinned for CVE fix (GHSA-846f-f764-76mx); remove when Microsoft.Data.SqlClient brings a patched version. -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft.Extensions">
@@ -33,22 +35,22 @@
   </ItemGroup>
 
   <ItemGroup Label="Health checks">
-    <PackageVersion Include="AspNetCore.HealthChecks.Network" Version="8.0.1" />
-    <PackageVersion Include="AspNetCore.HealthChecks.System" Version="8.0.1" />
-    <PackageVersion Include="AspNetCore.HealthChecks.UI" Version="8.0.2" />
-    <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.1" />
-    <PackageVersion Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="8.0.1" />
+    <PackageVersion Include="AspNetCore.HealthChecks.Network" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.System" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="9.0.0" />
+    <PackageVersion Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="Logging">
-    <PackageVersion Include="Serilog" Version="4.0.1" />
-    <PackageVersion Include="Serilog.AspNetCore" Version="8.0.2" />
-    <PackageVersion Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageVersion Include="Serilog" Version="4.4.0" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="Libraries">
     <PackageVersion Include="FluentEmail.Smtp" Version="3.0.2" />
-    <PackageVersion Include="Riok.Mapperly" Version="3.6.0" />
+    <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />
   </ItemGroup>
 
   <ItemGroup Label="bit platform">
