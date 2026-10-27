@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Serilog.Core;
 
 namespace Logiwall.IntegrationTests.Infrastructure;
 
@@ -13,6 +14,9 @@ public class LogiwallApiFactory : WebApplicationFactory<Logiwall.Server.AppSetti
 {
     private readonly string connectionString;
     private readonly bool relaxRateLimits;
+
+    /// <summary>The log events of this host and of the hosts made from it with <c>WithWebHostBuilder</c>.</summary>
+    public CapturingLogSink LogSink { get; } = new();
 
     /// <param name="relaxRateLimits">Tests share one IP address, so most tests lift the per-IP limits.</param>
     public LogiwallApiFactory(string connectionString, bool relaxRateLimits = true)
@@ -40,6 +44,7 @@ public class LogiwallApiFactory : WebApplicationFactory<Logiwall.Server.AppSetti
         }
         builder.ConfigureTestServices(services =>
         {
+            services.AddSingleton<ILogEventSink>(LogSink);
             services.RemoveAll<ISMSService>();
             services.AddSingleton<FakeSmsService>();
             services.AddSingleton<ISMSService>(sp => sp.GetRequiredService<FakeSmsService>());
