@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
+using Logiwall.Domain.Entities.OrderItems;
 using Logiwall.IntegrationTests.Infrastructure;
 using Logiwall.Shared.Resources;
 using Logiwall.Shared.Enums;
@@ -83,6 +84,36 @@ public class PaymentFlowTests(SqlServerFixture fixture)
         PersianAssert.HasMessage(body, nameof(AppStrings.PaymentVerificationUnavailable));
         PersianAssert.HasMessage(body.GetProperty("data"), nameof(AppStrings.PaymentVerificationUnavailable));
         Assert.Equal(PaymentStatus.Pending, Assert.Single(await PaymentsAsync(orderId)).Status);
+    }
+
+    [Fact]
+    public async Task Verify_finds_an_older_verified_payment()
+    {
+        var (client, orderId) = await PendingPaymentAsync();
+        await fixture.WithDbAsync(async db =>
+        {
+            // The first link was paid and verified; then the customer opened a second link.
+            var older = await db.OrderPayments.SingleAsync(t => t.OrderId == orderId);
+            older.Status = PaymentStatus.Success;
+            older.VerifiedAt = DateTimeOffset.Now;
+            db.OrderPayments.Add(new OrderPayment
+            {
+                OrderId = orderId,
+                Amount = older.Amount,
+                PaymentType = older.PaymentType,
+                Status = PaymentStatus.Pending,
+                PayTrackingCode = "2",
+                PayDate = DateTimeOffset.Now,
+                GatewayRequestId = 2,
+                GatewayReferenceCode = Guid.NewGuid(),
+            });
+            return await db.SaveChangesAsync();
+        });
+
+        var response = await client.PostAsJsonAsync("api/Payment/VerifyPayment", new { orderId });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal((int)PaymentStatus.Success, (await ApiClient.ReadJsonAsync(response)).GetProperty("data").GetProperty("status").GetInt32());
     }
 
     [Fact]

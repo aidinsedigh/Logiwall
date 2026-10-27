@@ -32,28 +32,38 @@ public class PaymentService : IPaymentService
                 return Failure(requestDto.OrderId, nameof(AppStrings.InvalidOrder));
             }
 
-            var payment = await appDbContext.OrderPayments
+            var payments = await appDbContext.OrderPayments
                 .Where(t => t.OrderId == order.Id && t.GatewayReferenceCode != null)
                 .OrderByDescending(t => t.Id)
-                .FirstOrDefaultAsync(cancellationToken);
-            if (payment is null)
+                .ToListAsync(cancellationToken);
+            if (payments.Count == 0)
             {
                 return Failure(order.Id, nameof(AppStrings.NoPaymentToVerify));
             }
 
             // Idempotent: a verified payment returns its stored outcome without calling the gateway again.
-            if (payment.VerifiedAt is not null && payment.Status is PaymentStatus.Success or PaymentStatus.UnSuccess)
+            if (payments.Any(p => p.VerifiedAt is not null && p.Status == PaymentStatus.Success))
             {
-                return Result(order.Id, payment.Status);
+                return Result(order.Id, PaymentStatus.Success);
             }
 
-            var verifiedStatus = await VerifyWithGatewayAsync(payment, cancellationToken);
-            if (verifiedStatus is null)
+            // Each payment link the customer opened can be the paid one, so check every pending payment.
+            foreach (var payment in payments.Where(p => p.Status == PaymentStatus.Pending))
             {
-                return Failure(order.Id, nameof(AppStrings.PaymentVerificationUnavailable));
+                var verifiedStatus = await VerifyWithGatewayAsync(payment, cancellationToken);
+                if (verifiedStatus is not null)
+                {
+                    return Result(order.Id, verifiedStatus.Value);
+                }
             }
 
-            return Result(order.Id, verifiedStatus.Value);
+            // A failure is final only when no pending payment can still succeed.
+            if (payments.Any(p => p.VerifiedAt is not null && p.Status == PaymentStatus.UnSuccess))
+            {
+                return Result(order.Id, PaymentStatus.UnSuccess);
+            }
+
+            return Failure(order.Id, nameof(AppStrings.PaymentVerificationUnavailable));
         }
         catch (Exception ex)
         {
