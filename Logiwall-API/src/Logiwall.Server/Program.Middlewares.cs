@@ -155,16 +155,28 @@ public static partial class Program
     {
         app.Use(async (context, next) =>
         {
+            int? statusCode = null;
             if (context.Request.Path.HasValue)
             {
                 if (context.Request.Path.Value.Contains("not-found", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    context.Response.StatusCode = (int)HttpStatusCode.NotFound;
+                    statusCode = (int)HttpStatusCode.NotFound;
                 }
                 if (context.Request.Path.Value.Contains("not-authorized", StringComparison.InvariantCultureIgnoreCase))
                 {
-                    context.Response.StatusCode = context.Request.Query["isForbidden"].FirstOrDefault() is "true" ? (int)HttpStatusCode.Forbidden : (int)HttpStatusCode.Unauthorized;
+                    statusCode = context.Request.Query["isForbidden"].FirstOrDefault() is "true" ? (int)HttpStatusCode.Forbidden : (int)HttpStatusCode.Unauthorized;
                 }
+            }
+
+            if (statusCode is not null)
+            {
+                // Set the status just before the headers go out. On .NET 10, a 404 set before the Blazor page
+                // renders makes UseStatusCodePages run the page a second time, which adds its headers twice.
+                context.Response.OnStarting(() =>
+                {
+                    context.Response.StatusCode = statusCode.Value;
+                    return Task.CompletedTask;
+                });
             }
 
             await next.Invoke(context);
