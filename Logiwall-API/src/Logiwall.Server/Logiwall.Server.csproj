@@ -16,8 +16,6 @@
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" />
         <PackageReference Include="Serilog" />
         <PackageReference Include="Serilog.AspNetCore" />
-        <PackageReference Include="Serilog.Extensions.Hosting" />
-        <PackageReference Include="Serilog.Extensions.Logging" />
         <PackageReference Include="Serilog.Sinks.File" />
     </ItemGroup>
 
@@ -28,7 +26,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Magick.NET-Q16-AnyCPU" />
         <PackageReference Include="FluentEmail.Smtp" />
         <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
         <PackageReference Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" />
@@ -39,15 +36,12 @@
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Tools">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" />
-        <PackageReference Include="MimeTypeMapOfficial" />
         <PackageReference Include="Swashbuckle.AspNetCore" />
         <PackageReference Include="AspNetCore.HealthChecks.System" />
         <PackageReference Include="AspNetCore.HealthChecks.UI" />

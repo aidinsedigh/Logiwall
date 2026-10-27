@@ -20,8 +20,6 @@
   <ItemGroup Label="Entity Framework Core">
     <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.33" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.33" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.33" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.33" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.33" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.33" />
   </ItemGroup>
@@ -46,17 +44,11 @@
   <ItemGroup Label="Logging">
     <PackageVersion Include="Serilog" Version="4.0.1" />
     <PackageVersion Include="Serilog.AspNetCore" Version="8.0.2" />
-    <PackageVersion Include="Serilog.Extensions.Hosting" Version="8.0.0" />
-    <PackageVersion Include="Serilog.Extensions.Logging" Version="8.0.0" />
     <PackageVersion Include="Serilog.Sinks.File" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="Libraries">
     <PackageVersion Include="FluentEmail.Smtp" Version="3.0.2" />
-    <PackageVersion Include="Magick.NET-Q16-AnyCPU" Version="14.17.2" />
-    <PackageVersion Include="MimeTypeMapOfficial" Version="1.0.17" />
-    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageVersion Include="RestSharp" Version="112.0.0" />
     <PackageVersion Include="Riok.Mapperly" Version="3.6.0" />
   </ItemGroup>
 
