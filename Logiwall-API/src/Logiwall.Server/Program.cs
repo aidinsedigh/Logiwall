@@ -13,7 +13,7 @@ public static partial class Program
             .CreateBootstrapLogger();
         try
         {
-            Log.Information("Starting web host");
+            Log.Information("[Program][Main] Web host is starting.");
 
             var builder = WebApplication.CreateBuilder(args);
             // Levels and sinks come from the Serilog section of appsettings.json (ADR-0004).
@@ -38,7 +38,7 @@ public static partial class Program
         }
         catch (Exception exc) when (exc is not HostAbortedException)
         {
-            Log.Fatal(exc, "Host terminated unexpectedly");
+            Log.Fatal(exc, "[Program][Main] Web host stopped unexpectedly.");
         }
         finally
         {

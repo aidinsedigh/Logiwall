@@ -77,7 +77,7 @@ public class AuthenticationService : IAuthenticationService
 
                 if (createResult.Succeeded is false)
                 {
-                    logger.LogWarning("Creating the OTP user failed: {ErrorCodes}", string.Join(", ", createResult.Errors.Select(e => e.Code)));
+                    logger.LogWarning("[Authentication][SendOtpCode][{ErrorCodes}] OTP user was not created.", string.Join(", ", createResult.Errors.Select(e => e.Code)));
                     return new ServiceResponse<bool>
                     {
                         Data = false,
@@ -112,7 +112,7 @@ public class AuthenticationService : IAuthenticationService
             var smsResult = await smsService.SendSmsAsync(message ?? code, requestDto.PhoneNumber);
             if (smsResult != "OK")
             {
-                logger.LogWarning("OTP SMS was not sent to {Destination}", SMSService.MaskPhone(requestDto.PhoneNumber));
+                logger.LogWarning("[Authentication][SendOtpCode][{Destination}] OTP SMS was not sent.", SMSService.MaskPhone(requestDto.PhoneNumber));
                 return new ServiceResponse<bool>
                 {
                     Data = false,
@@ -130,7 +130,7 @@ public class AuthenticationService : IAuthenticationService
         }
         catch (Exception exc)
         {
-            logger.LogError(exc, "SendOtpCodeAsync failed");
+            logger.LogError(exc, "[Authentication][SendOtpCode] Sending the OTP failed.");
             return new ServiceResponse<bool>
             {
                 Data = false,
@@ -231,10 +231,10 @@ public class AuthenticationService : IAuthenticationService
 
     public async Task LogUserLoginAsync(LogUserLoginRequestDto requestDto)
     {
+        User? user = null;
         try
         {
-        
-            var user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
+            user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
 
             var userlogin = new UserLogin
             {
@@ -250,7 +250,7 @@ public class AuthenticationService : IAuthenticationService
         }
         catch (Exception exc)
         {
-            logger.LogError(exc, "LogUserLoginAsync failed");
+            logger.LogError(exc, "[Authentication][LogUserLogin][{UserId}] Login record was not saved.", user?.Id);
         }
     }
 

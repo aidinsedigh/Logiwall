@@ -82,7 +82,7 @@ public static partial class Program
         });
         if (allowedOrigins.Length == 0 && env.IsDevelopment() is false)
         {
-            app.Logger.LogWarning("Cors:AllowedOrigins is empty; CORS allows any origin. Configure the frontend origin(s).");
+            app.Logger.LogWarning("[Program][ConfigureMiddlewares] Cors:AllowedOrigins is empty; CORS allows any origin.");
         }
 
         app.UseAuthentication();

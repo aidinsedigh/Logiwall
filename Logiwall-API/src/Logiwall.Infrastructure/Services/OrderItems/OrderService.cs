@@ -73,7 +73,7 @@ public class OrderService : IOrderService
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "CreateOrderAsync failed");
+            logger.LogError(ex, "[Order][CreateOrder][{UserId}] Order creation failed.", userId);
             return new ServiceResponse<CreateOrderResponseDto>
             {
                 Data = null,
@@ -145,7 +145,7 @@ public class OrderService : IOrderService
                 catch (Exception ex)
                 {
                     // One failing carrier must not fail the whole quote.
-                    logger.LogWarning(ex, "Quote from {Provider} failed", provider.GetType().Name);
+                    logger.LogWarning(ex, "[Order][GetOptions][{OrderId}][{Provider}] Quote request failed.", order.Id, provider.GetType().Name);
                     continue;
                 }
 
@@ -155,7 +155,7 @@ public class OrderService : IOrderService
                 var serviceProvider = await appDbContext.ServiceProviders.FirstOrDefaultAsync(t => t.Name == provider.GetType().Name);
                 if (serviceProvider is null)
                 {
-                    logger.LogWarning("No ServiceProviders row for {Provider}; its options are skipped", provider.GetType().Name);
+                    logger.LogWarning("[Order][GetOptions][{OrderId}][{Provider}] No ServiceProviders row; options skipped.", order.Id, provider.GetType().Name);
                     continue;
                 }
 
@@ -219,7 +219,7 @@ public class OrderService : IOrderService
         }
         catch (Exception exc)
         {
-            logger.LogError(exc, "GetOptionsAsync failed");
+            logger.LogError(exc, "[Order][GetOptions][{OrderId}] Getting options failed.", requestDto.OrderId);
             return new ServiceResponse<IList<OrderInqueryOptionsDto>>
             {
                 Data = null,
@@ -336,7 +336,7 @@ public class OrderService : IOrderService
         }
         if (paymentOptions.AllowedCallbackOrigins.Length == 0)
         {
-            logger.LogWarning("Payment:AllowedCallbackOrigins is empty; any callback URL is accepted.");
+            logger.LogWarning("[Order][SelectOptionAndPayment][{OrderId}] Payment:AllowedCallbackOrigins is empty; any callback URL is accepted.", order.Id);
         }
         else if (paymentOptions.AllowedCallbackOrigins.Contains(callbackUri.GetLeftPart(UriPartial.Authority), StringComparer.OrdinalIgnoreCase) is false)
         {

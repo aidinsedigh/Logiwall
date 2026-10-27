@@ -47,7 +47,7 @@ public class SMSService : ISMSService
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
             // Never log the message text: it contains the OTP.
-            logger.LogWarning(ex, "SMS send failed for {Destination}", MaskPhone(destination));
+            logger.LogWarning(ex, "[Sms][SendSms][{Destination}] SMS send failed.", MaskPhone(destination));
             return "ERROR";
         }
     }

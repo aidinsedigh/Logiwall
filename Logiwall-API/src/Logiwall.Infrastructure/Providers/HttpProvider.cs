@@ -104,7 +104,7 @@ public sealed class HttpProvider(IHttpClientFactory httpClientFactory, ILogger<H
         }
         catch (Exception exc) when (exc is not OperationCanceledException)
         {
-            logger.LogError(exc, "Outbound {Method} request to {Uri} failed", method, request.Uri);
+            logger.LogError(exc, "[Http][Send][{Method}][{Uri}] Outbound request failed.", method, request.Uri);
             throw;
         }
     }
@@ -124,7 +124,7 @@ public sealed class HttpProvider(IHttpClientFactory httpClientFactory, ILogger<H
         var mediaType = response.Content.Headers.ContentType?.MediaType;
         if (mediaType?.Contains("json", StringComparison.OrdinalIgnoreCase) is not true)
         {
-            logger.LogWarning("Non-JSON response ({MediaType}) from {Uri} ({Status})", mediaType, response.RequestMessage?.RequestUri, (int)response.StatusCode);
+            logger.LogWarning("[Http][DecodeJson][{Uri}][{StatusCode}][{MediaType}] Response is not JSON.", response.RequestMessage?.RequestUri, (int)response.StatusCode, mediaType);
             return default;
         }
 
@@ -134,7 +134,7 @@ public sealed class HttpProvider(IHttpClientFactory httpClientFactory, ILogger<H
         }
         catch (JsonException ex)
         {
-            logger.LogWarning(ex, "Non-JSON or invalid JSON from {Uri} ({Status})", response.RequestMessage?.RequestUri, (int)response.StatusCode);
+            logger.LogWarning(ex, "[Http][DecodeJson][{Uri}][{StatusCode}] Response JSON is not valid.", response.RequestMessage?.RequestUri, (int)response.StatusCode);
             return default;
         }
     }
@@ -143,14 +143,14 @@ public sealed class HttpProvider(IHttpClientFactory httpClientFactory, ILogger<H
     where TRequest : IHttpRequest
     {
         // Never log header values or bodies: they carry provider credentials and tokens.
-        logger.LogInformation("Outbound {Method} request to {BaseAddress}{Uri} with header names: {HeaderNames}",
+        logger.LogInformation("[Http][Send][{Method}][{BaseAddress}][{Uri}][{HeaderNames}] Outbound request started.",
             method, request.BaseAddress, request.Uri,
             request.HeaderParameters is null ? string.Empty : string.Join(", ", request.HeaderParameters.Select(h => h.Key)));
     }
 
     private void LogResponseDetails(HttpResponseMessage response)
     {
-        logger.LogInformation("Outbound response from {Uri}: {StatusCode}",
+        logger.LogInformation("[Http][Send][{Uri}][{StatusCode}] Outbound response received.",
             response.RequestMessage?.RequestUri, (int)response.StatusCode);
     }
 }

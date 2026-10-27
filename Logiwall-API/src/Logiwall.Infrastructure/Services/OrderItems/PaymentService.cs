@@ -57,7 +57,7 @@ public class PaymentService : IPaymentService
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "VerifyPaymentAsync failed");
+            logger.LogError(ex, "[Payment][VerifyPayment][{OrderId}] Payment verification failed.", requestDto.OrderId);
             return Failure(requestDto.OrderId, nameof(AppStrings.UnknownException));
         }
     }

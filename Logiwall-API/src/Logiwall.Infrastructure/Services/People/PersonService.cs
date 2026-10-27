@@ -187,7 +187,7 @@ public class PersonService : IPersonService
         }
         catch (Exception exc)
         {
-            logger.LogError(exc, "UpdateUserProfileAsync failed");
+            logger.LogError(exc, "[Person][UpdateUserProfile][{UserId}] Profile update failed.", requestDto.UserId);
             return new ServiceResponse<UserProfileDto>
             {
                 Data = requestDto,
