@@ -1,13 +1,12 @@
-﻿using System.IdentityModel.Tokens.Jwt;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using Logiwall.Application.Abstractions.Identity;
+﻿using Logiwall.Application.Abstractions.Identity;
 using Logiwall.Client.Core.Controllers.Identity;
 using Logiwall.Domain.Entities.Identity;
 using Logiwall.Server.Resources;
 using Logiwall.Shared.Dtos.Identity;
 using Logiwall.Shared.Utils;
-using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.BearerToken;
+using AuthenticationProperties = Microsoft.AspNetCore.Authentication.AuthenticationProperties;
+using AuthenticationTicket = Microsoft.AspNetCore.Authentication.AuthenticationTicket;
 using Microsoft.AspNetCore.RateLimiting;
 using Logiwall.Shared.Dtos.Global;
 
@@ -22,6 +21,8 @@ public partial class IdentityController : AppControllerBase, IIdentityController
     [AutoInject] private SignInManager<User> signInManager = default!;
 
     [AutoInject] private IAuthenticationService authenticationService = default!;
+
+    [AutoInject] private IOptionsMonitor<BearerTokenOptions> bearerTokenOptions = default!;
 
     [HttpPost, EnableRateLimiting("otp-send")]
     public async Task<ActionResult> SendOtpCode(SendOtpRequestDto requestDto, CancellationToken cancellationToken)
@@ -55,9 +56,11 @@ public partial class IdentityController : AppControllerBase, IIdentityController
             return BadRequest(response);
         }
 
-        await signInManager.SignInAsync(user, false);
-        var token = GenerateJwtToken(user);
-        response.Data.Token = token;
+        // The same protector as GetToken signs the token, so both login paths issue one kind of token.
+        var options = bearerTokenOptions.Get(IdentityConstants.BearerScheme);
+        var principal = await signInManager.CreateUserPrincipalAsync(user);
+        var properties = new AuthenticationProperties { ExpiresUtc = DateTimeOffset.UtcNow + options.BearerTokenExpiration };
+        response.Data.Token = options.BearerTokenProtector.Protect(new AuthenticationTicket(principal, properties, IdentityConstants.BearerScheme));
         return Ok(response);
     }
 
@@ -88,55 +91,5 @@ public partial class IdentityController : AppControllerBase, IIdentityController
             PhoneNumber = signInRequest.UserName,
             LoginProvider = signInRequest.LoginProvider,
         });
-    }
-
-    private string GenerateJwtToken(User user)
-    {
-        var jwtSecurityTokenHandler = new JwtSecurityTokenHandler();
-
-        var certificatePath = Path.Combine(AppContext.BaseDirectory, "IdentityCertificate.pfx");
-        var certificate = X509CertificateLoader.LoadPkcs12FromFile(certificatePath, AppSettings.IdentitySettings.IdentityCertificatePassword, OperatingSystem.IsWindows() ? X509KeyStorageFlags.EphemeralKeySet : X509KeyStorageFlags.DefaultKeySet);
-
-        var issuer = AppSettings.IdentitySettings.Issuer;
-        var audience = AppSettings.IdentitySettings.Audience;
-
-        var validationParameters = new TokenValidationParameters
-        {
-            ClockSkew = TimeSpan.Zero,
-            RequireSignedTokens = true,
-
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new X509SecurityKey(certificate),
-
-            RequireExpirationTime = true,
-            ValidateLifetime = true,
-
-            ValidateAudience = true,
-            ValidAudience = audience,
-
-            ValidateIssuer = true,
-            ValidIssuer = issuer,
-
-            AuthenticationType = IdentityConstants.BearerScheme
-        };
-
-        var securityToken = jwtSecurityTokenHandler
-            .CreateJwtSecurityToken(new SecurityTokenDescriptor
-            {
-                Issuer = issuer,
-                Audience = audience,
-                IssuedAt = DateTime.UtcNow,
-                SigningCredentials = new SigningCredentials(validationParameters.IssuerSigningKey, SecurityAlgorithms.RsaSha512),
-                Subject = new ClaimsIdentity(
-                [
-                    new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                    new Claim(ClaimTypes.Name, user.UserName),
-                ]),
-                Expires = DateTime.UtcNow.AddDays(1),
-            });
-
-        var encodedJwt = jwtSecurityTokenHandler.WriteToken(securityToken);
-
-        return encodedJwt;
     }
 }

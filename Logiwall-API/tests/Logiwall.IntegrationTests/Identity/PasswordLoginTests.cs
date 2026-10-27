@@ -48,4 +48,23 @@ public class PasswordLoginTests(SqlServerFixture fixture)
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("accessToken", await response.Content.ReadAsStringAsync());
     }
+
+    [Fact]
+    public async Task Otp_token_and_password_token_both_authorize()
+    {
+        var api = fixture.CreateApiClient();
+        var phone = ApiClient.NewPhone();
+        var otpToken = await api.LoginWithOtpAsync(phone);
+        await ApiClient.RegisterAsync(api.Authed(otpToken), "Strong-Pass-1");
+        var login = await api.Anonymous.PostAsJsonAsync("api/Identity/GetToken",
+            new { userName = phone, password = "Strong-Pass-1", channel = "pwa", loginProvider = 20 });
+        var passwordToken = (await ApiClient.ReadJsonAsync(login)).GetProperty("accessToken").GetString()!;
+
+        foreach (var token in new[] { otpToken, passwordToken })
+        {
+            var response = await api.Authed(token).GetAsync("api/User/GetCurrentUser");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+        Assert.Equal(HttpStatusCode.Unauthorized, (await api.Anonymous.GetAsync("api/User/GetCurrentUser")).StatusCode);
+    }
 }
