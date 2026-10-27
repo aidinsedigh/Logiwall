@@ -8,24 +8,30 @@ using Microsoft.Extensions.Options;
 namespace Logiwall.Infrastructure.Providers;
 public class Sep724Provider : ISep724Provider
 {
-    private short tryToGetToken = 1;
-    private const short maxTryToGetToken = 3;
+    private const string TokenCacheKey = "sep724:token";
+    private const int MaxAttempts = 2;
     private string getToken = "token";
     private string grantType = "password";
     private readonly IAppSettingService appSettingService;
     private readonly IHttpProvider httpProvider;
     private readonly Sep724Options options;
+    private readonly ProviderTokenCache tokenCache;
 
     public Sep724Provider(IAppSettingService appSettingService,
         IHttpProvider httpProvider,
-        IOptions<Sep724Options> sep724Options)
+        IOptions<Sep724Options> sep724Options,
+        ProviderTokenCache tokenCache)
     {
         this.appSettingService = appSettingService;
         this.httpProvider = httpProvider;
         this.options = sep724Options.Value;
+        this.tokenCache = tokenCache;
     }
 
-    public async Task<SepResponseBase<GetPaymentTokenResponseDto>> GetPaymentTokenAsync(PaymentTokenRequestDto requestDto)
+    public Task<SepResponseBase<GetPaymentTokenResponseDto>> GetPaymentTokenAsync(PaymentTokenRequestDto requestDto)
+        => GetPaymentTokenAsync(requestDto, attempt: 1);
+
+    private async Task<SepResponseBase<GetPaymentTokenResponseDto>> GetPaymentTokenAsync(PaymentTokenRequestDto requestDto, int attempt)
     {
         var token = await GetTokenAsync();
         if (string.IsNullOrEmpty(token))
@@ -73,7 +79,16 @@ public class Sep724Provider : ISep724Provider
                 Request = request,
                 Body = request,
                 HeaderParameters = header
-            },failHandler: GetPaymentTokanFailHandler);
+            }, failHandler: async (_, response) =>
+            {
+                // A 401 means the cached access token has expired on SEP's side: refresh it and retry once.
+                if (response?.Status == 401 && attempt < MaxAttempts)
+                {
+                    tokenCache.Invalidate(TokenCacheKey);
+                    return await GetPaymentTokenAsync(requestDto, attempt + 1);
+                }
+                return response;
+            });
 
         return result;
     }
@@ -83,7 +98,14 @@ public class Sep724Provider : ISep724Provider
         throw new NotImplementedException();
     }
 
-    private async Task<string?> GetTokenAsync()
+    private Task<string?> GetTokenAsync() => tokenCache.GetOrCreateAsync(TokenCacheKey, async () =>
+    {
+        var result = await RequestTokenAsync();
+        var lifetime = result?.ExpireIn > 0 ? TimeSpan.FromSeconds(result.ExpireIn) : TimeSpan.FromMinutes(5);
+        return (result?.AccessToken, lifetime);
+    });
+
+    private async Task<GetTokenResponseDto?> RequestTokenAsync()
     {
         if (string.IsNullOrEmpty(options.Username) || string.IsNullOrEmpty(options.Password) || string.IsNullOrEmpty(options.BasicAuthorization))
             throw new InvalidOperationException("Providers:Sep724 credentials are not configured.");
@@ -112,25 +134,6 @@ public class Sep724Provider : ISep724Provider
                 Body = body
             });
 
-        return result?.AccessToken;
-    }
-    private async Task<SepResponseBase<GetPaymentTokenResponseDto>?> GetPaymentTokanFailHandler(
-        GetPaymentTokenRequestDto<GetPaymentTokenExtensionDto>? request,
-        SepResponseBase<GetPaymentTokenResponseDto>? response)
-    {
-        if (response.Status == 401 && tryToGetToken < maxTryToGetToken)
-        {
-            tryToGetToken ++;
-            return await GetPaymentTokenAsync(new PaymentTokenRequestDto
-            {
-                Amount = request.Amount,
-                PhoneNumber = request.MobileNo,
-                CallbackUrl = request.CallbackUrl,
-                Channel= request.Channel,
-                OrderNumber = request.Extensions.OrderNumber,
-            });
-        }
-
-        return response;
+        return result;
     }
 }

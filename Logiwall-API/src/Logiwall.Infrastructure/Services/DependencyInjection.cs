@@ -26,6 +26,9 @@ public static class DependencyInjection
         // The user waits on the OTP request, so the SMS gateway gets a short timeout.
         services.AddHttpClient("sms", c => c.Timeout = TimeSpan.FromSeconds(10));
 
+        services.AddMemoryCache();
+        services.TryAddSingleton<ProviderTokenCache>();
+
         // Every carrier is one PostalServiceBase; OrderService queries all of them.
         services.TryAddEnumerable(ServiceDescriptor.Transient<PostalServiceBase, MyTipaxProvider>());
         services.TryAddTransient<IAuthenticationService, AuthenticationService>();

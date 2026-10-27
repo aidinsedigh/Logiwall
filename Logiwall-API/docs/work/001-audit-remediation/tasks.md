@@ -27,7 +27,7 @@ The user asked for plans covering **all** audit findings (15 findings, plus a .N
 | [010](010-investigate-currency-units.md) | **Investigation**: rial/toman units across quote → payment | P1 | S | — | DONE (verdict c; see `docs/adr/0001-currency-units.md`) |
 | [011](011-make-order-quote-flow-idempotent-and-stateful.md) | Idempotent quotes, DI-resolved providers, order state and history, transactions | P2 | M | 002, 005, 009 | DONE (Register rollback test skipped: no password-policy gap; `IPostalServiceBase.Payment` stub kept, see 015) |
 | [012](012-verify-payments-server-side.md) | Server-side payment verification (Phase A: pending/no client trust; Phase B: SEP verify) | P1 | L | 002, 005, 010, 011 | BLOCKED (Phase A done; Phase B needs SEP verify API docs and the ADR-0001 unit answer) |
-| [013](013-harden-http-provider-and-cache-settings.md) | HttpProvider timeouts, cancellation, disposal, error bodies; settings and token caching | P2 | M | 003, 005 | TODO |
+| [013](013-harden-http-provider-and-cache-settings.md) | HttpProvider timeouts, cancellation, disposal, error bodies; settings and token caching | P2 | M | 003, 005 | DONE |
 | [014](014-page-and-validate-order-list.md) | Order list: async, bounded, ordered, type-safe allow-listed filters | P3 | S | 005 | TODO |
 | [015](015-remove-dead-code-and-template-leftovers.md) | Remove unused packages, OData, dead middleware, commented code; namespace rename | P3 | S–M | 005, 008, 012 (run after 001–014) | TODO |
 | [016](016-migrate-server-to-net10.md) | Server-side projects to .NET 10 LTS (clients stay net8) | P2 | L | 004, 005, 015 | TODO |
