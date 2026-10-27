@@ -3,7 +3,6 @@ using Logiwall.Application.Abstractions.Identity;
 using Logiwall.Application.Abstractions.OrderItems;
 using Logiwall.Application.Abstractions.People;
 using Logiwall.Application.Abstractions.Providers;
-using Logiwall.Application.Abstractions.Providers.PaymentGateways;
 using Logiwall.Application.Abstractions.Tools;
 using Logiwall.Infrastructure.Providers;
 using Logiwall.Infrastructure.Providers.PostalServices;

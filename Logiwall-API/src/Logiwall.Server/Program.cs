@@ -33,7 +33,7 @@ public static partial class Program
 
             var app = builder.Build();
 
-            app.ConfiureMiddlewares();
+            app.ConfigureMiddlewares();
 
             await app.RunAsync();
         }

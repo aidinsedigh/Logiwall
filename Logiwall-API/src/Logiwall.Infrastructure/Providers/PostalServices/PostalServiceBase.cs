@@ -1,12 +1,11 @@
 ﻿using Logiwall.Application.Abstractions.Global;
 using Logiwall.Application.Abstractions.Providers;
-using Logiwall.Application.Abstractions.Providers.PaymentGateways;
-using Logiwall.Shared.Dtos.PaymentItems;
 using Logiwall.Shared.Dtos.Providers.PostalService;
 
 namespace Logiwall.Infrastructure.Providers.PostalServices;
 
-public abstract class PostalServiceBase : IPostalServiceBase
+/// <summary>A courier. Register each subclass with <c>TryAddEnumerable</c> in <c>DependencyInjection</c>.</summary>
+public abstract class PostalServiceBase
 {
     /// <summary>Selects this carrier's <c>StaticDataMapper</c> codes.</summary>
     public abstract ProviderType ProviderType { get; }
@@ -22,14 +21,4 @@ public abstract class PostalServiceBase : IPostalServiceBase
     protected IHttpProvider HttpProvider { get; }
 
     public abstract Task<List<OrderInquiryOptionDto>> GetOrderInquiryAsync(OrderInquiryRequestDto requestDto);
-
-    public PaymentResponseDto Payment(PaymentRequestDto requestDto)
-    {
-        return new PaymentResponseDto
-        {
-            OrderId = requestDto.OrderId,
-            Status = PaymentStatus.Success,
-            Message = string.Empty,
-        };
-    }
 }

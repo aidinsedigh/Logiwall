@@ -9,7 +9,6 @@ using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using HealthChecks.UI.Client;
 using Serilog;
-using Logiwall.Server.Middleware;
 
 namespace Logiwall.Server;
 
@@ -18,13 +17,12 @@ public static partial class Program
     /// <summary>
     /// https://learn.microsoft.com/en-us/aspnet/core/fundamentals/middleware/?view=aspnetcore-8.0#middleware-order
     /// </summary>
-    public static void ConfiureMiddlewares(this WebApplication app)
+    public static void ConfigureMiddlewares(this WebApplication app)
     {
         var configuration = app.Configuration;
         var env = app.Environment;
 
         app.UseSerilogRequestLogging();
-        //app.UseRequestResponseLoggingMiddleware();
         app.UseForwardedHeaders();
 
         if (AppRenderMode.MultilingualEnabled)

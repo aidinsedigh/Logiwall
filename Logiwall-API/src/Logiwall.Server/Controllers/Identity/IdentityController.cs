@@ -1,16 +1,12 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using FluentEmail.Core;
 using Logiwall.Application.Abstractions.Identity;
 using Logiwall.Client.Core.Controllers.Identity;
 using Logiwall.Domain.Entities.Identity;
 using Logiwall.Server.Resources;
 using Logiwall.Shared.Dtos.Identity;
 using Logiwall.Shared.Utils;
-using Microsoft.AspNetCore.Authentication.BearerToken;
-using Microsoft.AspNetCore.Components.Web;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.RateLimiting;
 using Logiwall.Shared.Dtos.Global;
@@ -25,19 +21,7 @@ public partial class IdentityController : AppControllerBase, IIdentityController
 
     [AutoInject] private SignInManager<User> signInManager = default!;
 
-    [AutoInject] private IFluentEmail fluentEmail = default!;
-
-    [AutoInject] private IStringLocalizer<EmailStrings> emailLocalizer = default!;
-
-    [AutoInject] private HtmlRenderer htmlRenderer = default!;
-
-    [AutoInject] private IStringLocalizer<IdentityStrings> identityLocalizer = default!;
-
-    [AutoInject] private IOptionsMonitor<BearerTokenOptions> bearerTokenOptions = default!;
-
     [AutoInject] private IAuthenticationService authenticationService = default!;
-
-    [AutoInject] private IDataProtectionProvider dataProtectionProvider = default!;
 
     [HttpPost, EnableRateLimiting("otp-send")]
     public async Task<ActionResult> SendOtpCode(SendOtpRequestDto requestDto, CancellationToken cancellationToken)
@@ -76,81 +60,6 @@ public partial class IdentityController : AppControllerBase, IIdentityController
         return Ok(response);
     }
 
-    //[HttpPost]
-    //public async Task SendConfirmationEmail(SendConfirmationEmailRequestDto sendConfirmationEmailRequest, CancellationToken cancellationToken)
-    //{
-    //    var user = await userManager.FindByEmailAsync(sendConfirmationEmailRequest.Email!);
-
-    //    if (user is null)
-    //        throw new BadRequestException(Localizer.GetString(nameof(AppStrings.UserNameNotFound), sendConfirmationEmailRequest.Email!));
-
-    //    if (await userManager.IsEmailConfirmedAsync(user))
-    //        throw new BadRequestException(Localizer[nameof(AppStrings.EmailAlreadyConfirmed)]);
-
-    //    await SendConfirmationEmail(sendConfirmationEmailRequest, user, cancellationToken);
-    //}
-
-    //private async Task SendConfirmationEmail(SendConfirmationEmailRequestDto sendConfirmationEmailRequest, User user, CancellationToken cancellationToken)
-    //{
-    //    //var resendDelay = (DateTimeOffset.Now - user.ConfirmationEmailRequestedOn) - AppSettings.IdentitySettings.ConfirmationEmailResendDelay;
-
-    //    //if (resendDelay < TimeSpan.Zero)
-    //    //    throw new TooManyRequestsExceptions(Localizer.GetString(nameof(AppStrings.WaitForConfirmationEmailResendDelay), resendDelay.Value.ToString("mm\\:ss")));
-
-    //    var token = await userManager.GenerateEmailConfirmationTokenAsync(user);
-
-    //    var controller = RouteData.Values["controller"]!.ToString();
-
-    //    var confirmationLink = new Uri(HttpContext.Request.GetBaseUrl(), $"email-confirmation?email={HttpUtility.UrlEncode(user.Email)}&token={HttpUtility.UrlEncode(token)}");
-
-    //    var body = await htmlRenderer.Dispatcher.InvokeAsync(async () =>
-    //    {
-    //        //var renderedComponent = await htmlRenderer.RenderComponentAsync<EmailConfirmationTemplate>(ParameterView.FromDictionary(new Dictionary<string, object?>()
-    //        //{
-    //        //    {   nameof(EmailConfirmationTemplate.Model),
-    //        //        new EmailConfirmationModel
-    //        //        {
-    //        //            ConfirmationLink = confirmationLink
-    //        //        }
-    //        //    },
-    //        //    { nameof(HttpContext), HttpContext }
-    //        //}));
-
-    //        //return renderedComponent.ToHtmlString();
-    //        return string.Empty;
-    //    });
-
-    //    var result = await fluentEmail
-    //        .Subject(emailLocalizer[EmailStrings.ConfirmationEmailSubject])
-    //        .Body(body, isHtml: true)
-    //        .SendAsync(cancellationToken);
-
-    //    //user.ConfirmationEmailRequestedOn = DateTimeOffset.Now;
-
-    //    await userManager.UpdateAsync(user);
-
-    //    if (!result.Successful)
-    //        throw new ResourceValidationException(result.ErrorMessages.Select(err => Localizer[err]).ToArray());
-    //}
-
-    //[HttpPost]
-    //public async Task ConfirmEmail(ConfirmEmailRequestDto body)
-    //{
-    //    var user = await userManager.FindByEmailAsync(body.Email!);
-
-    //    if (user is null)
-    //        throw new BadRequestException(Localizer.GetString(nameof(AppStrings.UserNameNotFound), body.Email!));
-
-    //    var emailConfirmed = user.EmailConfirmed;
-
-    //    if (emailConfirmed is false)
-    //    {
-    //        var result = await userManager.ConfirmEmailAsync(user, body.Token!);
-    //        if (!result.Succeeded)
-    //            throw new ResourceValidationException(result.Errors.Select(e => new LocalizedString(e.Code, e.Description)).ToArray());
-    //    }
-    //}
-
     [HttpPost, ProducesResponseType<TokenResponseDto>(statusCode: 200), EnableRateLimiting("auth-verify")]
     public async Task GetToken(SignInRequestDto signInRequest)
     {
@@ -169,18 +78,6 @@ public partial class IdentityController : AppControllerBase, IIdentityController
             throw new BadRequestException(Localizer.GetString(nameof(AppStrings.UserLockedOut), (DateTimeOffset.UtcNow - user!.LockoutEnd!).Value.ToString("mm\\:ss")));
         }
 
-        /* if (result.RequiresTwoFactor)
-        {
-            if (!string.IsNullOrEmpty(signInRequest.TwoFactorCode))
-            {
-                result = await signInManager.TwoFactorAuthenticatorSignInAsync(signInRequest.TwoFactorCode, rememberClient: true);
-            }
-            else if (!string.IsNullOrEmpty(signInRequest.TwoFactorRecoveryCode))
-            {
-                result = await signInManager.TwoFactorRecoveryCodeSignInAsync(signInRequest.TwoFactorRecoveryCode);
-            }
-        } */
-
         if (result.Succeeded is false)
             throw new UnauthorizedException(Localizer.GetString(nameof(AppStrings.InvalidUsernameOrPassword)));
 
@@ -191,85 +88,6 @@ public partial class IdentityController : AppControllerBase, IIdentityController
             LoginProvider = signInRequest.LoginProvider,
         });
     }
-
-    //[HttpPost]
-    //public async Task<ActionResult<TokenResponseDto>> Refresh(RefreshRequestDto refreshRequest)
-    //{
-    //    var refreshTokenProtector = bearerTokenOptions.Get(IdentityConstants.BearerScheme).RefreshTokenProtector;
-    //    var refreshTicket = refreshTokenProtector.Unprotect(refreshRequest.RefreshToken);
-
-    //    if (refreshTicket?.Properties?.ExpiresUtc is not { } expiresUtc || DateTimeOffset.UtcNow >= expiresUtc ||
-    //            await signInManager.ValidateSecurityStampAsync(refreshTicket.Principal) is not User user)
-    //    {
-    //        return base.Challenge();
-    //    }
-
-    //    var newPrincipal = await signInManager.CreateUserPrincipalAsync(user);
-
-    //    return SignIn(newPrincipal, authenticationScheme: IdentityConstants.BearerScheme);
-    //}
-
-    //[HttpPost]
-    //public async Task SendResetPasswordEmail(SendResetPasswordEmailRequestDto sendResetPasswordEmailRequest
-    //      , CancellationToken cancellationToken)
-    //{
-    //    var user = await userManager.FindByEmailAsync(sendResetPasswordEmailRequest.Email!);
-
-    //    if (user is null)
-    //        throw new BadRequestException(Localizer.GetString(nameof(AppStrings.UserNameNotFound), sendResetPasswordEmailRequest.Email!));
-
-    //    //var resendDelay = (DateTimeOffset.Now - user.ResetPasswordEmailRequestedOn) - AppSettings.IdentitySettings.ResetPasswordEmailResendDelay;
-
-    //    //if (resendDelay < TimeSpan.Zero)
-    //    //    throw new TooManyRequestsExceptions(Localizer.GetString(nameof(AppStrings.WaitForResetPasswordEmailResendDelay), resendDelay.Value.ToString("mm\\:ss")));
-
-    //    var token = await userManager.GeneratePasswordResetTokenAsync(user);
-
-    //    var resetPasswordLink = new Uri(HttpContext.Request.GetBaseUrl(), $"reset-password?email={HttpUtility.UrlEncode(user.Email)}&token={HttpUtility.UrlEncode(token)}");
-
-    //    var body = await htmlRenderer.Dispatcher.InvokeAsync(async () =>
-    //    {
-    //        //var renderedComponent = await htmlRenderer.RenderComponentAsync<ResetPasswordTemplate>(ParameterView.FromDictionary(new Dictionary<string, object?>()
-    //        //{
-    //        //    { nameof(ResetPasswordTemplate.Model),
-    //        //        new ResetPasswordModel
-    //        //        {
-    //        //            DisplayName = user.DisplayName,
-    //        //            ResetPasswordLink = resetPasswordLink
-    //        //        }
-    //        //    },
-    //        //    { nameof(HttpContext) , HttpContext }
-    //        //}));
-
-    //        //return renderedComponent.ToHtmlString();
-    //        return string.Empty;
-    //    });
-
-    //    var result = await fluentEmail
-    //        .Subject(emailLocalizer[EmailStrings.ResetPasswordEmailSubject])
-    //        .Body(body, isHtml: true)
-    //        .SendAsync(cancellationToken);
-
-
-    //    await userManager.UpdateAsync(user);
-
-    //    if (!result.Successful)
-    //        throw new ResourceValidationException(result.ErrorMessages.Select(err => Localizer[err]).ToArray());
-    //}
-
-    //[HttpPost]
-    //public async Task ResetPassword(ResetPasswordRequestDto resetPasswordRequest, CancellationToken cancellationToken)
-    //{
-    //    var user = await userManager.FindByEmailAsync(resetPasswordRequest.Email!);
-
-    //    if (user is null)
-    //        throw new BadRequestException(Localizer.GetString(nameof(AppStrings.UserNameNotFound), resetPasswordRequest.Email!));
-
-    //    var result = await userManager.ResetPasswordAsync(user, resetPasswordRequest.Token!, resetPasswordRequest.Password!);
-
-    //    if (!result.Succeeded)
-    //        throw new ResourceValidationException(result.Errors.Select(e => new LocalizedString(e.Code, e.Description)).ToArray());
-    //}
 
     private string GenerateJwtToken(User user)
     {
