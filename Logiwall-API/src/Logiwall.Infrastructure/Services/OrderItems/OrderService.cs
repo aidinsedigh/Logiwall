@@ -226,11 +226,26 @@ public class OrderService : IOrderService
         }
     }
 
+    /// <summary>The only order properties a client may filter or sort on, by client name.</summary>
+    private static readonly Dictionary<string, string> OrderFilterableProperties = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["id"] = nameof(Order.Id),
+        ["originCity"] = nameof(Order.OriginCity),
+        ["destinationCity"] = nameof(Order.DestinationCity),
+        ["status"] = nameof(Order.State),
+        ["state"] = nameof(Order.State),
+        ["orderNumber"] = nameof(Order.OrderNumber),
+        ["creationDate"] = nameof(Order.CreationDate),
+    };
+
+    /// <summary>An unpaged list returns at most this many orders, the newest first.</summary>
+    private const int UnpagedOrderLimit = 100;
+
     public async Task<ServiceResponse<IList<OrderDto>>> GetOrderListAsync(GetOrderListRequestDto requestDto)
     {
-        var customer = await appDbContext.Customers.FirstOrDefaultAsync(t => t.Person.UserId == requestDto.UserId);
+        var customerId = await appDbContext.Customers.Where(t => t.Person.UserId == requestDto.UserId).Select(t => (int?)t.Id).FirstOrDefaultAsync();
 
-        if (customer == null)
+        if (customerId == null)
         {
             return new ServiceResponse<IList<OrderDto>>
             {
@@ -239,14 +254,23 @@ public class OrderService : IOrderService
                 Message = "There is no customer"
             };
         }
-        var orders = appDbContext.Orders.Where(t => t.CustomerId == customer.Id);
-        var query = orders.ApplyQueryParams(requestDto.QueryParams);
-        //ToDo add filter & sort
-        var result = new List<OrderDto>();
-        foreach (var order in query)
+
+        var queryParams = requestDto.QueryParams;
+        var query = appDbContext.Orders.AsNoTracking().Where(t => t.CustomerId == customerId)
+            .ApplyFilters(queryParams.FilterGroups, OrderFilterableProperties)
+            .ApplySorting(queryParams.SortConditions, OrderFilterableProperties);
+
+        // Paging needs a stable order, so pages never overlap or skip rows.
+        if (query.Expression.Type != typeof(IOrderedQueryable<Order>))
         {
-            result.Add(order.Map());
+            query = query.OrderByDescending(t => t.Id);
         }
+
+        query = queryParams.HasPagination
+            ? query.ApplyPagination(queryParams.PageNumber, queryParams.PageSize)
+            : query.Take(UnpagedOrderLimit);
+
+        var result = (await query.ToListAsync()).Select(o => o.Map()).ToList();
 
         return new ServiceResponse<IList<OrderDto>>
         {
