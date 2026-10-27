@@ -13,6 +13,8 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Logiwall.Domain.Entities.Identity;
 using Logiwall.Infrastructure.Services;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 namespace Logiwall.Server;
 
@@ -52,6 +54,17 @@ public static partial class Program
         var appSettings = configuration.GetSection(nameof(AppSettings)).Get<AppSettings>()!;
 
         services.AddCors();
+
+        services.AddRateLimiter(options =>
+        {
+            options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+            options.AddPolicy("otp-send", ctx => RateLimitPartition.GetFixedWindowLimiter(
+                ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = configuration.GetValue("RateLimits:OtpSendPerMinute", 5), Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+            options.AddPolicy("auth-verify", ctx => RateLimitPartition.GetFixedWindowLimiter(
+                ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = configuration.GetValue("RateLimits:AuthVerifyPerMinute", 20), Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+        });
 
         services.AddHttpClient();
         

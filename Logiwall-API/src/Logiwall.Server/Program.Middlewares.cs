@@ -75,6 +75,7 @@ public static partial class Program
 
         app.UseAuthentication();
         app.UseAuthorization();
+        app.UseRateLimiter();
 
         app.UseAntiforgery();
 

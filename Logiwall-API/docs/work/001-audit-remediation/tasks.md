@@ -21,7 +21,7 @@ The user asked for plans covering **all** audit findings (15 findings, plus a .N
 | [004](004-patch-dotnet8-and-vulnerable-packages.md) | SDK roll-forward and 8.0.x patch bumps; no High/Critical advisories | P1 | S | — | DONE (8.0.33; exception: transitive SSH.NET 2023.0.0 High via `AspNetCore.HealthChecks.Network`, fix only in 2026.0.0 major; KubernetesClient Moderate) |
 | [005](005-establish-test-and-ci-baseline.md) | xUnit + Testcontainers SQL Server harness, regression tests, GitHub Actions CI | P1 | M | 001, 002, 004 | DONE (4 unit + 8 integration tests pass locally; finding: committed dev `IdentityCertificate.pfx` expired 2025-01, tests generate their own) |
 | [006](006-add-agent-and-setup-docs.md) | README, CLAUDE.md, AGENTS.md | P2 | S | 003, 004, 005 | DONE (README rewritten; commands in `instruction.md` §1.1; security notes in `auth-and-security.md`) |
-| [007](007-rate-limit-otp-and-login.md) | OTP attempt cap, resend cooldown, per-IP rate limits, phone validation | P1 | M | 001, 005 | TODO |
+| [007](007-rate-limit-otp-and-login.md) | OTP attempt cap, resend cooldown, per-IP rate limits, phone validation | P1 | M | 001, 005 | DONE (per-IP limits are correct only after plan 009 configures forwarded headers) |
 | [008](008-fix-otp-send-path-and-async-sms.md) | Async SMS with timeout, correct OTP ordering, logging, disabled accounts refused | P2 | M | 003, 005, 007 | TODO |
 | [009](009-harden-production-defaults.md) | Swagger flag, sample endpoint and SignUp removed, CORS/forwarded headers configurable, no `ex.Message` leaks | P2 | S | 005 | TODO |
 | [010](010-investigate-currency-units.md) | **Investigation**: rial/toman units across quote → payment | P1 | S | — | TODO |

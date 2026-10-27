@@ -10,15 +10,18 @@ namespace Logiwall.IntegrationTests.Infrastructure;
 public class LogiwallApiFactory : WebApplicationFactory<Logiwall.Server.AppSettings>
 {
     private readonly string connectionString;
+    private readonly bool relaxRateLimits;
 
-    public LogiwallApiFactory(string connectionString)
+    /// <param name="relaxRateLimits">Tests share one IP address, so most tests lift the per-IP limits.</param>
+    public LogiwallApiFactory(string connectionString, bool relaxRateLimits = true)
     {
         this.connectionString = connectionString;
+        this.relaxRateLimits = relaxRateLimits;
         // Program.Services.cs reads the connection string while it builds the host,
         // so the override must also be visible as an environment variable.
         Environment.SetEnvironmentVariable("ConnectionStrings__SqlServerConnectionString", connectionString);
 
-        TestCertificate.WriteTo(AppContext.BaseDirectory);
+        TestCertificate.EnsureWritten(AppContext.BaseDirectory);
         Environment.SetEnvironmentVariable("AppSettings__IdentitySettings__IdentityCertificatePassword", TestCertificate.Password);
     }
 
@@ -26,6 +29,11 @@ public class LogiwallApiFactory : WebApplicationFactory<Logiwall.Server.AppSetti
     {
         builder.UseEnvironment("Development");
         builder.UseSetting("ConnectionStrings:SqlServerConnectionString", connectionString);
+        if (relaxRateLimits)
+        {
+            builder.UseSetting("RateLimits:OtpSendPerMinute", "1000");
+            builder.UseSetting("RateLimits:AuthVerifyPerMinute", "1000");
+        }
         builder.ConfigureTestServices(services =>
         {
             services.RemoveAll<ISMSService>();

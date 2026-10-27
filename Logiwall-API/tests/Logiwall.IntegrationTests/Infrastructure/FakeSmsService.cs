@@ -8,12 +8,16 @@ namespace Logiwall.IntegrationTests.Infrastructure;
 public partial class FakeSmsService : ISMSService
 {
     private readonly ConcurrentDictionary<string, string> lastMessages = new();
+    private readonly ConcurrentDictionary<string, int> counts = new();
 
     public string SendSMS(string Message, string Destination)
     {
         lastMessages[Destination] = Message;
+        counts.AddOrUpdate(Destination, 1, (_, count) => count + 1);
         return "OK";
     }
+
+    public int CountFor(string phone) => counts.TryGetValue(phone, out var count) ? count : 0;
 
     public string LastCodeFor(string phone)
     {

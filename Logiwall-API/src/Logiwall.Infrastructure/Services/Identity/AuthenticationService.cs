@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
+using System.Text;
 using Logiwall.Application.Abstractions.Global;
 using Logiwall.Application.Abstractions.Identity;
 using Logiwall.Application.Abstractions.Tools;
@@ -14,6 +15,10 @@ using Microsoft.EntityFrameworkCore;
 namespace Logiwall.Infrastructure.Services.Identity;
 public class AuthenticationService : IAuthenticationService
 {
+    private const int MaxOtpAttempts = 5;
+    private static readonly TimeSpan OtpValidity = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan OtpResendCooldown = TimeSpan.FromSeconds(60);
+
     private readonly AppDbContext dbContext;
     private readonly UserManager<User> userManager;
     private readonly ISMSService smsService;
@@ -36,13 +41,24 @@ public class AuthenticationService : IAuthenticationService
     {
         try
         {
+            var user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
+
+            // The cooldown check must run before the SMS is sent: each SMS costs money.
+            if (user is not null)
+            {
+                var lastTimestamp = await userManager.GetAuthenticationTokenAsync(user, "OTP", "timestamp");
+                if (DateTimeOffset.TryParse(lastTimestamp, CultureInfo.InvariantCulture, out var lastExpiry)
+                    && lastExpiry - OtpValidity + OtpResendCooldown > DateTimeOffset.Now)
+                {
+                    return new ServiceResponse<bool> { Data = false, Succuss = false, Message = "Please wait before requesting a new code." };
+                }
+            }
+
             var code = GenerateRandomCode();
             var settings = await appSettingService.GetAllSettingsAsync();
             var message = settings.LoginOtpText?.Replace("{CODE}", code);
             var response = smsService.SendSMS(message ?? code, requestDto.PhoneNumber);
             //todo : send code to sms provider
-
-            var user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
 
             if (user == null || user.IsArchive)
             {
@@ -67,7 +83,7 @@ public class AuthenticationService : IAuthenticationService
 
                 user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
             }
-            var expiryTime = DateTimeOffset.Now.AddMinutes(2);
+            var expiryTime = DateTimeOffset.Now.Add(OtpValidity);
             var userOtp = new UserOtp
             {
                 Code = code,
@@ -81,6 +97,7 @@ public class AuthenticationService : IAuthenticationService
 
             await userManager.SetAuthenticationTokenAsync(user, "OTP", "otp", code);
             await userManager.SetAuthenticationTokenAsync(user, "OTP", "timestamp", expiryTime.ToString("o"));
+            await userManager.SetAuthenticationTokenAsync(user, "OTP", "attempts", "0");
             //todo: Send the OTP through a communication channel (e.g., email, SMS)
             // Code to send OTP to the user (e.g., via email, SMS) goes here
             return new ServiceResponse<bool>
@@ -115,9 +132,20 @@ public class AuthenticationService : IAuthenticationService
         //    };
         //}
         var storedOTP = await userManager.GetAuthenticationTokenAsync(user, "OTP", "otp");
+        var attemptsText = await userManager.GetAuthenticationTokenAsync(user, "OTP", "attempts");
+        _ = int.TryParse(attemptsText, out var attempts);
 
-        if (storedOTP == null || storedOTP != requestDto.Code)
+        if (storedOTP is null || attempts >= MaxOtpAttempts || CodesEqual(storedOTP, requestDto.Code) is false)
         {
+            attempts++;
+            if (storedOTP is not null && attempts >= MaxOtpAttempts)
+            {
+                // Too many wrong guesses: burn the code so the remaining keyspace can't be searched.
+                await userManager.RemoveAuthenticationTokenAsync(user, "OTP", "otp");
+                await userManager.RemoveAuthenticationTokenAsync(user, "OTP", "timestamp");
+            }
+            await userManager.SetAuthenticationTokenAsync(user, "OTP", "attempts", attempts.ToString(CultureInfo.InvariantCulture));
+
             return new ServiceResponse<ConfirmationOtpResponseDto>
             {
                 Succuss = false,
@@ -138,6 +166,7 @@ public class AuthenticationService : IAuthenticationService
 
         await userManager.RemoveAuthenticationTokenAsync(user, "OTP", "otp");
         await userManager.RemoveAuthenticationTokenAsync(user, "OTP", "timestamp");
+        await userManager.RemoveAuthenticationTokenAsync(user, "OTP", "attempts");
 
         var person = await dbContext.People.FirstOrDefaultAsync(t => t.UserId == user.Id);
         await LogUserLoginAsync(new LogUserLoginRequestDto
@@ -194,6 +223,10 @@ public class AuthenticationService : IAuthenticationService
             _ = exc;
         }
     }
+
+    private static bool CodesEqual(string expected, string? actual)
+        => actual is not null && CryptographicOperations.FixedTimeEquals(
+               Encoding.UTF8.GetBytes(expected), Encoding.UTF8.GetBytes(actual));
 
     private static string GenerateRandomCode()
     {

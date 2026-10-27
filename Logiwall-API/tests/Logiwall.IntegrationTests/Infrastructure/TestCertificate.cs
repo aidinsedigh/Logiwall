@@ -12,12 +12,26 @@ public static class TestCertificate
 {
     public const string Password = "Test-Cert-Pass-1";
 
-    public static void WriteTo(string directory)
-    {
-        using var rsa = RSA.Create(2048);
-        var request = new CertificateRequest("CN=Logiwall.IntegrationTests", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
-        using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+    private static readonly object Gate = new();
+    private static bool written;
 
-        File.WriteAllBytes(Path.Combine(directory, "IdentityCertificate.pfx"), certificate.Export(X509ContentType.Pfx, Password));
+    /// <summary>
+    /// Writes the certificate once per test process. IdentityController reads the file for every
+    /// token it signs, so a second factory must not replace the key the first one validates with.
+    /// </summary>
+    public static void EnsureWritten(string directory)
+    {
+        lock (Gate)
+        {
+            if (written)
+                return;
+
+            using var rsa = RSA.Create(2048);
+            var request = new CertificateRequest("CN=Logiwall.IntegrationTests", rsa, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+            using var certificate = request.CreateSelfSigned(DateTimeOffset.UtcNow.AddDays(-1), DateTimeOffset.UtcNow.AddYears(1));
+
+            File.WriteAllBytes(Path.Combine(directory, "IdentityCertificate.pfx"), certificate.Export(X509ContentType.Pfx, Password));
+            written = true;
+        }
     }
 }

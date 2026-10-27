@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Authentication.BearerToken;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Logiwall.Server.Controllers.Identity;
 
@@ -37,7 +38,7 @@ public partial class IdentityController : AppControllerBase, IIdentityController
 
     [AutoInject] private IDataProtectionProvider dataProtectionProvider = default!;
 
-    [HttpPost]
+    [HttpPost, EnableRateLimiting("otp-send")]
     public async Task<ActionResult> SendOtpCode(SendOtpRequestDto requestDto, CancellationToken cancellationToken)
     {
         var response = await authenticationService.SendOtpCodeAsync(requestDto);
@@ -48,7 +49,7 @@ public partial class IdentityController : AppControllerBase, IIdentityController
         return Ok(response);
     }
 
-    [HttpPost]
+    [HttpPost, EnableRateLimiting("auth-verify")]
     public async Task<ActionResult> ConfirmationOtpCode(ConfirmaionOtpRequestDto requestDto, CancellationToken cancellationToken)
     {
         var user = await userManager.FindByNameAsync(requestDto.PhoneNumber);
@@ -184,7 +185,7 @@ public partial class IdentityController : AppControllerBase, IIdentityController
     //    }
     //}
 
-    [HttpPost, ProducesResponseType<TokenResponseDto>(statusCode: 200)]
+    [HttpPost, ProducesResponseType<TokenResponseDto>(statusCode: 200), EnableRateLimiting("auth-verify")]
     public async Task GetToken(SignInRequestDto signInRequest)
     {
         signInManager.AuthenticationScheme = IdentityConstants.BearerScheme;
