@@ -254,6 +254,8 @@ A change is complete only when the applicable items are satisfied:
 * Authorization and resource ownership implemented
 * Error handling implemented
 * Logging follows the Logiwall conventions
+* Client messages are Persian resource keys (ADR-0003)
+* Logs follow the structured format (ADR-0004)
 * CancellationToken propagated
 * Tests implemented, when a test project exists (plan 005)
 * QA file created/updated for a new or changed endpoint

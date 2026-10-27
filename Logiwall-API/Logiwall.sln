@@ -52,6 +52,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "adr", "adr", "{E76C8E57-9D3
 	ProjectSection(SolutionItems) = preProject
 		docs\adr\0001-currency-units.md = docs\adr\0001-currency-units.md
 		docs\adr\0002-keep-layered-architecture.md = docs\adr\0002-keep-layered-architecture.md
+		docs\adr\0003-persian-client-messages.md = docs\adr\0003-persian-client-messages.md
+		docs\adr\0004-structured-log-format.md = docs\adr\0004-structured-log-format.md
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "conventions", "conventions", "{E7801A35-69BB-434B-A62C-B11B47F7DB96}"

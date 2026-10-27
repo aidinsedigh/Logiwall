@@ -12,7 +12,7 @@ Scope, in one line each:
 
 ## Tasks
 
-- [ ] Task 1 — ADR-0003, ADR-0004, conventions, `instruction.md` §17 (FR-D1-FR-D4)
+- [x] Task 1 — ADR-0003, ADR-0004, conventions, `instruction.md` §17 (FR-D1-FR-D4)
 - [ ] Task 2 — `fa-IR` for every request; complete Persian resources; completeness test (FR-M2, FR-M4)
 - [ ] Task 3 — Client messages from resource keys; no provider text (FR-M1, FR-M3, FR-M5, FR-M9, FR-O13)
 - [ ] Task 4 — Persian binding, JSON, 429 and unknown-error messages (FR-M6-FR-M8)

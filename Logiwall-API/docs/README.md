@@ -27,6 +27,8 @@ task (`NNN-*.md`), so the cycle folder holds those files and a `tasks.md` status
 |---|---|---|
 | 0001 | Currency units (rial/toman) | Open, verdict (c): provider confirmation required |
 | 0002 | Keep the layered architecture | Accepted |
+| 0003 | Client messages are Persian | Accepted |
+| 0004 | Structured log format and correlation ID | Accepted |
 
 Give a new ADR the next free number.
 
