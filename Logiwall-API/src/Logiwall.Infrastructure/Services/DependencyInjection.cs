@@ -22,6 +22,8 @@ public static class DependencyInjection
         services.Configure<MyTipaxOptions>(configuration.GetSection(MyTipaxOptions.SectionName));
         services.Configure<SmsOptions>(configuration.GetSection(SmsOptions.SectionName));
         services.Configure<PaymentOptions>(configuration.GetSection(PaymentOptions.SectionName));
+        services.Configure<AdminSeedOptions>(configuration.GetSection(AdminSeedOptions.SectionName));
+        services.AddHostedService<AdminSeeder>();
         // The user waits on the OTP request, so the SMS gateway gets a short timeout.
         services.AddHttpClient("sms", c => c.Timeout = TimeSpan.FromSeconds(10));
 

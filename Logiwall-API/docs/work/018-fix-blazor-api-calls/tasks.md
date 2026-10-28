@@ -14,6 +14,7 @@ order counts on the dashboard (`spec.md`).
 - [x] D12, D13 — server-side `HttpClient` base address, `LoginProvider` on sign-in (found in the live run)
 - [x] Task 4 — admin panel: `AdminsOnly`, `SeedAdminRole` migration, global stats, ADR-0005 (D14)
 - [x] Verification — build, tests, live run in the browser
+- [x] Task 5 — `AdminSeeder`: seed the first admin from `AdminSeed:PhoneNumber`/`Password` (user-secrets or env), ADR-0005 updated. Integration tests 66 passed, 1 skipped (old skip), incl. 2 `AdminSeedTests`.
 
 ## Results (2026-10-28, after Task 4)
 

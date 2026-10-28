@@ -19,8 +19,31 @@ with the `Admin` role use it. Customers use the React app (`Logiwall-Front`).
 * **Pages:** every panel page that needs a user has `[Authorize(Policy = "AdminsOnly")]`.
 * **The role:** the `SeedAdminRole` migration adds the `Admin` row to `dbo.Roles` when it is
   missing. No admin user and no password are in the repository.
+* **The seed:** `AdminSeeder` (`src/Logiwall.Infrastructure/Services/Identity/AdminSeeder.cs`)
+  runs at start-up. It makes the user in `AdminSeed:PhoneNumber` an admin. It does nothing when
+  `AdminSeed:PhoneNumber` or `AdminSeed:Password` is empty.
 
-## Operator step: make a user an admin
+## Operator step: seed the first admin
+
+Set the two values outside the repository, then start the server:
+
+```
+cd src/Logiwall.Server
+dotnet user-secrets set "AdminSeed:PhoneNumber" "09xxxxxxxxx"
+dotnet user-secrets set "AdminSeed:Password" "<password>"
+```
+
+On a server, use the environment variables `AdminSeed__PhoneNumber` and `AdminSeed__Password`.
+
+* A missing user is created with the password and the `Admin` role.
+* An existing user gets the `Admin` role. The password is set only when the user has none. The
+  seed never replaces a password.
+* The log shows `[AdminSeed][Start][{UserId}] Admin user is ready.`, or a warning with the
+  Identity error codes (for example a password that fails the password rules).
+* The seed does not create a `Person` row. For a new seeded user, `GetUserProfile` returns
+  `UserIsNotRegistered` (`PersonService.cs`), so the profile page has no data.
+
+## Operator step: make an existing user an admin with SQL
 
 1. The person signs in once in the React app with OTP.
 2. The person sets a password with `Person/Register` (the React registration form).
