@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.Global;
-public class AppSettingsDto
+public record AppSettingsDto
 {
     public string? LoginOtpText { get; set; }
 

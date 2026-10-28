@@ -6,17 +6,9 @@ using Logiwall.Shared.Dtos.People;
 using Microsoft.EntityFrameworkCore;
 
 namespace Logiwall.Infrastructure.Services.People;
-public class CustomerService : ICustomerService
+public class CustomerService(AppDbContext appDbContext,
+    IStringLocalizer<AppStrings> localizer) : ICustomerService
 {
-    private readonly AppDbContext appDbContext;
-    private readonly IStringLocalizer<AppStrings> localizer;
-
-    public CustomerService(AppDbContext appDbContext,
-        IStringLocalizer<AppStrings> localizer)
-    {
-        this.appDbContext = appDbContext;
-        this.localizer = localizer;
-    }
     public async Task<ServiceResponse<bool>> CreateCustomerContactAsync(CreateCustomerContactRequestDto requestDto)
     {
         var person = await appDbContext.People.Select(t => new { t.UserId, CustomerId = t.Customer.Id }).FirstOrDefaultAsync(t => t.UserId == requestDto.UserId);

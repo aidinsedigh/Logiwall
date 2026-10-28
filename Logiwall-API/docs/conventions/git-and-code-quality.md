@@ -108,3 +108,52 @@ Comments explain **why**, not obvious implementation details.
 Never rename `Succuss`: it is a wire contract with `Logiwall-Front`. Do not rename other
 misspelled names (`OrderInqueryOption`, `GetOptionnsRequestDto`, ...) inside an unrelated task.
 A rename of an entity also renames a table, so it needs its own plan and a migration.
+
+---
+
+## 14.3 Primary constructors and records
+
+### Primary constructors
+
+Always use a primary constructor. Use a normal constructor only when a primary constructor
+cannot do the job:
+
+* The type has more than one constructor that do not chain to one primary constructor (the
+  exception types in `src/Logiwall.Shared/Exceptions/`).
+* The constructor runs statements, not only assignments (`LogiwallApiFactory` sets an
+  environment variable).
+* The constructor is generated (`*.Designer.cs`), or the type is a Client template file.
+* The class uses `[AutoInject]` fields (controllers, `AppControllerBase`,
+  `ServerExceptionHandler`, ...). Keep that pattern (§11.2).
+
+Use the parameters directly in the methods. Do not copy a parameter into a field with the same
+value. Add a field only when you change the value once, for example `IOptions<T>.Value`:
+
+```csharp
+public class SMSService(IHttpClientFactory httpClientFactory, IOptions<SmsOptions> smsOptions, ILogger<SMSService> logger) : ISMSService
+{
+    private readonly SmsOptions smsOptions = smsOptions.Value;
+}
+```
+
+Do not assign to a primary constructor parameter. The compiler does not make it `readonly`.
+
+### Records
+
+Use `record` for DTOs, models and contracts: the types in `src/Logiwall.Shared/Dtos/`, email
+models (`ResetPasswordModel`) and test request/response types.
+
+* Keep the `{ get; set; }` or `{ get; init; }` properties. Model binding, `System.Text.Json`,
+  Mapperly and the validation attributes use them.
+* Use a positional record (`record PagedResult<T>(T[] Items, long TotalCount)`) only for a small
+  type without validation attributes or `[Display]` names.
+* Do not log a whole record. Its generated `ToString()` writes every property, also passwords
+  and tokens (§10).
+
+Keep these types as `class`:
+
+* EF Core entities in `src/Logiwall.Domain/Entities/`. Record value equality breaks change
+  tracking and navigation collections.
+* Options and settings classes (`AppSettings`, `SmsOptions`, ...). They hold secrets, and a
+  record's `ToString()` writes them.
+* Services, providers, controllers, middleware, `JsonSerializerContext` and exceptions.

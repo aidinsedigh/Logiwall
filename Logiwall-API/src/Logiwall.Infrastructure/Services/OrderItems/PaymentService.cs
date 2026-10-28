@@ -7,21 +7,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Logiwall.Infrastructure.Services.OrderItems;
-public class PaymentService : IPaymentService
+public class PaymentService(AppDbContext appDbContext,
+    ILogger<PaymentService> logger,
+    IStringLocalizer<AppStrings> localizer) : IPaymentService
 {
-    private readonly AppDbContext appDbContext;
-    private readonly ILogger<PaymentService> logger;
-    private readonly IStringLocalizer<AppStrings> localizer;
-
-    public PaymentService(AppDbContext appDbContext,
-        ILogger<PaymentService> logger,
-        IStringLocalizer<AppStrings> localizer)
-    {
-        this.appDbContext = appDbContext;
-        this.logger = logger;
-        this.localizer = localizer;
-    }
-
     public async Task<ServiceResponse<PaymentResponseDto>> VerifyPaymentAsync(VerifyPaymentRequestDto requestDto, int userId, CancellationToken cancellationToken)
     {
         try

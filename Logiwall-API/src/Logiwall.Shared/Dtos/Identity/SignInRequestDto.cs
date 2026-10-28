@@ -4,7 +4,7 @@ using static Logiwall.Shared.Enums.Constants;
 namespace Logiwall.Shared.Dtos.Identity;
 
 [DtoResourceType(typeof(AppStrings))]
-public class SignInRequestDto
+public record SignInRequestDto
 {
     /// <example>test@bitplatform.dev</example>
     [Required(ErrorMessage = nameof(AppStrings.RequiredAttribute_ValidationError))]

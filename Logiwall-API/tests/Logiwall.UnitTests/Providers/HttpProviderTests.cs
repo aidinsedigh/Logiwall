@@ -12,9 +12,9 @@ namespace Logiwall.UnitTests.Providers;
 // Tests for plan 013: HttpProvider timeouts, cancellation, error bodies and log redaction.
 public class HttpProviderTests
 {
-    public class TestRequest : IHttpRequest;
+    public record TestRequest : IHttpRequest;
 
-    public class TestResponse : IHttpResponse
+    public record TestResponse : IHttpResponse
     {
         public string? Value { get; set; }
     }

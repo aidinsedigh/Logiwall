@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.People;
-public class UserProfileRequestDto
+public record UserProfileRequestDto
 {
     [Required]
     public int UserId { get; set; }

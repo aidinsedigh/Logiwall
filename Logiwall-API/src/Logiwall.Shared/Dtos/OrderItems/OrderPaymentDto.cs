@@ -1,4 +1,4 @@
 ﻿namespace Logiwall.Shared.Dtos.OrderItems;
-public class OrderPaymentDto
+public record OrderPaymentDto
 {
 }

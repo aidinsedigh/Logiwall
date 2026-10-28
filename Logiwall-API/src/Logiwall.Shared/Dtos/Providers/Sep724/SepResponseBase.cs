@@ -1,7 +1,7 @@
 ﻿using Logiwall.Shared.Dtos.Global;
 
 namespace Logiwall.Shared.Dtos.Providers.Sep724;
-public class SepResponseBase<T> : IHttpResponse
+public record SepResponseBase<T> : IHttpResponse
 {
     [JsonPropertyName("message")]
     public string? Message { get; set; }

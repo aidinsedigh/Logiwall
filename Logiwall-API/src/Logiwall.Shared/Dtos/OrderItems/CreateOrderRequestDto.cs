@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.OrderItems;
-public class CreateOrderRequestDto
+public record CreateOrderRequestDto
 {
     public short ChannelId { get; set; }
 

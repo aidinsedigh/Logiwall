@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.Providers.PostalService.MyTipax;
-public class MyTipaxLoginAccountDto
+public record MyTipaxLoginAccountDto
 {
     [JsonPropertyName("cellNumber")]
     public string? CellPhoneNumber { get; set; }

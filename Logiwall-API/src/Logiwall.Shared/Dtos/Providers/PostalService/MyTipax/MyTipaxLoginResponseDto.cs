@@ -1,7 +1,7 @@
 ﻿using Logiwall.Shared.Dtos.Global;
 
 namespace Logiwall.Shared.Dtos.Providers.PostalService.MyTipax;
-public class MyTipaxLoginResponseDto : IHttpResponse
+public record MyTipaxLoginResponseDto : IHttpResponse
 {
     [JsonPropertyName("status")]
     public int Status { get; set; }

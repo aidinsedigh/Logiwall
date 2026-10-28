@@ -5,6 +5,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Logiwall.Shared.Dtos.OrderItems;
-public class OrderInqueryOptionDto
+public record OrderInqueryOptionDto
 {
 }

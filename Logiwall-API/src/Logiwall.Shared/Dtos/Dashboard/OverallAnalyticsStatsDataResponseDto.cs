@@ -1,6 +1,6 @@
 ﻿namespace Logiwall.Shared.Dtos.Dashboard;
 
-public class OverallAnalyticsStatsDataResponseDto
+public record OverallAnalyticsStatsDataResponseDto
 {
     public int Last30DaysProductCount { get; set; }
 

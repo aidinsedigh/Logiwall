@@ -1,7 +1,7 @@
 ﻿
 namespace Logiwall.Shared.Dtos.Identity;
 
-public class TokenResponseDto
+public record TokenResponseDto
 {
     public string? TokenType { get; set; }
 

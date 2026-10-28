@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.Providers.PostalService;
-public class OrderInquiryOptionDto
+public record OrderInquiryOptionDto
 {
     [JsonPropertyName("id")]
     public string? ProviderId { get; set; }

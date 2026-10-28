@@ -1,6 +1,6 @@
 ﻿namespace Logiwall.Domain.Entities.Emailing;
 
-public class ResetPasswordModel
+public record ResetPasswordModel
 {
     public string? DisplayName { get; set; }
 

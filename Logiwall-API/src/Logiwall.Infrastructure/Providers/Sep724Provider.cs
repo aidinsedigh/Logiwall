@@ -6,27 +6,16 @@ using Logiwall.Infrastructure.Options;
 using Microsoft.Extensions.Options;
 
 namespace Logiwall.Infrastructure.Providers;
-public class Sep724Provider : ISep724Provider
+public class Sep724Provider(IAppSettingService appSettingService,
+    IHttpProvider httpProvider,
+    IOptions<Sep724Options> sep724Options,
+    ProviderTokenCache tokenCache) : ISep724Provider
 {
     private const string TokenCacheKey = "sep724:token";
     private const int MaxAttempts = 2;
     private string getToken = "token";
     private string grantType = "password";
-    private readonly IAppSettingService appSettingService;
-    private readonly IHttpProvider httpProvider;
-    private readonly Sep724Options options;
-    private readonly ProviderTokenCache tokenCache;
-
-    public Sep724Provider(IAppSettingService appSettingService,
-        IHttpProvider httpProvider,
-        IOptions<Sep724Options> sep724Options,
-        ProviderTokenCache tokenCache)
-    {
-        this.appSettingService = appSettingService;
-        this.httpProvider = httpProvider;
-        this.options = sep724Options.Value;
-        this.tokenCache = tokenCache;
-    }
+    private readonly Sep724Options options = sep724Options.Value;
 
     public Task<SepResponseBase<GetPaymentTokenResponseDto>> GetPaymentTokenAsync(PaymentTokenRequestDto requestDto)
         => GetPaymentTokenAsync(requestDto, attempt: 1);

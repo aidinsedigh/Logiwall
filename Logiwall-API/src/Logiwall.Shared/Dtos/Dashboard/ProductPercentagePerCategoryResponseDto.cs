@@ -1,6 +1,6 @@
 ﻿namespace Logiwall.Shared.Dtos.Dashboard;
 
-public class ProductPercentagePerCategoryResponseDto
+public record ProductPercentagePerCategoryResponseDto
 {
     public string? CategoryName { get; set; }
 

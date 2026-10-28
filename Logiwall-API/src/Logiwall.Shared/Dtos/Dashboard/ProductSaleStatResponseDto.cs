@@ -1,6 +1,6 @@
 ﻿namespace Logiwall.Shared.Dtos.Dashboard;
 
-public class ProductSaleStatResponseDto
+public record ProductSaleStatResponseDto
 {
     public string? ProductName { get; set; }
 

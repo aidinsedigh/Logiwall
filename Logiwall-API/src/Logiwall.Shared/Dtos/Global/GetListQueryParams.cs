@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.Global;
-public class GetListQueryParams
+public record GetListQueryParams
 {
     public bool HasPagination { get; set; }
     public int PageNumber { get; set; } = 1;

@@ -15,33 +15,16 @@ using Microsoft.Extensions.Logging;
 using Logiwall.Infrastructure.Services.Tools;
 
 namespace Logiwall.Infrastructure.Services.Identity;
-public class AuthenticationService : IAuthenticationService
+public class AuthenticationService(AppDbContext dbContext,
+    UserManager<User> userManager,
+    ISMSService smsService,
+    IAppSettingService appSettingService,
+    IStringLocalizer<AppStrings> localizer,
+    ILogger<AuthenticationService> logger) : IAuthenticationService
 {
     private const int MaxOtpAttempts = 5;
     private static readonly TimeSpan OtpValidity = TimeSpan.FromMinutes(2);
     private static readonly TimeSpan OtpResendCooldown = TimeSpan.FromSeconds(60);
-
-    private readonly AppDbContext dbContext;
-    private readonly UserManager<User> userManager;
-    private readonly ISMSService smsService;
-    private readonly IAppSettingService appSettingService;
-    private readonly IStringLocalizer<AppStrings> localizer;
-    private readonly ILogger<AuthenticationService> logger;
-
-    public AuthenticationService(AppDbContext dbContext,
-        UserManager<User> userManager,
-        ISMSService smsService,
-        IAppSettingService appSettingService,
-        IStringLocalizer<AppStrings> localizer,
-        ILogger<AuthenticationService> logger)
-    {
-        this.dbContext = dbContext;
-        this.userManager = userManager;
-        this.smsService = smsService;
-        this.appSettingService = appSettingService;
-        this.localizer = localizer;
-        this.logger = logger;
-    }
     public async Task<ServiceResponse<bool>> SendOtpCodeAsync([NotNull] SendOtpRequestDto requestDto)
     {
         try

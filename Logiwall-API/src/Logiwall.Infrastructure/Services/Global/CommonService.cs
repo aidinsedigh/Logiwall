@@ -4,14 +4,8 @@ using Logiwall.Shared.Dtos.Global;
 using Microsoft.EntityFrameworkCore;
 
 namespace Logiwall.Infrastructure.Services.Global;
-public class CommonService : ICommonService
+public class CommonService(AppDbContext appDbContext) : ICommonService
 {
-    private readonly AppDbContext appDbContext;
-
-    public CommonService(AppDbContext appDbContext)
-    {
-        this.appDbContext = appDbContext;
-    }
     public async Task<ServiceResponse<List<GetStaticDataResponseDto>>> GetStaticDatasAsync(GetStaticDataRequestDto requestDto)
     {
         var query = appDbContext.StaticDatas.Where(t => t.Type == requestDto.Type

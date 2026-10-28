@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.OrderItems;
-public class OrderDto
+public record OrderDto
 {
     public int Id { get; set; }
 

@@ -1,7 +1,7 @@
 ﻿using Logiwall.Shared.Dtos.Global;
 
 namespace Logiwall.Shared.Dtos.Providers.PostalService.MyTipax;
-public class MyTipaxGetTokenRequestDto : IHttpRequest
+public record MyTipaxGetTokenRequestDto : IHttpRequest
 {
     [JsonPropertyName("username")]
     public string? Username { get; set; }

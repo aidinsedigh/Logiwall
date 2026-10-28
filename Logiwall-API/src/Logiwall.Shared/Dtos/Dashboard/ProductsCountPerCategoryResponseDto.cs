@@ -1,6 +1,6 @@
 ﻿namespace Logiwall.Shared.Dtos.Dashboard;
 
-public class ProductsCountPerCategoryResponseDto
+public record ProductsCountPerCategoryResponseDto
 {
     public string? CategoryName { get; set; }
 

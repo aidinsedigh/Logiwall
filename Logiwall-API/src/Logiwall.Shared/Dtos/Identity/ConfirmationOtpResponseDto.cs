@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.Identity;
-public class ConfirmationOtpResponseDto
+public record ConfirmationOtpResponseDto
 {
     public string? FullName { get; set; }
 

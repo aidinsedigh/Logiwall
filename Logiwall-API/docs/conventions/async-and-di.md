@@ -30,7 +30,7 @@ Use Microsoft's built-in dependency injection.
 * Register an Infrastructure service in
   `src/Logiwall.Infrastructure/Services/DependencyInjection.cs` (`AddInfrastructure`). Follow the
   lifetime of the services around it.
-* Services use constructor injection.
+* Services use constructor injection through a primary constructor (§14.3).
 * Controllers, `AppControllerBase` and `ServerExceptionHandler` use `[AutoInject]` fields
   (Bit.SourceGenerators). Keep that pattern in those classes.
 * Avoid the service locator pattern. Do not resolve services from `IServiceProvider` in new code.

@@ -16,29 +16,14 @@ using Microsoft.Extensions.Options;
 using static Logiwall.Shared.Enums.Constants;
 
 namespace Logiwall.Infrastructure.Services.OrderItems;
-public class OrderService : IOrderService
+public class OrderService(AppDbContext appDbContext,
+    ISep724Provider sep724Provider,
+    IEnumerable<PostalServiceBase> postalProviders,
+    ILogger<OrderService> logger,
+    IOptions<PaymentOptions> paymentOptions,
+    IStringLocalizer<AppStrings> localizer) : IOrderService
 {
-    private readonly AppDbContext appDbContext;
-    private readonly ISep724Provider sep724Provider;
-    private readonly IEnumerable<PostalServiceBase> postalProviders;
-    private readonly ILogger<OrderService> logger;
-    private readonly PaymentOptions paymentOptions;
-    private readonly IStringLocalizer<AppStrings> localizer;
-
-    public OrderService(AppDbContext appDbContext,
-        ISep724Provider sep724Provider,
-        IEnumerable<PostalServiceBase> postalProviders,
-        ILogger<OrderService> logger,
-        IOptions<PaymentOptions> paymentOptions,
-        IStringLocalizer<AppStrings> localizer)
-    {
-        this.appDbContext = appDbContext;
-        this.sep724Provider = sep724Provider;
-        this.postalProviders = postalProviders;
-        this.logger = logger;
-        this.paymentOptions = paymentOptions.Value;
-        this.localizer = localizer;
-    }
+    private readonly PaymentOptions paymentOptions = paymentOptions.Value;
 
     public async Task<ServiceResponse<CreateOrderResponseDto>> CreateOrderAsync(CreateOrderRequestDto requestDto, int userId)
     {

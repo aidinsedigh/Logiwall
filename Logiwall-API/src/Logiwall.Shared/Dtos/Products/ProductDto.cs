@@ -1,7 +1,7 @@
 ﻿namespace Logiwall.Shared.Dtos.Products;
 
 [DtoResourceType(typeof(AppStrings))]
-public class ProductDto
+public record ProductDto
 {
     public int Id { get; set; }
 

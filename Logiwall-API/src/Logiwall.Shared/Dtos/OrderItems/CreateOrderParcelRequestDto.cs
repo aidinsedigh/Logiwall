@@ -1,7 +1,7 @@
 ﻿using static Logiwall.Shared.Enums.Constants;
 
 namespace Logiwall.Shared.Dtos.OrderItems;
-public class CreateOrderParcelRequestDto
+public record CreateOrderParcelRequestDto
 {
     public ParcelType ParcelTypeId { get; set; }
 

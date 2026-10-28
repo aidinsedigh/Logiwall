@@ -195,6 +195,9 @@ See `docs/conventions/dotnet-and-deploy.md`.
 
 See `docs/conventions/git-and-code-quality.md`.
 
+Always use a primary constructor, and use `record` for DTOs, models and contracts. The
+exceptions (entities, options, `[AutoInject]` classes, ...) are in §14.3 of that file.
+
 ---
 
 # 15. Shared Code

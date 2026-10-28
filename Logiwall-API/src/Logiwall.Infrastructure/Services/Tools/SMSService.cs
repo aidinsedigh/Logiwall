@@ -5,18 +5,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Logiwall.Infrastructure.Services.Tools;
-public class SMSService : ISMSService
+public class SMSService(IHttpClientFactory httpClientFactory, IOptions<SmsOptions> smsOptions, ILogger<SMSService> logger) : ISMSService
 {
-    private readonly IHttpClientFactory httpClientFactory;
-    private readonly SmsOptions smsOptions;
-    private readonly ILogger<SMSService> logger;
-
-    public SMSService(IHttpClientFactory httpClientFactory, IOptions<SmsOptions> smsOptions, ILogger<SMSService> logger)
-    {
-        this.httpClientFactory = httpClientFactory;
-        this.smsOptions = smsOptions.Value;
-        this.logger = logger;
-    }
+    private readonly SmsOptions smsOptions = smsOptions.Value;
 
     private record PersiaFavaResult(
         [property: JsonPropertyName("result")] bool Result,

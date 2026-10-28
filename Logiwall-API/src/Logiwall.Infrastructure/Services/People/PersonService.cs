@@ -9,23 +9,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Logiwall.Infrastructure.Services.People;
-public class PersonService : IPersonService
+public class PersonService(AppDbContext dbContext,
+    UserManager<User> userManager,
+    ILogger<PersonService> logger,
+    IStringLocalizer<AppStrings> localizer) : IPersonService
 {
-    private readonly AppDbContext dbContext;
-    private readonly UserManager<User> userManager;
-    private readonly ILogger<PersonService> logger;
-    private readonly IStringLocalizer<AppStrings> localizer;
-
-    public PersonService(AppDbContext dbContext,
-        UserManager<User> userManager,
-        ILogger<PersonService> logger,
-        IStringLocalizer<AppStrings> localizer)
-    {
-        this.dbContext = dbContext;
-        this.userManager = userManager;
-        this.logger = logger;
-        this.localizer = localizer;
-    }
     public async Task<ServiceResponse<bool>> CreatePersonAsync(CreatePersonRequestDto requestDto)
     {
         var person = await dbContext.People.FirstOrDefaultAsync(t=> t.UserId == requestDto.UserId);

@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.OrderItems;
-public class SelectOptionResponseDto
+public record SelectOptionResponseDto
 {
     [JsonPropertyName("requestId")]
     public long RequestId { get; set; }

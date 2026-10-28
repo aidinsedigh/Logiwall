@@ -5,19 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace Logiwall.Infrastructure.Services.Global;
-public class AppSettingService : IAppSettingService
+public class AppSettingService(AppDbContext dbContext, IMemoryCache cache) : IAppSettingService
 {
     private const string CacheKey = "app-settings";
     private static readonly TimeSpan CacheLifetime = TimeSpan.FromMinutes(5);
-
-    private readonly AppDbContext dbContext;
-    private readonly IMemoryCache cache;
-
-    public AppSettingService(AppDbContext dbContext, IMemoryCache cache)
-    {
-        this.dbContext = dbContext;
-        this.cache = cache;
-    }
 
     /// <remarks>Cached for 5 minutes; DB edits take effect after expiry or restart.</remarks>
     public async Task<AppSettingsDto> GetAllSettingsAsync()

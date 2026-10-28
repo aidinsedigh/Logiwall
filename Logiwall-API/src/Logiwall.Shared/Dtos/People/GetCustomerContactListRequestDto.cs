@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.People;
-public class GetCustomerContactListRequestDto
+public record GetCustomerContactListRequestDto
 {
     public int UserId { get; set; }
 }

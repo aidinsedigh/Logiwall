@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Logiwall.Shared.Dtos.People;
-public class RegisterPersonRequestDto
+public record RegisterPersonRequestDto
 {
     [Required]
     public string Name { get; set; } = default!;

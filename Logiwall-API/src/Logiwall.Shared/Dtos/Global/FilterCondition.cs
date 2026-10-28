@@ -2,7 +2,7 @@
 using static Logiwall.Shared.Enums.Constants;
 
 namespace Logiwall.Shared.Dtos.Global;
-public class FilterCondition
+public record FilterCondition
 {
     public string? PropertyName { get; set; }
 

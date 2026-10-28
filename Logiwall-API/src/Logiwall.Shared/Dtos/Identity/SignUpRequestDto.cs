@@ -1,7 +1,7 @@
 ﻿namespace Logiwall.Shared.Dtos.Identity;
 
 [DtoResourceType(typeof(AppStrings))]
-public class SignUpRequestDto
+public record SignUpRequestDto
 {
     /// <summary>
     /// The user's email

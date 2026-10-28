@@ -8,7 +8,10 @@ using Logiwall.Infrastructure.Options;
 using Microsoft.Extensions.Options;
 
 namespace Logiwall.Infrastructure.Providers.PostalServices;
-public class MyTipaxProvider : PostalServiceBase
+public class MyTipaxProvider(IAppSettingService appSettingService,
+    IHttpProvider httpProvider,
+    IOptions<MyTipaxOptions> myTipaxOptions,
+    ProviderTokenCache tokenCache) : PostalServiceBase(appSettingService, httpProvider)
 {
     private readonly string tokenUrl = "token";
     private readonly string loginUrl = "/api/v1/accounts/login";
@@ -19,19 +22,9 @@ public class MyTipaxProvider : PostalServiceBase
     // The MyTipax API returns no expiry for either token.
     private static readonly TimeSpan TokenLifetime = TimeSpan.FromMinutes(10);
     private const int MaxAttempts = 2;
-    private readonly MyTipaxOptions options;
-    private readonly ProviderTokenCache tokenCache;
+    private readonly MyTipaxOptions options = myTipaxOptions.Value;
 
     public override ProviderType ProviderType => ProviderType.MyTipax;
-
-    public MyTipaxProvider(IAppSettingService appSettingService,
-        IHttpProvider httpProvider,
-        IOptions<MyTipaxOptions> myTipaxOptions,
-        ProviderTokenCache tokenCache) : base(appSettingService, httpProvider)
-    {
-        this.options = myTipaxOptions.Value;
-        this.tokenCache = tokenCache;
-    }
 
     public override Task<List<OrderInquiryOptionDto>> GetOrderInquiryAsync(OrderInquiryRequestDto requestDto)
         => InquireAsync(requestDto, attempt: 1);
