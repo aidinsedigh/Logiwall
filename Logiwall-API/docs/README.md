@@ -18,6 +18,7 @@ range, not in full.
 | 001-016 | Audit remediation: one cycle for each audit plan (security, tests/CI, .NET 10, cleanup) | Done 2026-10-27 — archived; 012 Phase B BLOCKED | `archive/cycles/001-*` to `016-*` |
 | 017 | Persian client messages, structured logs, open items from cycles 001-016 | Done 2026-10-28 — archived; results in its `tasks.md` | `archive/cycles/017-persian-messages-and-structured-logs/` |
 | 018 | Fix the Blazor client's API calls; the client is the admin panel (password sign-in, `AdminsOnly`, global order stats) | In progress — done, not committed | `work/018-fix-blazor-api-calls/` |
+| 019 | Adapt the API to the React app's contracts (E2E report 2026-10-28) | In progress — done, not committed | `work/019-adapt-api-to-front-contracts/` |
 
 Cycles 001-016 come from one audit (2026-10-27). Each cycle folder has `spec.md`, `plan.md` and
 `tasks.md`, like 017. `archive/audit-2026-10-27.md` keeps the notes for more than one cycle: the

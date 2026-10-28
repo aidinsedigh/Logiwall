@@ -21,8 +21,38 @@ public class OrderListTests(SqlServerFixture fixture)
     {
         var response = await client.PostAsJsonAsync("api/Order/GetOrders", body);
         response.EnsureSuccessStatusCode();
-        var data = (await ApiClient.ReadJsonAsync(response)).GetProperty("data");
+        var data = (await ApiClient.ReadJsonAsync(response)).GetProperty("data").GetProperty("result");
         return data.EnumerateArray().Select(o => o.GetProperty("id").GetInt32()).ToList();
+    }
+
+    [Fact]
+    public async Task Page_has_the_total_count_of_all_matching_orders()
+    {
+        var (client, _) = await ThreeOrdersAsync();
+
+        var response = await client.PostAsJsonAsync("api/Order/GetOrders", new { hasPagination = true, pageNumber = 1, pageSize = 2 });
+
+        var data = (await ApiClient.ReadJsonAsync(response)).GetProperty("data");
+        Assert.Equal(3, data.GetProperty("totalCount").GetInt32());
+        Assert.Equal(2, data.GetProperty("result").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task Order_has_city_names_and_the_chosen_total()
+    {
+        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
+        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+        (await OrderTestData.SelectAsync(client, orderId, await OrderTestData.QuoteAsync(client, orderId))).EnsureSuccessStatusCode();
+        var cityName = await fixture.WithDbAsync(db => db.StaticDatas.Where(s => s.Id == 1).Select(s => s.Title).SingleOrDefaultAsync());
+
+        var response = await client.PostAsJsonAsync("api/Order/GetOrders", new { });
+
+        var order = Assert.Single((await ApiClient.ReadJsonAsync(response)).GetProperty("data").GetProperty("result").EnumerateArray());
+        Assert.NotNull(cityName); // the migrations seed StaticDatas, so row 1 exists
+        Assert.Equal(1100m, order.GetProperty("finalAmount").GetDecimal()); // FakePostalProvider's total
+        Assert.Equal(cityName, order.GetProperty("originCityName").GetString());
+        Assert.Equal(cityName, order.GetProperty("destinationCityName").GetString());
+        Assert.False(order.TryGetProperty("orderParcels", out _));
     }
 
     [Fact]

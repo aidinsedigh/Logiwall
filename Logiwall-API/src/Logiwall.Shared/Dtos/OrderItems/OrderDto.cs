@@ -7,6 +7,8 @@ public record OrderDto
 
     public short Status { get; set; }
 
+    public string? StatusName { get; set; }
+
     [Required, MaxLength(100)]
     public string SenderName { get; set; } = default!;
 
@@ -17,6 +19,8 @@ public record OrderDto
     public string SenderPhoneNumber { get; set; } = default!;
 
     public short OriginCity { get; set; }
+
+    public string? OriginCityName { get; set; }
 
     [Required, MaxLength(100)]
     public string OriginLat { get; set; } = default!;
@@ -48,6 +52,8 @@ public record OrderDto
     public short? DestinationCountry { get; set; }
 
     public short DestinationCity { get; set; }
+
+    public string? DestinationCityName { get; set; }
 
     [Required, MaxLength(100)]
     public string DestinationLat { get; set; } = default!;
@@ -87,7 +93,8 @@ public record OrderDto
 
     public decimal Tax { get; set; }
 
-    public decimal FinalAmount { get; }
+    /// <summary>The chosen quote's total; 0 before an option is selected.</summary>
+    public decimal FinalAmount { get; set; }
 
     public short PickupServiceId { get; set; }
 
@@ -98,12 +105,4 @@ public record OrderDto
     public DateTimeOffset? PickupDateTime { get; set; }
 
     public int CustomerId { get; set; }
-
-    public IList<OrderInqueryOptionDto> OrderInqueryOptions { get; set; } = [];
-
-    public IList<OrderParcelDto> OrderParcels { get; set; } = [];
-
-    public IList<OrderPaymentDto> OrderPayments { get; set; } = [];
-
-    public IList<OrderStatusDto> OrderStatuses { get; set; } = [];
 }

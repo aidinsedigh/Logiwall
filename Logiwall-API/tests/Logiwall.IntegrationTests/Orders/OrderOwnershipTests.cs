@@ -49,13 +49,7 @@ public class OrderOwnershipTests(SqlServerFixture fixture)
             return option.Id;
         });
 
-        var response = await owner.PostAsJsonAsync("api/Order/SelectOption", new
-        {
-            orderId = firstOrderId,
-            orderInqueryOptionId = optionId,
-            channel = "pwa",
-            callbackUrl = "https://example.test/cb"
-        });
+        var response = await OrderTestData.SelectAsync(owner, firstOrderId, optionId);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.InvalidOrderOption));

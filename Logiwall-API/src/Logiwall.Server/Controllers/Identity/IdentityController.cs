@@ -60,7 +60,8 @@ public partial class IdentityController : AppControllerBase, IIdentityController
         var options = bearerTokenOptions.Get(IdentityConstants.BearerScheme);
         var principal = await signInManager.CreateUserPrincipalAsync(user);
         var properties = new AuthenticationProperties { ExpiresUtc = DateTimeOffset.UtcNow + options.BearerTokenExpiration };
-        response.Data.Token = options.BearerTokenProtector.Protect(new AuthenticationTicket(principal, properties, IdentityConstants.BearerScheme));
+        response.Data.AccessToken = options.BearerTokenProtector.Protect(new AuthenticationTicket(principal, properties, IdentityConstants.BearerScheme));
+        response.Data.ExpiresIn = (long)options.BearerTokenExpiration.TotalSeconds;
         return Ok(response);
     }
 

@@ -195,7 +195,7 @@ public class AuthenticationService(AppDbContext dbContext,
             return new ServiceResponse<ConfirmationOtpResponseDto>
             {
                 Succuss = true,
-                Message = localizer.GetString(nameof(AppStrings.OtpCodeIsSent)),
+                Message = localizer.GetString(nameof(AppStrings.OtpLoginSucceeded)),
                 Data = new ConfirmationOtpResponseDto
                 {
                     FullName = person.FullName,
@@ -208,7 +208,7 @@ public class AuthenticationService(AppDbContext dbContext,
         {
             Data = new ConfirmationOtpResponseDto { },
             Succuss = true,
-            Message = localizer.GetString(nameof(AppStrings.OtpCodeIsSent))
+            Message = localizer.GetString(nameof(AppStrings.OtpLoginSucceeded))
         }; //todo
 
     }

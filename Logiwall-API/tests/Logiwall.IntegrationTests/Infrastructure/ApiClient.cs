@@ -22,7 +22,7 @@ public class ApiClient(LogiwallApiFactory factory, FakeSmsService sms)
         confirm.EnsureSuccessStatusCode();
 
         var body = await ReadJsonAsync(confirm);
-        return body.GetProperty("data").GetProperty("token").GetString()
+        return body.GetProperty("data").GetProperty("accessToken").GetString()
             ?? throw new InvalidOperationException("ConfirmationOtpCode returned no token.");
     }
 

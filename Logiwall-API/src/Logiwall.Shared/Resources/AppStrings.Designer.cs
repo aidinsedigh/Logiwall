@@ -1716,5 +1716,32 @@ namespace Logiwall.Shared.Resources {
                 return ResourceManager.GetString("PaidOrders", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to You are signed in.
+        /// </summary>
+        public static string OtpLoginSucceeded {
+            get {
+                return ResourceManager.GetString("OtpLoginSucceeded", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to The selected pickup time is not valid.
+        /// </summary>
+        public static string InvalidPickupTime {
+            get {
+                return ResourceManager.GetString("InvalidPickupTime", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to This payment type is not supported.
+        /// </summary>
+        public static string PaymentTypeNotSupported {
+            get {
+                return ResourceManager.GetString("PaymentTypeNotSupported", resourceCulture);
+            }
+        }
     }
 }

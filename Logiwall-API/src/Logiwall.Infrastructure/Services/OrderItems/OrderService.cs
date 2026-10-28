@@ -69,14 +69,14 @@ public class OrderService(AppDbContext appDbContext,
         }
     }
 
-    public async Task<ServiceResponse<IList<OrderInqueryOptionsDto>>> GetOptionsAsync(GetOptionnsRequestDto requestDto, int userId)
+    public async Task<ServiceResponse<IList<OrderProviderOptionsDto>>> GetOptionsAsync(GetOptionnsRequestDto requestDto, int userId)
     {
         try
         {
             var order = await appDbContext.Orders.Include(t => t.OrderParcels).FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId);
             if (order is null)
             {
-                return new ServiceResponse<IList<OrderInqueryOptionsDto>>
+                return new ServiceResponse<IList<OrderProviderOptionsDto>>
                 {
                     Data = null,
                     Succuss = false,
@@ -86,7 +86,7 @@ public class OrderService(AppDbContext appDbContext,
 
             if (order.State is (short)OrderState.Paid or (short)OrderState.PaymentPending)
             {
-                return new ServiceResponse<IList<OrderInqueryOptionsDto>>
+                return new ServiceResponse<IList<OrderProviderOptionsDto>>
                 {
                     Data = null,
                     Succuss = false,
@@ -148,24 +148,26 @@ public class OrderService(AppDbContext appDbContext,
                 anyProviderSucceeded = true;
                 newOptions.AddRange(options.Select(t => new OrderInqueryOption
                 {
-                    ServiceAmount = decimal.Parse(t.SpecialService, CultureInfo.InvariantCulture),
-                    Tax = decimal.Parse(t.Tax, CultureInfo.InvariantCulture),
-                    PackagingAmount = decimal.Parse(t.PackageService, CultureInfo.InvariantCulture),
-                    FinalAmount = decimal.Parse(t.FinalAmount, CultureInfo.InvariantCulture),
+                    // TODO(plan 010): field meaning unconfirmed (ADR-0001); the parts add up to finalAmount in the E2E run.
+                    ServiceAmount = PartAmount(t.ShippingCost) + PartAmount(t.SpecialService),
+                    Tax = PartAmount(t.Tax),
+                    PackagingAmount = PartAmount(t.PackageService),
+                    // No default: a quote without a total must not become a zero payment.
+                    FinalAmount = decimal.Parse(t.FinalAmount!, CultureInfo.InvariantCulture),
                     OrderId = order.Id,
                     ServiceProviderId = serviceProvider.Id,
                     Choosen = false,
                     ServiceType = 0,
                     ServiceSLA = 0,
                     InsuranceAmount = 0,
-                    DelivereDate = t.DelivereDate
+                    DelivereDate = t.DelivereDate ?? string.Empty
                 }));
             }
 
             if (anyProviderSucceeded is false)
             {
                 // Keep the previous quotes: the customer may still select one of them.
-                return new ServiceResponse<IList<OrderInqueryOptionsDto>>
+                return new ServiceResponse<IList<OrderProviderOptionsDto>>
                 {
                     Data = null,
                     Succuss = false,
@@ -186,19 +188,27 @@ public class OrderService(AppDbContext appDbContext,
                 await tx.CommitAsync();
             }
 
-            var lst = await appDbContext.OrderInqueryOptions.Include(t => t.ServiceProvider).Where(t => t.OrderId == requestDto.OrderId).Select(t =>
-            new OrderInqueryOptionsDto
+            var rows = await appDbContext.OrderInqueryOptions.Where(t => t.OrderId == order.Id).OrderBy(t => t.Id).Select(t => new
             {
-                Id = t.Id,
-                BaseAmount = t.ServiceAmount,
-                ProviderName = t.ServiceProvider.Title,
-                DelivereDate = t.DelivereDate,
-                PackageAmount = t.PackagingAmount,
-                TaxAmount = t.Tax,
-                TotalAmount = t.FinalAmount,
+                t.ServiceProviderId,
+                t.ServiceProvider.Title,
+                Option = new OrderInqueryOptionsDto
+                {
+                    Id = t.Id,
+                    BaseAmount = t.ServiceAmount,
+                    DelivereDate = t.DelivereDate,
+                    PackageAmount = t.PackagingAmount,
+                    TaxAmount = t.Tax,
+                    TotalAmount = t.FinalAmount,
+                }
             }).ToListAsync();
 
-            return new ServiceResponse<IList<OrderInqueryOptionsDto>>
+            var pickupDates = PickupSlots.For(DateTimeOffset.Now);
+            var lst = rows.GroupBy(t => (t.ServiceProviderId, t.Title))
+                .Select(g => new OrderProviderOptionsDto(g.Key.ServiceProviderId, g.Key.Title, g.Select(t => t.Option).ToList(), pickupDates))
+                .ToList();
+
+            return new ServiceResponse<IList<OrderProviderOptionsDto>>
             {
                 Data = lst,
                 Succuss = true,
@@ -208,7 +218,7 @@ public class OrderService(AppDbContext appDbContext,
         catch (Exception exc)
         {
             logger.LogError(exc, "[Order][GetOptions][{OrderId}] Getting options failed.", requestDto.OrderId);
-            return new ServiceResponse<IList<OrderInqueryOptionsDto>>
+            return new ServiceResponse<IList<OrderProviderOptionsDto>>
             {
                 Data = null,
                 Succuss = false,
@@ -232,13 +242,13 @@ public class OrderService(AppDbContext appDbContext,
     /// <summary>An unpaged list returns at most this many orders, the newest first.</summary>
     private const int UnpagedOrderLimit = 100;
 
-    public async Task<ServiceResponse<IList<OrderDto>>> GetOrderListAsync(GetOrderListRequestDto requestDto)
+    public async Task<ServiceResponse<OrderListResponseDto>> GetOrderListAsync(GetOrderListRequestDto requestDto)
     {
         var customerId = await appDbContext.Customers.Where(t => t.Person.UserId == requestDto.UserId).Select(t => (int?)t.Id).FirstOrDefaultAsync();
 
         if (customerId == null)
         {
-            return new ServiceResponse<IList<OrderDto>>
+            return new ServiceResponse<OrderListResponseDto>
             {
                 Data = null,
                 Succuss = false,
@@ -251,6 +261,8 @@ public class OrderService(AppDbContext appDbContext,
             .ApplyFilters(queryParams.FilterGroups, OrderFilterableProperties)
             .ApplySorting(queryParams.SortConditions, OrderFilterableProperties);
 
+        var totalCount = await query.CountAsync();
+
         // Paging needs a stable order, so pages never overlap or skip rows.
         if (query.Expression.Type != typeof(IOrderedQueryable<Order>))
         {
@@ -261,11 +273,26 @@ public class OrderService(AppDbContext appDbContext,
             ? query.ApplyPagination(queryParams.PageNumber, queryParams.PageSize)
             : query.Take(UnpagedOrderLimit);
 
-        var result = (await query.ToListAsync()).Select(o => o.Map()).ToList();
-
-        return new ServiceResponse<IList<OrderDto>>
+        var rows = await query.Select(o => new
         {
-            Data = result,
+            Order = o,
+            // Orders has no FinalAmount column: the chosen quote holds the total.
+            FinalAmount = o.OrderInqueryOptions.Where(t => t.Choosen).Select(t => t.FinalAmount).FirstOrDefault(),
+            OriginCityName = appDbContext.StaticDatas.Where(s => s.Id == o.OriginCity).Select(s => s.Title).FirstOrDefault(),
+            DestinationCityName = appDbContext.StaticDatas.Where(s => s.Id == o.DestinationCity).Select(s => s.Title).FirstOrDefault(),
+        }).ToListAsync();
+
+        var result = rows.Select(t => t.Order.Map() with
+        {
+            FinalAmount = t.FinalAmount,
+            StatusName = ((OrderState)t.Order.State).GetDescription(),
+            OriginCityName = t.OriginCityName,
+            DestinationCityName = t.DestinationCityName,
+        }).ToList();
+
+        return new ServiceResponse<OrderListResponseDto>
+        {
+            Data = new OrderListResponseDto(totalCount, result),
             Succuss = true,
             Message = string.Empty
         };
@@ -288,70 +315,23 @@ public class OrderService(AppDbContext appDbContext,
         };
     }
 
-    public async Task<ServiceResponse<SelectOptionResponseDto>> SelectOptionAndPaymentAsync(SelectOptionRequestDto requestDto, int userId)
+    public async Task<ServiceResponse<SelectOptionResponseDto>> SelectOptionAsync(SelectOptionRequestDto requestDto, int userId)
     {
-        var person = await appDbContext.People.FirstOrDefaultAsync(t => t.UserId == userId);
-        if (person is null)
-        {
-            return new ServiceResponse<SelectOptionResponseDto>
-            {
-                Data = null,
-                Succuss = false,
-                Message = localizer[nameof(AppStrings.UserIsNotRegistered)]
-            };
-        }
-
         var order = await appDbContext.Orders.FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId);
-
         if (order is null)
-        {
-            return new ServiceResponse<SelectOptionResponseDto>
-            {
-                Data = null,
-                Succuss = false,
-                Message = localizer[nameof(AppStrings.InvalidOrder)]
-            };
-        }
+            return Fail<SelectOptionResponseDto>(nameof(AppStrings.InvalidOrder));
+
+        if (order.State == (short)OrderState.Paid)
+            return Fail<SelectOptionResponseDto>(nameof(AppStrings.OrderIsAlreadyPaid));
 
         var orderInquiry = await appDbContext.OrderInqueryOptions.FirstOrDefaultAsync(t => t.Id == requestDto.OrderInqueryOptionId && t.OrderId == order.Id);
         if (orderInquiry is null)
-        {
-            return new ServiceResponse<SelectOptionResponseDto>
-            {
-                Data = null,
-                Succuss = false,
-                Message = localizer[nameof(AppStrings.InvalidOrderOption)]
-            };
-        }
+            return Fail<SelectOptionResponseDto>(nameof(AppStrings.InvalidOrderOption));
 
-        if (order.State == (short)OrderState.Paid)
-        {
-            return new ServiceResponse<SelectOptionResponseDto>
-            {
-                Data = null,
-                Succuss = false,
-                Message = localizer[nameof(AppStrings.OrderIsAlreadyPaid)]
-            };
-        }
+        if (PickupSlots.Find(requestDto.PickupId, DateTimeOffset.Now) is not { } pickup)
+            return Fail<SelectOptionResponseDto>(nameof(AppStrings.InvalidPickupTime));
 
-        // The gateway redirects the customer to this URL, so it must point at our own frontend.
-        if (Uri.TryCreate(requestDto.CallbackUrl, UriKind.Absolute, out var callbackUri) is false)
-        {
-            return new ServiceResponse<SelectOptionResponseDto> { Data = null, Succuss = false, Message = localizer[nameof(AppStrings.InvalidCallbackUrl)] };
-        }
-        if (paymentOptions.AllowedCallbackOrigins.Length == 0)
-        {
-            logger.LogWarning("[Order][SelectOptionAndPayment][{OrderId}] Payment:AllowedCallbackOrigins is empty; any callback URL is accepted.", order.Id);
-        }
-        else if (paymentOptions.AllowedCallbackOrigins.Contains(callbackUri.GetLeftPart(UriPartial.Authority), StringComparer.OrdinalIgnoreCase) is false)
-        {
-            return new ServiceResponse<SelectOptionResponseDto> { Data = null, Succuss = false, Message = localizer[nameof(AppStrings.InvalidCallbackUrl)] };
-        }
-
-        // TODO(plan 010): unit unconfirmed (ADR-0001 verdict c), so the quote goes to the gateway unconverted.
-        var expectedGatewayAmount = (long)decimal.Round(orderInquiry.FinalAmount, MidpointRounding.AwayFromZero);
-
-        // Record the accepted quote before the gateway call, so later steps know what the customer chose.
+        // Record the accepted quote, so SelectPaymentType charges what the customer chose.
         var orderOptions = await appDbContext.OrderInqueryOptions.Where(t => t.OrderId == order.Id).ToListAsync();
         foreach (var option in orderOptions)
             option.Choosen = option.Id == orderInquiry.Id;
@@ -363,6 +343,7 @@ public class OrderService(AppDbContext appDbContext,
         order.ServiceType = orderInquiry.ServiceType;
         order.ServiceSLA = orderInquiry.ServiceSLA;
         order.ServiceProviderId = orderInquiry.ServiceProviderId;
+        order.PickupDateTime = pickup.Start;
         order.State = (short)OrderState.SelectedServiceProvider;
         order.ModificationDate = DateTimeOffset.Now;
         appDbContext.OrderStatuses.Add(new OrderStatus
@@ -375,11 +356,60 @@ public class OrderService(AppDbContext appDbContext,
         });
         await appDbContext.SaveChangesAsync();
 
+        return new ServiceResponse<SelectOptionResponseDto>
+        {
+            Data = new SelectOptionResponseDto(
+            [
+                new PickupOptionDto(orderInquiry.Id, null, orderInquiry.FinalAmount, orderInquiry.ServiceAmount, orderInquiry.PackagingAmount, orderInquiry.Tax, pickup.Description)
+            ]),
+            Succuss = true,
+            Message = string.Empty
+        };
+    }
+
+    public async Task<ServiceResponse<SelectPaymentTypeResponseDto>> SelectPaymentTypeAsync(SelectPaymentTypeRequestDto requestDto, int userId)
+    {
+        // The front settles cash on delivery itself and calls this endpoint only for online payment.
+        if (requestDto.PaymentType != PaymentMethod.Online)
+            return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.PaymentTypeNotSupported));
+
+        var person = await appDbContext.People.FirstOrDefaultAsync(t => t.UserId == userId);
+        if (person is null)
+            return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.UserIsNotRegistered));
+
+        var order = await appDbContext.Orders.FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId);
+        if (order is null)
+            return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.InvalidOrder));
+
+        if (order.State == (short)OrderState.Paid)
+            return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.OrderIsAlreadyPaid));
+
+        // Only the option SelectOption recorded can be paid.
+        var orderInquiry = await appDbContext.OrderInqueryOptions.FirstOrDefaultAsync(t => t.Id == requestDto.PickupOptionId && t.OrderId == order.Id && t.Choosen);
+        if (orderInquiry is null)
+            return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.InvalidOrderOption));
+
+        // The gateway redirects the customer to this URL, so it must point at our own frontend.
+        if (Uri.TryCreate(requestDto.CallbackUrl, UriKind.Absolute, out var callbackUri) is false)
+            return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.InvalidCallbackUrl));
+
+        if (paymentOptions.AllowedCallbackOrigins.Length == 0)
+        {
+            logger.LogWarning("[Order][SelectPaymentType][{OrderId}] Payment:AllowedCallbackOrigins is empty; any callback URL is accepted.", order.Id);
+        }
+        else if (paymentOptions.AllowedCallbackOrigins.Contains(callbackUri.GetLeftPart(UriPartial.Authority), StringComparer.OrdinalIgnoreCase) is false)
+        {
+            return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.InvalidCallbackUrl));
+        }
+
+        // TODO(plan 010): unit unconfirmed (ADR-0001 verdict c), so the quote goes to the gateway unconverted.
+        var expectedGatewayAmount = (long)decimal.Round(orderInquiry.FinalAmount, MidpointRounding.AwayFromZero);
+
         var result = await sep724Provider.GetPaymentTokenAsync(new PaymentTokenRequestDto
         {
             Amount = expectedGatewayAmount,
             PhoneNumber = person.PhoneNumber,
-            Channel = requestDto.Channel,
+            Channel = string.IsNullOrEmpty(requestDto.Channel) ? "pwa" : requestDto.Channel,
             CallbackUrl = requestDto.CallbackUrl,
             OrderNumber = order.OrderNumber,
         });
@@ -388,13 +418,8 @@ public class OrderService(AppDbContext appDbContext,
         if (result is null || data is null)
         {
             // Provider text goes to the log only (ADR-0003).
-            logger.LogWarning("[Order][SelectOptionAndPayment][{OrderId}][{ProviderMessage}] Payment link was not created.", order.Id, result?.Title ?? result?.Message);
-            return new ServiceResponse<SelectOptionResponseDto>
-            {
-                Data = null,
-                Succuss = false,
-                Message = localizer[nameof(AppStrings.PaymentLinkFailed)]
-            };
+            logger.LogWarning("[Order][SelectPaymentType][{OrderId}][{ProviderMessage}] Payment link was not created.", order.Id, result?.Title ?? result?.Message);
+            return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.PaymentLinkFailed));
         }
 
         // The server-computed amount is the only truth; verification later compares the gateway against it.
@@ -419,11 +444,21 @@ public class OrderService(AppDbContext appDbContext,
             CityId = order.OriginCity,
             Description = "Payment link issued"
         });
-        await appDbContext.SaveChangesAsync();
 
-        return new ServiceResponse<SelectOptionResponseDto>
+        try
         {
-            Data = new SelectOptionResponseDto
+            await appDbContext.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex)
+        {
+            // A repeated gateway reference code breaks the unique index; the link cannot be tracked, so it is not given out.
+            logger.LogError(ex, "[Order][SelectPaymentType][{OrderId}] Payment was not saved.", order.Id);
+            return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.PaymentLinkFailed));
+        }
+
+        return new ServiceResponse<SelectPaymentTypeResponseDto>
+        {
+            Data = new SelectPaymentTypeResponseDto
             {
                 ReferenceCode = data.ReferenceCode,
                 RequestId = data.RequestId,
@@ -433,4 +468,9 @@ public class OrderService(AppDbContext appDbContext,
             Message = localizer[nameof(AppStrings.PaymentLinkCreated)],
         };
     }
+
+    private ServiceResponse<T> Fail<T>(string messageKey) => new() { Data = default, Succuss = false, Message = localizer[messageKey] };
+
+    /// <summary>A quote part the provider may leave out counts as 0.</summary>
+    private static decimal PartAmount(string? value) => string.IsNullOrEmpty(value) ? 0 : decimal.Parse(value, CultureInfo.InvariantCulture);
 }

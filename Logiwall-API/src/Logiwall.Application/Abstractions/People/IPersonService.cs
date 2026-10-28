@@ -9,4 +9,6 @@ public interface IPersonService
     Task<ServiceResponse<UserProfileDto>> GetUserProfileAsync(int userId);
 
     Task<ServiceResponse<UserProfileDto>> UpdateUserProfileAsync(UserProfileDto requestDto);
+
+    Task<ServiceResponse<bool>> ChangePasswordAsync(int userId, ChangePasswordRequestDto requestDto);
 }

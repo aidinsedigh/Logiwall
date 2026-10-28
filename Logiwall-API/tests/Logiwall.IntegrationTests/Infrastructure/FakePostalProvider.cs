@@ -29,7 +29,8 @@ public class FakePostalProvider(IAppSettingService appSettingService, IHttpProvi
     private static OrderInquiryOptionDto Option(string id) => new()
     {
         ProviderId = id,
-        SpecialService = "1000",
+        ShippingCost = "900",
+        SpecialService = "100",
         PackageService = "0",
         Tax = "100",
         FinalAmount = "1100",

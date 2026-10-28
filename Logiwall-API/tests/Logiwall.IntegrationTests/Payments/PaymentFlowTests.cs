@@ -14,21 +14,20 @@ namespace Logiwall.IntegrationTests.Payments;
 [Collection("api")]
 public class PaymentFlowTests(SqlServerFixture fixture)
 {
-    private static object SelectBody(int orderId, int optionId, string callbackUrl = "https://example.test/cb") =>
-        new { orderId, orderInqueryOptionId = optionId, channel = "pwa", callbackUrl };
-
-    private static async Task<int> QuoteAsync(HttpClient client, int orderId)
+    /// <summary>Quoted and selected, not paid yet.</summary>
+    private async Task<(HttpClient Client, int OrderId, int OptionId)> SelectedOrderAsync()
     {
-        var quote = await ApiClient.ReadJsonAsync(await client.GetAsync($"api/Order/GetOptions?orderId={orderId}"));
-        return quote.GetProperty("data")[0].GetProperty("id").GetInt32();
+        var (owner, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
+        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+        var optionId = await OrderTestData.QuoteAsync(owner, orderId);
+        (await OrderTestData.SelectAsync(owner, orderId, optionId)).EnsureSuccessStatusCode();
+        return (owner, orderId, optionId);
     }
 
     private async Task<(HttpClient Client, int OrderId)> PendingPaymentAsync()
     {
-        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
-        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
-        var optionId = await QuoteAsync(client, orderId);
-        (await client.PostAsJsonAsync("api/Order/SelectOption", SelectBody(orderId, optionId))).EnsureSuccessStatusCode();
+        var (client, orderId, optionId) = await SelectedOrderAsync();
+        (await OrderTestData.PayAsync(client, orderId, optionId)).EnsureSuccessStatusCode();
         return (client, orderId);
     }
 
@@ -38,7 +37,65 @@ public class PaymentFlowTests(SqlServerFixture fixture)
             .Select(t => (t.Status, t.Amount, t.GatewayReferenceCode)).ToList());
 
     [Fact]
-    public async Task SelectOption_creates_pending_payment_with_server_amount()
+    public async Task Cash_on_delivery_is_rejected()
+    {
+        var (client, orderId, optionId) = await SelectedOrderAsync();
+
+        var response = await OrderTestData.PayAsync(client, orderId, optionId, paymentType: 72);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.PaymentTypeNotSupported));
+        Assert.Empty(await PaymentsAsync(orderId));
+    }
+
+    [Fact]
+    public async Task Option_that_was_not_selected_cannot_be_paid()
+    {
+        var (client, orderId, optionId) = await SelectedOrderAsync();
+        var otherOptionId = await fixture.WithDbAsync(db => db.OrderInqueryOptions.Where(t => t.OrderId == orderId && t.Id != optionId).Select(t => t.Id).FirstAsync());
+
+        var response = await OrderTestData.PayAsync(client, orderId, otherOptionId);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.InvalidOrderOption));
+    }
+
+    [Fact]
+    public async Task SelectPaymentType_returns_the_link_the_front_redirects_to()
+    {
+        var (client, orderId, optionId) = await SelectedOrderAsync();
+
+        var response = await OrderTestData.PayAsync(client, orderId, optionId);
+
+        response.EnsureSuccessStatusCode();
+        var data = (await ApiClient.ReadJsonAsync(response)).GetProperty("data");
+        Assert.False(string.IsNullOrEmpty(data.GetProperty("paymentLink").GetString()));
+        Assert.Equal("pwa", fixture.Factory.Services.GetRequiredService<FakeSep724Provider>().LastChannel);
+    }
+
+    [Fact]
+    public async Task Repeated_gateway_reference_returns_own_message_not_500()
+    {
+        var (client, orderId) = await PendingPaymentAsync();
+        var used = await fixture.WithDbAsync(db => db.OrderPayments.Where(t => t.OrderId == orderId).Select(t => t.GatewayReferenceCode!.Value).SingleAsync());
+        var gateway = fixture.Factory.Services.GetRequiredService<FakeSep724Provider>();
+        var optionId = await fixture.WithDbAsync(db => db.OrderInqueryOptions.Where(t => t.OrderId == orderId && t.Choosen).Select(t => t.Id).SingleAsync());
+        gateway.NextReferenceCode = used;
+        try
+        {
+            var response = await OrderTestData.PayAsync(client, orderId, optionId);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.PaymentLinkFailed));
+        }
+        finally
+        {
+            gateway.NextReferenceCode = null;
+        }
+    }
+
+    [Fact]
+    public async Task SelectPaymentType_creates_pending_payment_with_server_amount()
     {
         var (_, orderId) = await PendingPaymentAsync();
 
@@ -56,15 +113,13 @@ public class PaymentFlowTests(SqlServerFixture fixture)
     {
         await using var factory = fixture.Factory.WithWebHostBuilder(b => b.UseSetting("Payment:AllowedCallbackOrigins:0", "https://app.test"));
         var gateway = factory.Services.GetRequiredService<FakeSep724Provider>();
-        var (owner, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
-        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+        var (owner, orderId, optionId) = await SelectedOrderAsync();
         // Both hosts sign and validate with the same test certificate, so the owner's token works here too.
         var client = factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = owner.DefaultRequestHeaders.Authorization;
-        var optionId = await QuoteAsync(client, orderId);
         var callsBefore = gateway.TokenCalls;
 
-        var response = await client.PostAsJsonAsync("api/Order/SelectOption", SelectBody(orderId, optionId, "https://evil.test/cb"));
+        var response = await OrderTestData.PayAsync(client, orderId, optionId, "https://evil.test/cb");
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.InvalidCallbackUrl));
@@ -142,13 +197,11 @@ public class PaymentFlowTests(SqlServerFixture fixture)
     public async Task Gateway_failure_returns_own_message_not_provider_text()
     {
         var gateway = fixture.Factory.Services.GetRequiredService<FakeSep724Provider>();
-        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
-        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
-        var optionId = await QuoteAsync(client, orderId);
+        var (client, orderId, optionId) = await SelectedOrderAsync();
         gateway.FailWithTitle = "Provider internal text";
         try
         {
-            var response = await client.PostAsJsonAsync("api/Order/SelectOption", SelectBody(orderId, optionId));
+            var response = await OrderTestData.PayAsync(client, orderId, optionId);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.PaymentLinkFailed));

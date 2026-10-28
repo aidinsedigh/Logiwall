@@ -3,6 +3,7 @@ using Logiwall.Client.Core.Controllers.People;
 using Logiwall.Domain.Entities.Identity;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.People;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Logiwall.Server.Controllers.People;
 
@@ -40,6 +41,17 @@ public partial class PersonController : AppControllerBase, IPersonController
         if (!response.Succuss)
         {
             return BadRequest(response);
+        }
+
+        // GetUserProfile reads the e-mail from the Identity user.
+        if (string.IsNullOrWhiteSpace(requestDto.Email) is false
+            && (await userManager.SetEmailAsync(user, requestDto.Email)).Succeeded is false)
+        {
+            return BadRequest(new ServiceResponse<bool>
+            {
+                Succuss = false,
+                Message = Localizer[nameof(AppStrings.EmailAddressAttribute_ValidationError), Localizer[nameof(AppStrings.Email)]]
+            });
         }
 
         var token = await userManager.GeneratePasswordResetTokenAsync(user);
@@ -86,6 +98,17 @@ public partial class PersonController : AppControllerBase, IPersonController
         }
         requestDto.UserId = userId;
         var response = await personService.UpdateUserProfileAsync(requestDto);
+        if (!response.Succuss)
+        {
+            return BadRequest(response);
+        }
+        return Ok(response);
+    }
+
+    [HttpPost, EnableRateLimiting("auth-verify")]
+    public async Task<ActionResult> ChangePassword(ChangePasswordRequestDto requestDto, CancellationToken cancellationToken)
+    {
+        var response = await personService.ChangePasswordAsync(User.GetUserId(), requestDto);
         if (!response.Succuss)
         {
             return BadRequest(response);

@@ -70,7 +70,7 @@ public class OtpThrottlingTests(SqlServerFixture fixture)
         var response = await ConfirmAsync(client, phone, code);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var token = (await ApiClient.ReadJsonAsync(response)).GetProperty("data").GetProperty("token").GetString();
+        var token = (await ApiClient.ReadJsonAsync(response)).GetProperty("data").GetProperty("accessToken").GetString();
         Assert.False(string.IsNullOrEmpty(token));
 
         var attemptTokens = await fixture.WithDbAsync(async db =>

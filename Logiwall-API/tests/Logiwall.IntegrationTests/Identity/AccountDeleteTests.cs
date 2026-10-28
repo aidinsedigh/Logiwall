@@ -15,10 +15,7 @@ public class AccountDeleteTests(SqlServerFixture fixture)
     {
         var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
         var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
-        var quote = await ApiClient.ReadJsonAsync(await client.GetAsync($"api/Order/GetOptions?orderId={orderId}"));
-        var optionId = quote.GetProperty("data")[0].GetProperty("id").GetInt32();
-        (await client.PostAsJsonAsync("api/Order/SelectOption",
-            new { orderId, orderInqueryOptionId = optionId, channel = "pwa", callbackUrl = "https://example.test/cb" })).EnsureSuccessStatusCode();
+        await OrderTestData.PendingPaymentAsync(client, orderId);
 
         var response = await client.DeleteAsync("api/User/Delete");
 

@@ -147,18 +147,19 @@ public class PersonService(AppDbContext dbContext,
                 };
             }
 
+            // The phone number is the login identity, so the profile form never changes it.
             person.Name = requestDto.FirstName;
             person.LastName = requestDto.LastName;
-            person.PhoneNumber = requestDto.PhoneNumber;
             dbContext.Update(person);
 
+            // The front's profile form has no kind or birth date: keep the stored values when they are not sent.
             var personalInfo = person.PersonalInfo;
             if (personalInfo is null)
             {
                 personalInfo = new PersonalInfo
                 {
                     BirthDate = requestDto.BirthDate,
-                    Kind = requestDto.Kind,
+                    Kind = Enum.IsDefined(requestDto.Kind) ? requestDto.Kind : Constants.PersonKind.Private,
                     Gender = requestDto.Gender,
                     NationalCode = requestDto.NationalCode,
                     PersonId = person.Id,
@@ -167,9 +168,10 @@ public class PersonService(AppDbContext dbContext,
             }
             else
             {
-                personalInfo.BirthDate = requestDto.BirthDate;
+                personalInfo.BirthDate = requestDto.BirthDate ?? personalInfo.BirthDate;
                 personalInfo.Gender = requestDto.Gender;
-                personalInfo.Kind = requestDto.Kind;
+                if (Enum.IsDefined(requestDto.Kind))
+                    personalInfo.Kind = requestDto.Kind;
                 personalInfo.NationalCode = requestDto.NationalCode;
 
                 dbContext.Update(personalInfo);
@@ -194,6 +196,25 @@ public class PersonService(AppDbContext dbContext,
                 Message = localizer[nameof(AppStrings.UnknownException)]
             };
         }
-        
+
+    }
+
+    public async Task<ServiceResponse<bool>> ChangePasswordAsync(int userId, ChangePasswordRequestDto requestDto)
+    {
+        var user = await userManager.FindByIdAsync(userId.ToString());
+        if (user is null)
+        {
+            return new ServiceResponse<bool> { Data = false, Succuss = false, Message = localizer[nameof(AppStrings.UserNotFound)] };
+        }
+
+        var result = await userManager.ChangePasswordAsync(user, requestDto.OldPassword!, requestDto.NewPassword!);
+        if (result.Succeeded is false)
+        {
+            logger.LogWarning("[Person][ChangePassword][{UserId}][{ErrorCodes}] Password was not changed.", userId, string.Join(", ", result.Errors.Select(e => e.Code)));
+            // AppIdentityErrorDescriber writes the descriptions in Persian (ADR-0003).
+            return new ServiceResponse<bool> { Data = false, Succuss = false, Message = string.Join(" ", result.Errors.Select(e => e.Description)) };
+        }
+
+        return new ServiceResponse<bool> { Data = true, Succuss = true, Message = localizer[nameof(AppStrings.PasswordChangedSuccessfullyMessage)] };
     }
 }

@@ -27,6 +27,15 @@ public class Constants
         BankGateway = 6,
     }
 
+    /// <summary>The front's payment choice on the pay step.</summary>
+    public enum PaymentMethod
+    {
+        [Description("پرداخت آنلاین")]
+        Online = 71,
+        [Description("پس کرایه")]
+        CashOnDelivery = 72,
+    }
+
     public enum ParcelType : short
     {
         [Description("پاکت")]

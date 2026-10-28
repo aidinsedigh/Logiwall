@@ -670,4 +670,13 @@
   <data name="PaidOrders" xml:space="preserve">
     <value>سفارش‌های پرداخت‌شده</value>
   </data>
+  <data name="OtpLoginSucceeded" xml:space="preserve">
+    <value>ورود با موفقیت انجام شد.</value>
+  </data>
+  <data name="InvalidPickupTime" xml:space="preserve">
+    <value>زمان جمع‌آوری انتخاب‌شده معتبر نیست.</value>
+  </data>
+  <data name="PaymentTypeNotSupported" xml:space="preserve">
+    <value>این روش پرداخت پشتیبانی نمی‌شود.</value>
+  </data>
 </root>

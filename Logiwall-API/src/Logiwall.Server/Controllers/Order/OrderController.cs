@@ -47,7 +47,20 @@ public partial class OrderController : AppControllerBase, IOrderController
     public async Task<ActionResult> SelectOption(SelectOptionRequestDto requestDto, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
-        var result = await orderService.SelectOptionAndPaymentAsync(requestDto, userId);
+        var result = await orderService.SelectOptionAsync(requestDto, userId);
+
+        if (!result.Succuss)
+        {
+            ModelState.AddModelError(string.Empty, result.Message);
+            return BadRequest(result);
+        }
+        return Ok(result);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult> SelectPaymentType(SelectPaymentTypeRequestDto requestDto, CancellationToken cancellationToken)
+    {
+        var result = await orderService.SelectPaymentTypeAsync(requestDto, User.GetUserId());
 
         if (!result.Succuss)
         {

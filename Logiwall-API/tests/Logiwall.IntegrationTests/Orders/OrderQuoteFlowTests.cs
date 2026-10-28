@@ -24,8 +24,30 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
         var second = await client.GetAsync($"api/Order/GetOptions?orderId={orderId}");
 
         second.EnsureSuccessStatusCode();
-        Assert.Equal(2, (await ApiClient.ReadJsonAsync(second)).GetProperty("data").GetArrayLength());
+        var provider = Assert.Single((await ApiClient.ReadJsonAsync(second)).GetProperty("data").EnumerateArray());
+        Assert.Equal(2, provider.GetProperty("orderOptions").GetArrayLength());
         Assert.Equal(2, await OptionCountAsync(orderId));
+    }
+
+    [Fact]
+    public async Task GetOptions_returns_the_front_shape_with_parts_that_add_up()
+    {
+        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
+        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+
+        var provider = (await ApiClient.ReadJsonAsync(await client.GetAsync($"api/Order/GetOptions?orderId={orderId}"))).GetProperty("data")[0];
+
+        Assert.True(provider.GetProperty("providerId").GetInt16() > 0);
+        Assert.False(string.IsNullOrEmpty(provider.GetProperty("providerName").GetString()));
+        var option = provider.GetProperty("orderOptions")[0];
+        // FakePostalProvider: shippingCost 900 + specialService 100, tax 100, total 1100.
+        Assert.Equal(1000m, option.GetProperty("baseAmount").GetDecimal());
+        Assert.Equal(option.GetProperty("totalAmount").GetDecimal(),
+            option.GetProperty("baseAmount").GetDecimal() + option.GetProperty("packageAmount").GetDecimal() + option.GetProperty("taxAmount").GetDecimal());
+        // The front selects pickupDates[1].times[0] by default.
+        var dates = provider.GetProperty("pickupDates");
+        Assert.True(dates.GetArrayLength() >= 2);
+        Assert.Equal(OrderTestData.PickupId(), dates[0].GetProperty("times")[0].GetProperty("id").GetString());
     }
 
     [Fact]
@@ -55,29 +77,42 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
     {
         var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
         var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
-        var quote = await ApiClient.ReadJsonAsync(await client.GetAsync($"api/Order/GetOptions?orderId={orderId}"));
-        var chosenId = quote.GetProperty("data")[0].GetProperty("id").GetInt32();
+        var chosenId = await OrderTestData.QuoteAsync(client, orderId);
 
-        await client.PostAsJsonAsync("api/Order/SelectOption", new
-        {
-            orderId,
-            orderInqueryOptionId = chosenId,
-            channel = "pwa",
-            callbackUrl = "https://example.test/cb"
-        });
+        var response = await OrderTestData.SelectAsync(client, orderId, chosenId);
 
-        var (options, state, statuses) = await fixture.WithDbAsync(async db =>
+        response.EnsureSuccessStatusCode();
+        var pickupOption = (await ApiClient.ReadJsonAsync(response)).GetProperty("data").GetProperty("pickupOptions")[0];
+        Assert.Equal(chosenId, pickupOption.GetProperty("id").GetInt32());
+        Assert.Equal(1100m, pickupOption.GetProperty("finalAmount").GetDecimal());
+        var (options, state, statuses, pickup, payments) = await fixture.WithDbAsync(async db =>
         {
             var options = await db.OrderInqueryOptions.Where(t => t.OrderId == orderId).Select(t => new { t.Id, t.Choosen }).ToListAsync();
-            var state = await db.Orders.Where(t => t.Id == orderId).Select(t => t.State).SingleAsync();
+            var order = await db.Orders.Where(t => t.Id == orderId).Select(t => new { t.State, t.PickupDateTime }).SingleAsync();
             var statuses = await db.OrderStatuses.Where(t => t.OrderId == orderId).Select(t => t.Status).ToListAsync();
-            return (options, state, statuses);
+            var payments = await db.OrderPayments.CountAsync(t => t.OrderId == orderId);
+            return (options, order.State, statuses, order.PickupDateTime, payments);
         });
         Assert.True(options.Single(t => t.Id == chosenId).Choosen);
         Assert.False(options.Single(t => t.Id != chosenId).Choosen);
-        // The fake gateway issues a link, so the order moves on to PaymentPending (plan 012).
-        Assert.Equal((short)OrderState.PaymentPending, state);
+        // Payment is a separate step now (SelectPaymentType).
+        Assert.Equal((short)OrderState.SelectedServiceProvider, state);
         Assert.Contains((int)OrderState.SelectedServiceProvider, statuses);
+        Assert.NotNull(pickup);
+        Assert.Equal(0, payments);
+    }
+
+    [Fact]
+    public async Task SelectOption_rejects_a_pickup_time_that_is_not_offered()
+    {
+        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
+        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+        var optionId = await OrderTestData.QuoteAsync(client, orderId);
+
+        var response = await client.PostAsJsonAsync("api/Order/SelectOption", new { orderId, orderInqueryOptionId = optionId, pickupId = "2000-01-01T09" });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.InvalidPickupTime));
     }
 
     [Fact]
@@ -103,9 +138,10 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
         var response = await client.PostAsJsonAsync("api/Order/GetOrders", new { });
 
         response.EnsureSuccessStatusCode();
-        var order = (await ApiClient.ReadJsonAsync(response)).GetProperty("data").EnumerateArray()
+        var order = (await ApiClient.ReadJsonAsync(response)).GetProperty("data").GetProperty("result").EnumerateArray()
             .Single(o => o.GetProperty("id").GetInt32() == orderId);
         Assert.Equal((short)OrderState.PaymentPending, order.GetProperty("status").GetInt16());
+        Assert.Equal("در انتظار پرداخت", order.GetProperty("statusName").GetString());
     }
 
     [Fact(Skip = "no policy gap to exercise")]

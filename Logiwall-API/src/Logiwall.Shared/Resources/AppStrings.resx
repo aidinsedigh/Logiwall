@@ -670,4 +670,13 @@ Please confirm your email by clicking on the link.</value>
   <data name="PaidOrders" xml:space="preserve">
     <value>Paid orders</value>
   </data>
+  <data name="OtpLoginSucceeded" xml:space="preserve">
+    <value>You are signed in.</value>
+  </data>
+  <data name="InvalidPickupTime" xml:space="preserve">
+    <value>The selected pickup time is not valid.</value>
+  </data>
+  <data name="PaymentTypeNotSupported" xml:space="preserve">
+    <value>This payment type is not supported.</value>
+  </data>
 </root>
