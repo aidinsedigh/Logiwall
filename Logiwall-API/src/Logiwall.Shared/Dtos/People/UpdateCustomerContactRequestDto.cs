@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.People;
-public class UpdateCustomerContactRequestDto
+public record UpdateCustomerContactRequestDto
 {
     [Required]
     public int Id { get; set; }

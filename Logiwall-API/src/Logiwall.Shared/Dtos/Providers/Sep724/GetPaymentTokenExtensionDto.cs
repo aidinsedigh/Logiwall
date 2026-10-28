@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.Providers.Sep724;
-public class GetPaymentTokenExtensionDto
+public record GetPaymentTokenExtensionDto
 {
     [JsonPropertyName("orderId")]
     public string? OrderNumber { get; set; }

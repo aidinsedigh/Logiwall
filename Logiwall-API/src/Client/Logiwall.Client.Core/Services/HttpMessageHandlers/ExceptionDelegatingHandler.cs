@@ -35,6 +35,18 @@ public class ExceptionDelegatingHandler(IStringLocalizer<AppStrings> localizer, 
 
                     throw exp;
                 }
+
+                // A failed ServiceResponse comes back as 400 with no Request-ID; show its (Persian) message.
+                if (response.StatusCode is HttpStatusCode.BadRequest)
+                {
+                    using var body = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(cancellationToken), cancellationToken: cancellationToken);
+                    if (body.RootElement.ValueKind is JsonValueKind.Object
+                        && body.RootElement.TryGetProperty("message", out var message)
+                        && message.ValueKind is JsonValueKind.String && message.GetString() is { Length: > 0 } text)
+                    {
+                        throw new BadRequestException(text);
+                    }
+                }
             }
 
             if (response.StatusCode is HttpStatusCode.Unauthorized)

@@ -9,4 +9,8 @@ public enum OrderState: short
     SelectedServiceProvider = 1,
     [Description("پرداخت شده")]
     Paid = 2,
+    [Description("در انتظار پرداخت")]
+    PaymentPending = 3,
+    [Description("پرداخت ناموفق")]
+    PaymentFailed = 4,
 }

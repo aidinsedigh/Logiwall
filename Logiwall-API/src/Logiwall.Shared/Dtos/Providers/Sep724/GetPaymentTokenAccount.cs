@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.Providers.Sep724;
-public class GetPaymentTokenAccount
+public record GetPaymentTokenAccount
 {
     [JsonPropertyName("amount")]
     public long Amount { get; set; }

@@ -130,7 +130,7 @@
     <value>داده های درخواست معتبر نمیباشند.</value>
   </data>
   <data name="RestException" xml:space="preserve">
-    <value>ToDo</value>
+    <value>هنگام ارتباط با سرور خطایی رخ داد.</value>
   </data>
   <data name="UnknownException" xml:space="preserve">
     <value>خطای نامشخص</value>
@@ -154,7 +154,7 @@
     <value>نام</value>
   </data>
   <data name="TermsTitle" xml:space="preserve">
-    <value>ToDo</value>
+    <value>قوانین</value>
   </data>
   <data name="ProfileUpdatedSuccessfullyMessage" xml:space="preserve">
     <value>پروفایل شما با موفقیت آپدیت شد.</value>
@@ -166,14 +166,14 @@
     <value>تغییر رمز عبور با موفقیت انجام شد.</value>
   </data>
   <assembly alias="System.Windows.Forms" name="System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089" />
-  <data name="ResendConfirmationLinkMessage" type="System.Resources.ResXNullRef, System.Windows.Forms">
-    <value />
+  <data name="ResendConfirmationLinkMessage" xml:space="preserve">
+    <value>لینک تأیید دوباره به ایمیل شما ارسال شد.</value>
   </data>
   <data name="WaitForResetPasswordEmailResendDelay" xml:space="preserve">
     <value>شما قبلا ایمیل تغییر رمز عبور را دریافت نموده اید. لطفا پس از {0} تلاش کنید.</value>
   </data>
   <data name="TermsAccepted" xml:space="preserve">
-    <value>ToDo</value>
+    <value>قوانین را می‌پذیرید؟</value>
   </data>
   <data name="YouHaveToAcceptTerms" xml:space="preserve">
     <value>شما باید با شرایط ما موافقت کنید.</value>
@@ -251,7 +251,7 @@
     <value>ثبت نام</value>
   </data>
   <data name="TermsMessage" xml:space="preserve">
-    <value>ToDo</value>
+    <value>من موافقم با</value>
   </data>
   <data name="UploadNewProfileImage" xml:space="preserve">
     <value>تصویر پروفایل جدیدی را بارگزاری نمایید.</value>
@@ -278,7 +278,7 @@
     <value>ورود با کاربری دیگر</value>
   </data>
   <data name="YouAreSignInAs" xml:space="preserve">
-    <value>ToDo</value>
+    <value>شما وارد شده‌اید با</value>
   </data>
   <data name="ForgotPasswordLink" xml:space="preserve">
     <value>فراموشی رمز عبور</value>
@@ -287,10 +287,10 @@
     <value>مرا بخاطر بسپار</value>
   </data>
   <data name="Update" xml:space="preserve">
-    <value>ToDo</value>
+    <value>به‌روزرسانی</value>
   </data>
-  <data name="UpdateToNewVersion" type="System.Resources.ResXNullRef, System.Windows.Forms">
-    <value />
+  <data name="UpdateToNewVersion" xml:space="preserve">
+    <value>آیا می‌خواهید به نسخهٔ جدید به‌روزرسانی کنید؟</value>
   </data>
   <data name="TotalProducts" xml:space="preserve">
     <value>کل محصولات</value>
@@ -304,29 +304,29 @@
   <data name="SearchOnName" xml:space="preserve">
     <value>جستجو با نام</value>
   </data>
-  <data name="ProductsCountPerCategoryChartText" type="System.Resources.ResXNullRef, System.Windows.Forms">
-    <value />
+  <data name="ProductsCountPerCategoryChartText" xml:space="preserve">
+    <value>این نمودار تعداد محصولات هر دسته‌بندی را نشان می‌دهد.</value>
   </data>
   <data name="ProductsPageTitle" xml:space="preserve">
     <value>محصولات</value>
   </data>
   <data name="ProductsPercentagePerCategoryText" xml:space="preserve">
-    <value>ToDo</value>
+    <value>این نمودار درصد محصولات هر دسته‌بندی را نشان می‌دهد.</value>
   </data>
   <data name="ProductCategory" xml:space="preserve">
     <value>دسته محصولات</value>
   </data>
-  <data name="Products" type="System.Resources.ResXNullRef, System.Windows.Forms">
-    <value />
+  <data name="Products" xml:space="preserve">
+    <value>محصولات</value>
   </data>
-  <data name="ProductCouldNotBeFound" type="System.Resources.ResXNullRef, System.Windows.Forms">
-    <value />
+  <data name="ProductCouldNotBeFound" xml:space="preserve">
+    <value>محصول یافت نشد.</value>
   </data>
-  <data name="CategoryNotEmpty" type="System.Resources.ResXNullRef, System.Windows.Forms">
-    <value />
+  <data name="CategoryNotEmpty" xml:space="preserve">
+    <value>این دسته‌بندی محصول دارد، بنابراین امکان حذف آن وجود ندارد.</value>
   </data>
-  <data name="AreYouSureWannaDeleteCategory" type="System.Resources.ResXNullRef, System.Windows.Forms">
-    <value />
+  <data name="AreYouSureWannaDeleteCategory" xml:space="preserve">
+    <value>آیا از حذف دسته‌بندی {0} مطمئن هستید؟</value>
   </data>
   <data name="CategoryCouldNotBeFound" xml:space="preserve">
     <value>دسته مورد نظر یافت نشد</value>
@@ -341,7 +341,7 @@
     <value>آفلاین</value>
   </data>
   <data name="TodoTitle" xml:space="preserve">
-    <value>ToDo</value>
+    <value>کارها</value>
   </data>
   <data name="ToDoItemCouldNotBeFound" xml:space="preserve">
     <value>توو دوو</value>
@@ -350,7 +350,7 @@
     <value>توو دوو</value>
   </data>
   <data name="TodoSearchPlaceholder" xml:space="preserve">
-    <value>Todo</value>
+    <value>جست‌وجوی کار</value>
   </data>
   <data name="InvalidOrder" xml:space="preserve">
     <value>سفارش مورد نظر در سیستم یافت نشد!</value>
@@ -359,21 +359,324 @@
     <value>در اتصال با سرویس ارسال پیامک مشکلی پیش آمده، لطفا لحظاتی دیگر مجددا تلاش نمائید.</value>
   </data>
   <data name="OtpCodeIsNotCorrect" xml:space="preserve">
-    <value>کد otp ارسالی صحیح نیست</value>
+    <value>کد تأیید ارسالی صحیح نیست.</value>
   </data>
   <data name="OtpCodeIsExpired" xml:space="preserve">
-    <value>کد otp منقضی شده است.</value>
+    <value>کد تأیید منقضی شده است.</value>
   </data>
   <data name="OtpCodeIsSent" xml:space="preserve">
     <value>کد ورود به سیستم برای شما ارسال گردید.</value>
   </data>
   <data name="LimitedPackageSize" xml:space="preserve">
-    <value>اندازه بسته بزرگتر از حد مجاز است. ابعاد مجاز مرسوله از ۱۰x۱۰x۱۰ تا ۴۵x۴۵x۴۵ سانتی متر می باشد.</value>
+    <value>اندازه بسته بزرگ‌تر از حد مجاز است. ابعاد مجاز مرسوله از ۱۰×۱۰×۱۰ تا ۴۵×۴۵×۴۵ سانتی‌متر است.</value>
   </data>
   <data name="AnErrorOccurrdWhileRegisteration" xml:space="preserve">
     <value>هنگام ثبت نام خطایی رخ داده است</value>
   </data>
   <data name="YouRegisteredBefore" xml:space="preserve">
     <value>شما قبلا در سامانه ثبت نام کرده اید</value>
+  </data>
+  <data name="CompareAttribute_ValidationError" xml:space="preserve">
+    <value>«{0}» و «{1}» با هم یکسان نیستند.</value>
+  </data>
+  <data name="EmailAddressAttribute_ValidationError" xml:space="preserve">
+    <value>مقدار {0} یک نشانی ایمیل معتبر نیست.</value>
+  </data>
+  <data name="MaxLengthAttribute_InvalidMaxLength" xml:space="preserve">
+    <value>حداکثر طول باید بزرگ‌تر از صفر باشد.</value>
+  </data>
+  <data name="MinLengthAttribute_ValidationError" xml:space="preserve">
+    <value>طول {0} باید دست‌کم «{1}» باشد.</value>
+  </data>
+  <data name="ConflictException" xml:space="preserve">
+    <value>به دلیل تداخل در درخواست، امکان انجام آن وجود ندارد.</value>
+  </data>
+  <data name="ForbiddenException" xml:space="preserve">
+    <value>دسترسی به این منبع مجاز نیست.</value>
+  </data>
+  <data name="UnauthorizedException" xml:space="preserve">
+    <value>درخواست شما اعتبارنامهٔ معتبر ندارد. لطفاً دوباره وارد شوید.</value>
+  </data>
+  <data name="UpdateConcurrencyException" xml:space="preserve">
+    <value>این رکورد پس از دریافت شما توسط کاربر دیگری تغییر کرده است. عملیات لغو شد.</value>
+  </data>
+  <data name="Alphabetical" xml:space="preserve">
+    <value>الفبایی</value>
+  </data>
+  <data name="Completed" xml:space="preserve">
+    <value>انجام‌شده</value>
+  </data>
+  <data name="Date" xml:space="preserve">
+    <value>تاریخ</value>
+  </data>
+  <data name="EditProfileTitle" xml:space="preserve">
+    <value>ویرایش پروفایل</value>
+  </data>
+  <data name="ConfirmNewPassword" xml:space="preserve">
+    <value>تکرار رمز عبور جدید</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>ایمیل</value>
+  </data>
+  <data name="ResetPasswordLinkSentMessage" xml:space="preserve">
+    <value>لینک بازنشانی رمز عبور به ایمیل شما ارسال شد.</value>
+  </data>
+  <data name="UserImageCouldNotBeFound" xml:space="preserve">
+    <value>تصویر کاربر یافت نشد.</value>
+  </data>
+  <data name="Error" xml:space="preserve">
+    <value>خطا</value>
+  </data>
+  <data name="Gender" xml:space="preserve">
+    <value>جنسیت</value>
+  </data>
+  <data name="Description" xml:space="preserve">
+    <value>توضیحات</value>
+  </data>
+  <data name="EmailAlreadyConfirmed" xml:space="preserve">
+    <value>ایمیل شما قبلاً تأیید شده است.</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>خانه</value>
+  </data>
+  <data name="UserLockedOut" xml:space="preserve">
+    <value>حساب کاربری قفل شده است. پس از {0} دوباره تلاش کنید.</value>
+  </data>
+  <data name="DuplicateEmail" xml:space="preserve">
+    <value>ایمیل «{0}» قبلاً ثبت شده است.</value>
+  </data>
+  <data name="AlreadyHaveAccountMessage" xml:space="preserve">
+    <value>حساب کاربری دارید؟</value>
+  </data>
+  <data name="ConfirmEmailTitle" xml:space="preserve">
+    <value>تأیید نشانی ایمیل</value>
+  </data>
+  <data name="DeleteAccount" xml:space="preserve">
+    <value>حذف حساب کاربری</value>
+  </data>
+  <data name="DeleteAccountPrompt" xml:space="preserve">
+    <value>آیا از حذف حساب کاربری خود مطمئن هستید؟</value>
+  </data>
+  <data name="DontHaveAccountMessage" xml:space="preserve">
+    <value>حساب کاربری ندارید؟</value>
+  </data>
+  <data name="EmailConfirmationFailedMessage" xml:space="preserve">
+    <value>تأیید ایمیل ناموفق بود!</value>
+  </data>
+  <data name="EmailConfirmationTitle" xml:space="preserve">
+    <value>تأیید ایمیل</value>
+  </data>
+  <data name="EmailConfirmedSuccessfullyMessage" xml:space="preserve">
+    <value>ایمیل با موفقیت تأیید شد!</value>
+  </data>
+  <data name="FileUploadFailed" xml:space="preserve">
+    <value>هنگام بارگذاری فایل خطایی رخ داد.</value>
+  </data>
+  <data name="ForgetPasswordMessage" xml:space="preserve">
+    <value>لطفاً نشانی ایمیلی را که با آن ثبت‌نام کرده‌اید وارد کنید تا لینک بازنشانی رمز عبور برای شما ارسال شود.</value>
+  </data>
+  <data name="GenderMale" xml:space="preserve">
+    <value>مرد</value>
+  </data>
+  <data name="GenderOther" xml:space="preserve">
+    <value>سایر</value>
+  </data>
+  <data name="GitHubRepo" xml:space="preserve">
+    <value>مخزن گیت‌هاب</value>
+  </data>
+  <data name="GoToToday" xml:space="preserve">
+    <value>رفتن به امروز</value>
+  </data>
+  <data name="HomeMessage" xml:space="preserve">
+    <value>برنامهٔ بلیزر چندحالته خود را به‌آسانی و در کوتاه‌ترین زمان بسازید!</value>
+  </data>
+  <data name="HomeTitle" xml:space="preserve">
+    <value>خانهٔ لاجی‌وال</value>
+  </data>
+  <data name="InvalidConfirmationLinkMessage" xml:space="preserve">
+    <value>به نظر می‌رسد لینک تأیید نامعتبر است یا منقضی شده است.</value>
+  </data>
+  <data name="NotReceivedConfirmationEmailMessage" xml:space="preserve">
+    <value>ایمیل تأیید را دریافت نکرده‌اید؟</value>
+  </data>
+  <data name="SignOutPrompt" xml:space="preserve">
+    <value>آیا از خروج مطمئن هستید؟</value>
+  </data>
+  <data name="SingUpTitle" xml:space="preserve">
+    <value>ثبت‌نام</value>
+  </data>
+  <data name="Submit" xml:space="preserve">
+    <value>ثبت</value>
+  </data>
+  <data name="Action" xml:space="preserve">
+    <value>عملیات</value>
+  </data>
+  <data name="CheckSpamMailMessage" xml:space="preserve">
+    <value>اگر ایمیل را در صندوق ورودی نیافتید، پوشهٔ هرزنامه را بررسی کنید.</value>
+  </data>
+  <data name="Color" xml:space="preserve">
+    <value>رنگ</value>
+  </data>
+  <data name="CustomColor" xml:space="preserve">
+    <value>رنگ دلخواه</value>
+  </data>
+  <data name="Delete" xml:space="preserve">
+    <value>حذف</value>
+  </data>
+  <data name="Id" xml:space="preserve">
+    <value>شناسه</value>
+  </data>
+  <data name="GenderFemale" xml:space="preserve">
+    <value>زن</value>
+  </data>
+  <data name="NewVersionIsAvailable" xml:space="preserve">
+    <value>نسخهٔ جدید در دسترس است</value>
+  </data>
+  <data name="ProductsCount" xml:space="preserve">
+    <value>تعداد محصولات</value>
+  </data>
+  <data name="Last30DaysProductCount" xml:space="preserve">
+    <value>تعداد محصولات ۳۰ روز گذشته</value>
+  </data>
+  <data name="AddProduct" xml:space="preserve">
+    <value>افزودن محصول</value>
+  </data>
+  <data name="SelectCategory" xml:space="preserve">
+    <value>انتخاب دسته‌بندی</value>
+  </data>
+  <data name="TotalCategories" xml:space="preserve">
+    <value>تعداد کل دسته‌بندی‌ها</value>
+  </data>
+  <data name="AddCategory" xml:space="preserve">
+    <value>دسته‌بندی جدید</value>
+  </data>
+  <data name="EnterCategoryName" xml:space="preserve">
+    <value>نام دسته‌بندی را وارد کنید</value>
+  </data>
+  <data name="EnterProductName" xml:space="preserve">
+    <value>نام محصول را وارد کنید</value>
+  </data>
+  <data name="Last30DaysCategoryCount" xml:space="preserve">
+    <value>تعداد دسته‌بندی‌های ۳۰ روز گذشته</value>
+  </data>
+  <data name="ProductSales" xml:space="preserve">
+    <value>فروش محصولات</value>
+  </data>
+  <data name="ProductSalesText" xml:space="preserve">
+    <value>این نمودار تعداد فروش هر محصول را نشان می‌دهد.</value>
+  </data>
+  <data name="ProductsCountPerCategoryChart" xml:space="preserve">
+    <value>نمودار تعداد محصولات هر دسته‌بندی</value>
+  </data>
+  <data name="ProductsPercentagePerCategory" xml:space="preserve">
+    <value>درصد محصولات هر دسته‌بندی</value>
+  </data>
+  <data name="Categories" xml:space="preserve">
+    <value>دسته‌بندی‌ها</value>
+  </data>
+  <data name="AreYouSureWannaDeleteProduct" xml:space="preserve">
+    <value>آیا از حذف محصول {0} مطمئن هستید؟</value>
+  </data>
+  <data name="DeleteCategory" xml:space="preserve">
+    <value>حذف دسته‌بندی</value>
+  </data>
+  <data name="DeleteProduct" xml:space="preserve">
+    <value>حذف محصول</value>
+  </data>
+  <data name="DefaultColorPicker" xml:space="preserve">
+    <value>انتخابگر رنگ پیش‌فرض</value>
+  </data>
+  <data name="EditProduct" xml:space="preserve">
+    <value>ویرایش محصول</value>
+  </data>
+  <data name="Dashboard" xml:space="preserve">
+    <value>داشبورد</value>
+  </data>
+  <data name="DeleteTodoItem" xml:space="preserve">
+    <value>حذف کار</value>
+  </data>
+  <data name="NoTodos" xml:space="preserve">
+    <value>کاری وجود ندارد</value>
+  </data>
+  <data name="OtpResendCooldown" xml:space="preserve">
+    <value>لطفاً پیش از درخواست کد جدید کمی صبر کنید.</value>
+  </data>
+  <data name="AccountIsDisabled" xml:space="preserve">
+    <value>حساب کاربری شما غیرفعال است.</value>
+  </data>
+  <data name="CustomerNotFound" xml:space="preserve">
+    <value>مشتری یافت نشد.</value>
+  </data>
+  <data name="OrderCannotBeRequoted" xml:space="preserve">
+    <value>امکان استعلام دوباره برای این سفارش وجود ندارد.</value>
+  </data>
+  <data name="ProviderServiceUnavailable" xml:space="preserve">
+    <value>عدم دریافت سرویس از سرویس‌دهنده</value>
+  </data>
+  <data name="UserIsNotRegistered" xml:space="preserve">
+    <value>کاربر ثبت‌نام نکرده است.</value>
+  </data>
+  <data name="InvalidOrderOption" xml:space="preserve">
+    <value>گزینهٔ انتخاب‌شده معتبر نیست.</value>
+  </data>
+  <data name="OrderIsAlreadyPaid" xml:space="preserve">
+    <value>این سفارش قبلاً پرداخت شده است.</value>
+  </data>
+  <data name="InvalidCallbackUrl" xml:space="preserve">
+    <value>آدرس بازگشت معتبر نیست.</value>
+  </data>
+  <data name="PaymentLinkFailed" xml:space="preserve">
+    <value>ایجاد لینک پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.</value>
+  </data>
+  <data name="PaymentLinkCreated" xml:space="preserve">
+    <value>لینک پرداخت ایجاد شد.</value>
+  </data>
+  <data name="NoPaymentToVerify" xml:space="preserve">
+    <value>پرداختی برای بررسی یافت نشد.</value>
+  </data>
+  <data name="PaymentVerificationUnavailable" xml:space="preserve">
+    <value>بررسی پرداخت در حال حاضر ممکن نیست.</value>
+  </data>
+  <data name="ContactInfoNotFound" xml:space="preserve">
+    <value>اطلاعات تماس یافت نشد.</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>کاربر یافت نشد.</value>
+  </data>
+  <data name="ProfileIsUpdated" xml:space="preserve">
+    <value>اطلاعات کاربری به‌روزرسانی شد.</value>
+  </data>
+  <data name="InvalidUserId" xml:space="preserve">
+    <value>شناسهٔ کاربر معتبر نیست.</value>
+  </data>
+  <data name="NationalCodeIsTaken" xml:space="preserve">
+    <value>این کد ملی قبلاً ثبت شده است.</value>
+  </data>
+  <data name="InvalidRequestFormat" xml:space="preserve">
+    <value>قالب درخواست معتبر نیست.</value>
+  </data>
+  <data name="ModelBindingValueIsInvalid" xml:space="preserve">
+    <value>مقدار ارسال‌شده معتبر نیست.</value>
+  </data>
+  <data name="ModelBindingValueIsRequired" xml:space="preserve">
+    <value>این مقدار الزامی است.</value>
+  </data>
+  <data name="TotalOrders" xml:space="preserve">
+    <value>همه سفارش‌ها</value>
+  </data>
+  <data name="Last30DaysOrders" xml:space="preserve">
+    <value>سفارش‌های ۳۰ روز گذشته</value>
+  </data>
+  <data name="PaidOrders" xml:space="preserve">
+    <value>سفارش‌های پرداخت‌شده</value>
+  </data>
+  <data name="OtpLoginSucceeded" xml:space="preserve">
+    <value>ورود با موفقیت انجام شد.</value>
+  </data>
+  <data name="InvalidPickupTime" xml:space="preserve">
+    <value>زمان جمع‌آوری انتخاب‌شده معتبر نیست.</value>
+  </data>
+  <data name="PaymentTypeNotSupported" xml:space="preserve">
+    <value>این روش پرداخت پشتیبانی نمی‌شود.</value>
   </data>
 </root>

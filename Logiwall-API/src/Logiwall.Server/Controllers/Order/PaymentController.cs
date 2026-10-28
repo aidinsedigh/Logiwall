@@ -11,12 +11,9 @@ public partial class PaymentController : AppControllerBase, IPaymentController
     [AutoInject] private IPaymentService paymentService = default!;
 
     [HttpPost]
-    public async Task<ActionResult> UpdatePaymentOrderStatus(PaymentRequestDto requestDto, CancellationToken cancellationToken)
+    public async Task<ActionResult> VerifyPayment(VerifyPaymentRequestDto requestDto, CancellationToken cancellationToken)
     {
-        var userId = User.GetUserId();
-
-        var result = await paymentService.PaymentOrderStatusAsync(requestDto, userId);
-
+        var result = await paymentService.VerifyPaymentAsync(requestDto, User.GetUserId(), cancellationToken);
         if (!result.Succuss)
         {
             ModelState.AddModelError(string.Empty, result.Message);

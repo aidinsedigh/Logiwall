@@ -1,7 +1,7 @@
 ﻿using static Logiwall.Shared.Enums.Constants;
 
 namespace Logiwall.Shared.Dtos.PaymentItems;
-public class PaymentResponseDto
+public record PaymentResponseDto
 {
     public int OrderId { get; set; }
 

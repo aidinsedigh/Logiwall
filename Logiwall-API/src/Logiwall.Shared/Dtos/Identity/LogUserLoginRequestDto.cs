@@ -1,7 +1,7 @@
 ﻿using static Logiwall.Shared.Enums.Constants;
 
 namespace Logiwall.Shared.Dtos.Identity;
-public class LogUserLoginRequestDto
+public record LogUserLoginRequestDto
 {
     public string? PhoneNumber { get; set; }
 

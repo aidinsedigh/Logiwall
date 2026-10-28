@@ -4,7 +4,7 @@ using static Logiwall.Shared.Enums.Constants;
 namespace Logiwall.Shared.Dtos.Identity;
 
 [DtoResourceType(typeof(AppStrings))]
-public class UserDto
+public record UserDto
 {
     public int Id { get; set; }
 

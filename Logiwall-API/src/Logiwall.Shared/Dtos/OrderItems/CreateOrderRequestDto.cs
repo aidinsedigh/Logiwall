@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.OrderItems;
-public class CreateOrderRequestDto
+public record CreateOrderRequestDto
 {
     public short ChannelId { get; set; }
 
@@ -66,5 +66,7 @@ public class CreateOrderRequestDto
     [MaxLength(500)]
     public string? Description { get; set; }
 
-    public IList<CreateOrderParcelRequestDto> OrderParcels { get; set; } = default;
+    [Required(ErrorMessage = nameof(AppStrings.RequiredAttribute_ValidationError))]
+    [MinLength(1, ErrorMessage = nameof(AppStrings.ModelBindingValueIsInvalid))]
+    public IList<CreateOrderParcelRequestDto> OrderParcels { get; set; } = default!;
 }

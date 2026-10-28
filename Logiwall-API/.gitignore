@@ -222,6 +222,9 @@ ModelManifest.xml
 profile.arm.json
 
 # Logiwall
+**/Logs/
+*.pfx.local
+appsettings.*.local.json
 *.map
 *Resource.designer.cs
 /**/*.css

@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.Providers.PostalService;
-public class OrderInquiryParcelDto
+public record OrderInquiryParcelDto
 {
     [JsonPropertyName("height")]
     public int Height { get; set; }

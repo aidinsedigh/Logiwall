@@ -1,11 +1,16 @@
-{
+﻿{
   "solution": {
     "path": "Logiwall.sln",
     "projects": [
-      "src\\Logiwall.Server\\Logiwall.Server.csproj",
-      "src\\Logiwall.Shared\\Logiwall.Shared.csproj",
       "src\\Client\\Logiwall.Client.Core\\Logiwall.Client.Core.csproj",
-      "src\\Client\\Logiwall.Client.Web\\Logiwall.Client.Web.csproj"
+      "src\\Client\\Logiwall.Client.Maui\\Logiwall.Client.Maui.csproj",
+      "src\\Client\\Logiwall.Client.Web\\Logiwall.Client.Web.csproj",
+      "src\\Logiwall.Application\\Logiwall.Application.csproj",
+      "src\\Logiwall.Domain\\Logiwall.Domain.csproj",
+      "src\\Logiwall.Iac\\Logiwall.Iac.csproj",
+      "src\\Logiwall.Infrastructure\\Logiwall.Infrastructure.csproj",
+      "src\\Logiwall.Server\\Logiwall.Server.csproj",
+      "src\\Logiwall.Shared\\Logiwall.Shared.csproj"
     ]
   }
 }

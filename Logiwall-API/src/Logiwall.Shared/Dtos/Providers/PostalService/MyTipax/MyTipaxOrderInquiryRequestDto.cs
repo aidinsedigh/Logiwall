@@ -1,7 +1,7 @@
 ﻿using Logiwall.Shared.Dtos.Global;
 
 namespace Logiwall.Shared.Dtos.Providers.PostalService.MyTipax;
-public class MyTipaxOrderInquiryRequestDto : IHttpRequest
+public record MyTipaxOrderInquiryRequestDto : IHttpRequest
 {
     [JsonPropertyName("order")]
     public OrderInquiryRequestDto? Order { get; set; }

@@ -1,7 +1,7 @@
 ﻿namespace Logiwall.Shared.Dtos.Categories;
 
 [DtoResourceType(typeof(AppStrings))]
-public class CategoryDto
+public record CategoryDto
 {
     public int Id { get; set; }
 

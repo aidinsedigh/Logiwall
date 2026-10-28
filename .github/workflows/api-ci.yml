@@ -1,0 +1,22 @@
+name: api-ci
+on:
+  push:
+    paths: ['Logiwall-API/**', '.github/workflows/api-ci.yml']
+  pull_request:
+    paths: ['Logiwall-API/**', '.github/workflows/api-ci.yml']
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Logiwall-API
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: Logiwall-API/global.json
+      # Client.Web (WasmBuildNative) needs the WASM tools workload.
+      - run: dotnet workload install wasm-tools
+      - run: dotnet build Logiwall.Server.slnf -c Release
+      - run: dotnet test tests/Logiwall.UnitTests -c Release --no-build
+      - run: dotnet test tests/Logiwall.IntegrationTests -c Release --no-build
