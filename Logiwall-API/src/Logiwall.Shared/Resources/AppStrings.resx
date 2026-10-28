@@ -661,4 +661,13 @@ Please confirm your email by clicking on the link.</value>
   <data name="ModelBindingValueIsRequired" xml:space="preserve">
     <value>This value is required.</value>
   </data>
+  <data name="TotalOrders" xml:space="preserve">
+    <value>Total orders</value>
+  </data>
+  <data name="Last30DaysOrders" xml:space="preserve">
+    <value>Orders in the last 30 days</value>
+  </data>
+  <data name="PaidOrders" xml:space="preserve">
+    <value>Paid orders</value>
+  </data>
 </root>

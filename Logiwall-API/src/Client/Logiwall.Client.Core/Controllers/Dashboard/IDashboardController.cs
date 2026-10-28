@@ -7,11 +7,4 @@ public interface IDashboardController : IAppController
 {
     [HttpGet]
     Task<OverallAnalyticsStatsDataResponseDto> GetOverallAnalyticsStatsData(CancellationToken cancellationToken = default);
-
-    [HttpGet]
-    Task<List<ProductsCountPerCategoryResponseDto>> GetProductsCountPerCategoryStats(CancellationToken cancellationToken = default) => default!;
-
-    [HttpGet]
-    Task<List<ProductSaleStatResponseDto>> GetProductsSalesStats(CancellationToken cancellationToken = default) => default!;
-
 }

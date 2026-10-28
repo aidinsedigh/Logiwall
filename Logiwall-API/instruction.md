@@ -24,8 +24,8 @@ The stack (versions from the `*.csproj` files and `global.json`):
 * Swashbuckle (Swagger)
 * Pulumi for Azure infrastructure (`src/Logiwall.Iac/`)
 
-The project was made from the bit Boilerplate (bit-bp) template. The `Client/*` projects are
-template leftovers that the server still hosts.
+The project was made from the bit Boilerplate (bit-bp) template. The `Client/*` projects come
+from the template. The server hosts the Blazor client as the admin panel (ADR-0005).
 
 ### 1.1 Commands
 
@@ -77,7 +77,8 @@ Logiwall.Server          → Application, Infrastructure, Shared, Client.Web
 * Do not add business logic to `Logiwall.Server`. Controllers call a service and shape the HTTP result.
 * `AppDbContext` is in `src/Logiwall.Infrastructure/Data/`, namespace `Logiwall.Infrastructure.Data`
   (plan 015 renamed it from the template's `Logiwall.Server.Data`).
-* Do not add features to `Client/*` unless the task asks for it. Their future is an open product decision.
+* Do not add features to `Client/*` unless the task asks for it. The Blazor client is the admin
+  panel (ADR-0005): its pages and endpoints use the `AdminsOnly` policy.
 
 Do not migrate to a modular monolith, Minimal APIs or MediatR. A change of
 architecture needs its own ADR and the user's decision (`docs/adr/0002-keep-layered-architecture.md`).

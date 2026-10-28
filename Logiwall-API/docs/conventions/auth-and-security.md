@@ -10,6 +10,8 @@
   `app.MapControllers().RequireAuthorization()` in `src/Logiwall.Server/Program.Middlewares.cs`.
 * Only `IdentityController` and `CommonController` are `[AllowAnonymous]`. Do not add
   `[AllowAnonymous]` to another controller or action without the user's decision.
+* An admin endpoint (for the Blazor admin panel) has `[Authorize(Policy = "AdminsOnly")]` and a
+  test that a customer token gets 403 (ADR-0005).
 * Take the user from the token with `User.GetUserId()`. Never trust a user ID, customer ID or
   person ID from the request.
 

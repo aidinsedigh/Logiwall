@@ -10,15 +10,20 @@ public partial class AuthenticationManager : AuthenticationStateProvider
     [AutoInject] private Cookie cookie = default!;
     [AutoInject] private IAuthTokenProvider tokenProvider = default!;
     [AutoInject] private IStorageService storageService = default!;
-    [AutoInject] private IIdentityController identityController = default;
-    [AutoInject] private IStringLocalizer<AppStrings> localizer = default!;
+    [AutoInject] private IIdentityController identityController = default!;
     [AutoInject] private JsonSerializerOptions jsonSerializerOptions = default!;
+    [AutoInject] private IStringLocalizer<AppStrings> localizer = default!;
 
     public async Task SignIn(SignInRequestDto signInModel, CancellationToken cancellationToken)
     {
-        var result = await identityController.SignIn(signInModel, cancellationToken);
+        var result = await identityController.GetToken(signInModel, cancellationToken);
 
-        await StoreToken(result!, signInModel.RememberMe);
+        // GetToken also signs in customers (the React app uses it). The server checks the role on
+        // every admin endpoint; this check only keeps a customer out of the panel UI.
+        if (ParseTokenClaims(result.AccessToken!).Any(claim => claim is { Type: "role", Value: "Admin" }) is false)
+            throw new ForbiddenException(localizer[nameof(AppStrings.ForbiddenException)]);
+
+        await StoreToken(result.AccessToken!, signInModel.RememberMe);
 
         NotifyAuthenticationStateChanged(Task.FromResult(await GetAuthenticationStateAsync()));
     }
@@ -26,7 +31,6 @@ public partial class AuthenticationManager : AuthenticationStateProvider
     public async Task SignOut()
     {
         await storageService.RemoveItem("access_token");
-        await storageService.RemoveItem("refresh_token");
         if (AppRenderMode.PrerenderEnabled && AppRenderMode.IsBlazorHybrid is false)
         {
             await cookie.Remove("access_token");
@@ -46,31 +50,8 @@ public partial class AuthenticationManager : AuthenticationStateProvider
 
     public override async Task<AuthenticationState> GetAuthenticationStateAsync()
     {
+        // The server has no refresh endpoint: an expired token signs the user out.
         var access_token = await tokenProvider.GetAccessTokenAsync();
-
-        if (string.IsNullOrEmpty(access_token) && tokenProvider.IsInitialized)
-        {
-            string? refresh_token = await storageService.GetItem("refresh_token");
-
-            if (string.IsNullOrEmpty(refresh_token) is false)
-            {
-                // We refresh the access_token to ensure a seamless user experience, preventing unnecessary 'NotAuthorized' page redirects and improving overall UX.
-                // This method is triggered after 401 and 403 server responses in AuthDelegationHandler,
-                // as well as when accessing pages without the required permissions in NotAuthorizedPage, ensuring that any recent claims granted to the user are promptly reflected.
-
-                try
-                {
-                    //var refreshTokenResponse = await identityController.Refresh(new() { RefreshToken = refresh_token });
-                    //await StoreToken(refreshTokenResponse!);
-                    //access_token = refreshTokenResponse!.AccessToken;
-                }
-                catch (ResourceValidationException exp) // refresh_token in invalid or expired
-                {
-                    await storageService.RemoveItem("refresh_token");
-                    throw new UnauthorizedException(localizer[nameof(AppStrings.YouNeedToSignIn)], exp);
-                }
-            }
-        }
 
         if (string.IsNullOrEmpty(access_token))
         {
@@ -82,21 +63,15 @@ public partial class AuthenticationManager : AuthenticationStateProvider
         return new AuthenticationState(new ClaimsPrincipal(identity));
     }
 
-    private async Task StoreToken(TokenResponseDto tokenResponseDto, bool? rememberMe = null)
+    private async Task StoreToken(string accessToken, bool rememberMe)
     {
-        if (rememberMe is null)
-        {
-            rememberMe = await storageService.IsPersistent("refresh_token");
-        }
-        await storageService.SetItem("access_token", tokenResponseDto!.AccessToken, rememberMe is true);
-        await storageService.SetItem("refresh_token", tokenResponseDto!.RefreshToken, rememberMe is true);
+        await storageService.SetItem("access_token", accessToken, rememberMe);
         if (AppRenderMode.PrerenderEnabled && AppRenderMode.IsBlazorHybrid is false)
         {
             await cookie.Set(new()
             {
                 Name = "access_token",
-                Value = tokenResponseDto.AccessToken,
-                MaxAge = tokenResponseDto.ExpiresIn,
+                Value = accessToken,
                 SameSite = SameSite.Strict,
                 Secure = BuildConfiguration.IsRelease()
             });
@@ -110,8 +85,11 @@ public partial class AuthenticationManager : AuthenticationStateProvider
 
     private IEnumerable<Claim> ParseTokenClaims(string access_token)
     {
+        // A user with more than one role gets a JSON array, for example "role": ["Admin", "Support"].
         return ParseJwt(access_token)
-            .Select(keyValue => new Claim(keyValue.Key, keyValue.Value.ToString() ?? string.Empty))
+            .SelectMany(keyValue => keyValue.Value is JsonElement { ValueKind: JsonValueKind.Array } values
+                ? values.EnumerateArray().Select(value => new Claim(keyValue.Key, value.ToString()))
+                : [new Claim(keyValue.Key, keyValue.Value.ToString() ?? string.Empty)])
             .ToArray();
     }
 

@@ -1689,5 +1689,32 @@ namespace Logiwall.Shared.Resources {
                 return ResourceManager.GetString("YouRegisteredBefore", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Total orders
+        /// </summary>
+        public static string TotalOrders {
+            get {
+                return ResourceManager.GetString("TotalOrders", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Orders in the last 30 days
+        /// </summary>
+        public static string Last30DaysOrders {
+            get {
+                return ResourceManager.GetString("Last30DaysOrders", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Paid orders
+        /// </summary>
+        public static string PaidOrders {
+            get {
+                return ResourceManager.GetString("PaidOrders", resourceCulture);
+            }
+        }
     }
 }

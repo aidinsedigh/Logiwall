@@ -6,10 +6,9 @@ namespace Logiwall.Shared.Dtos.Identity;
 [DtoResourceType(typeof(AppStrings))]
 public record SignInRequestDto
 {
-    /// <example>test@bitplatform.dev</example>
+    /// <example>09121234567</example>
     [Required(ErrorMessage = nameof(AppStrings.RequiredAttribute_ValidationError))]
-    //[EmailAddress(ErrorMessage = nameof(AppStrings.EmailAddressAttribute_ValidationError))]
-    [Display(Name = nameof(AppStrings.Email))]
+    [Display(Name = nameof(AppStrings.PhoneNumber))]
     public string? UserName { get; set; }
 
     /// <example>123456</example>

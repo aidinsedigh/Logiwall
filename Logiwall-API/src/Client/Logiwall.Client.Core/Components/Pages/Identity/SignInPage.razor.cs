@@ -1,4 +1,5 @@
 ﻿using Logiwall.Shared.Dtos.Identity;
+using static Logiwall.Shared.Enums.Constants;
 
 namespace Logiwall.Client.Core.Components.Pages.Identity;
 
@@ -6,21 +7,9 @@ public partial class SignInPage : AppComponentBase
 {
     private bool isLoading;
     private string? signInMessage;
-    //private BitMessageBarType signInMessageType;
-    private SignInRequestDto signInModel = new();
+    private readonly SignInRequestDto signInModel = new() { LoginProvider = LoginProvider.Logiwall };
 
     [SupplyParameterFromQuery(Name = "redirect-url"), Parameter] public string? RedirectUrl { get; set; }
-    [SupplyParameterFromQuery(Name = "email"), Parameter] public string? Email { get; set; }
-
-    protected override async Task OnParamsSetAsync()
-    {
-        await base.OnParamsSetAsync();
-
-        if (string.IsNullOrEmpty(signInModel.UserName))
-        {
-            signInModel.UserName = Email;
-        }
-    }
 
     private async Task DoSignIn()
     {
@@ -37,8 +26,6 @@ public partial class SignInPage : AppComponentBase
         }
         catch (KnownException e)
         {
-            //signInMessageType = BitMessageBarType.Error;
-
             signInMessage = e.Message;
         }
         finally
@@ -47,4 +34,3 @@ public partial class SignInPage : AppComponentBase
         }
     }
 }
-

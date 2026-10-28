@@ -1,4 +1,5 @@
-﻿using Logiwall.Shared.Dtos.Global;
+﻿using Logiwall.Shared.Dtos.Dashboard;
+using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.OrderItems;
 
 namespace Logiwall.Application.Abstractions.OrderItems;
@@ -11,4 +12,6 @@ public interface IOrderService
     Task<ServiceResponse<SelectOptionResponseDto>> SelectOptionAndPaymentAsync(SelectOptionRequestDto requestDto, int userId);
 
     Task<ServiceResponse<IList<OrderDto>>> GetOrderListAsync(GetOrderListRequestDto requestDto);
+
+    Task<ServiceResponse<OverallAnalyticsStatsDataResponseDto>> GetOrderStatsAsync(CancellationToken cancellationToken);
 }

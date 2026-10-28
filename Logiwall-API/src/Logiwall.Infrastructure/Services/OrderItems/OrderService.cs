@@ -4,6 +4,7 @@ using Logiwall.Domain.Entities.OrderItems;
 using Logiwall.Infrastructure.Mapper;
 using Logiwall.Infrastructure.Providers.PostalServices;
 using Logiwall.Infrastructure.Data;
+using Logiwall.Shared.Dtos.Dashboard;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.OrderItems;
 using Logiwall.Shared.Dtos.Providers.PostalService;
@@ -267,6 +268,23 @@ public class OrderService(AppDbContext appDbContext,
             Data = result,
             Succuss = true,
             Message = string.Empty
+        };
+    }
+
+    public async Task<ServiceResponse<OverallAnalyticsStatsDataResponseDto>> GetOrderStatsAsync(CancellationToken cancellationToken)
+    {
+        // Business-wide counts for the admin panel (ADR-0005). Only admins may call this.
+        var orders = appDbContext.Orders.AsNoTracking();
+        var since = DateTimeOffset.UtcNow.AddDays(-30);
+
+        return new ServiceResponse<OverallAnalyticsStatsDataResponseDto>
+        {
+            Data = new()
+            {
+                TotalOrders = await orders.CountAsync(cancellationToken),
+                Last30DaysOrders = await orders.CountAsync(t => t.CreationDate >= since, cancellationToken),
+                PaidOrders = await orders.CountAsync(t => t.OrderPayments.Any(p => p.Status == PaymentStatus.Success), cancellationToken),
+            }
         };
     }
 

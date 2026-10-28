@@ -661,4 +661,13 @@
   <data name="ModelBindingValueIsRequired" xml:space="preserve">
     <value>این مقدار الزامی است.</value>
   </data>
+  <data name="TotalOrders" xml:space="preserve">
+    <value>همه سفارش‌ها</value>
+  </data>
+  <data name="Last30DaysOrders" xml:space="preserve">
+    <value>سفارش‌های ۳۰ روز گذشته</value>
+  </data>
+  <data name="PaidOrders" xml:space="preserve">
+    <value>سفارش‌های پرداخت‌شده</value>
+  </data>
 </root>

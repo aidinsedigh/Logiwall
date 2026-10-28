@@ -202,7 +202,8 @@ public static partial class Program
 
         services.TryAddTransient<IAuthTokenProvider, ServerSideAuthTokenProvider>();
 
-        services.TryAddTransient(sp =>
+        // AddHttpClient() already registers an HttpClient with no BaseAddress, so a TryAdd here never runs.
+        services.AddTransient(sp =>
         {
             Uri.TryCreate(configuration.GetApiServerAddress(), UriKind.RelativeOrAbsolute, out var apiServerAddress);
 

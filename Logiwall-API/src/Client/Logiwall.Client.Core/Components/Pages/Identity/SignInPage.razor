@@ -9,8 +9,7 @@
 
         @if (string.IsNullOrEmpty(signInMessage) is false)
         {
-            <BitMessage Class="form-message-bar"
-                           OnDismiss="() => signInMessage = null">
+            <BitMessage Class="form-message-bar" OnDismiss="() => signInMessage = null">
                 @signInMessage
             </BitMessage>
         }
@@ -19,19 +18,20 @@
 
         <div class="form-input-container">
             <BitTextField @bind-Value="signInModel.UserName"
-                          Label="@Localizer[nameof(AppStrings.Email)]"
-                          Placeholder="@Localizer[nameof(AppStrings.Email)]"
-                          Type="BitInputType.Email" />
+                          Label="@Localizer[nameof(AppStrings.PhoneNumber)]"
+                          Placeholder="09xxxxxxxxx"
+                          Type="BitInputType.Tel"
+                          AutoComplete="username" />
             <ValidationMessage For="@(() => signInModel.UserName)" />
         </div>
 
         <div class="form-input-container">
             <BitTextField @bind-Value="signInModel.Password"
                           Label="@Localizer[nameof(AppStrings.Password)]"
+                          Placeholder="@Localizer[nameof(AppStrings.Password)]"
                           Type="BitInputType.Password"
                           AutoComplete="current-password"
-                          CanRevealPassword="true"
-                          Placeholder="@Localizer[nameof(AppStrings.Password)]" />
+                          CanRevealPassword="true" />
             <ValidationMessage For="@(() => signInModel.Password)" />
         </div>
 
@@ -42,18 +42,8 @@
         <BitButton IsLoading="isLoading"
                    Class="form-submit-button"
                    ButtonStyle="BitButtonStyle.Primary"
-                   Title="@Localizer[nameof(AppStrings.SignIn)]"
-                   AriaLabel="@Localizer[nameof(AppStrings.SignIn)]"
                    ButtonType="BitButtonType.Submit">
             @Localizer[nameof(AppStrings.SignIn)]
         </BitButton>
-
-        <div class="form-forgot-password">
-            <BitLink Href="/forgot-password">@Localizer[nameof(AppStrings.ForgotPasswordLink)]</BitLink>
-        </div>
-
-        <div>
-            @Localizer[nameof(AppStrings.DontHaveAccountMessage)] <BitLink Href="/sign-up">@Localizer[nameof(AppStrings.SignUp)]</BitLink>
-        </div>
     </EditForm>
 </div>
