@@ -8,10 +8,10 @@
     <div class="content-container profile-panel">
         @if (string.IsNullOrEmpty(editProfileMessage) is false)
         {
-            <BitMessageBar Class="form-message-bar"
+            <BitMessage Class="form-message-bar"
                            OnDismiss="() => editProfileMessage = null">
                 @editProfileMessage
-            </BitMessageBar>
+            </BitMessage>
         }
 
         <h1 class="page-title">
@@ -21,7 +21,7 @@
         @if (isLoading)
         {
             <div class="loading-container">
-                <BitSpinner Size="BitSpinnerSize.Large"></BitSpinner>
+                <BitSpinnerLoading Size="BitSize.Large" />
             </div>
         }
         else
@@ -101,14 +101,14 @@
     </div>
     <br />
     <div class="content-container danger-panel">
-        <BitTypography Variant="BitTypographyVariant.H5" Style="color: #dc0000;border-bottom: 1px solid #dc0000">
+        <BitText Typography="BitTypography.H5" Style="color: #dc0000;border-bottom: 1px solid #dc0000">
             @Localizer[nameof(AppStrings.DeleteAccount)]
-        </BitTypography>
+        </BitText>
         <br />
         <br />
-        <BitTypography Variant="BitTypographyVariant.Body1">
+        <BitText Typography="BitTypography.Body1">
             @Localizer[nameof(AppStrings.DeleteAccountPrompt)]
-        </BitTypography>
+        </BitText>
         <br />
         <br />
         <BitButton ButtonStyle="BitButtonStyle.Standard"

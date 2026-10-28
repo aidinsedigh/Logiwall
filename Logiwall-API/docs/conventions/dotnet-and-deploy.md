@@ -5,9 +5,10 @@
 
 ## 13.1 .NET
 
-* The projects target `net8.0`. `global.json` pins the SDK with `rollForward: disable`.
-* .NET 8 support ends on 2026-11-10. Plan 004 patches .NET 8, and plan 016 moves the server-side
-  projects to .NET 10. Do not change the target framework outside those plans.
+* Every project targets .NET 10: `net10.0`, and `net10.0-<platform>` for MAUI. The clients use Bit 10. `global.json` selects SDK 10.0.100 with `rollForward: latestFeature`. Building the WASM client needs the `wasm-tools` workload.
+* Plan 016 moved every project to .NET 10. Do not change the target framework outside a plan.
+* .NET 10 serves `_framework/blazor.web.js` as a static web asset. Keep `app.MapStaticAssets()` in
+  `Program.Middlewares.cs`, or the Blazor script returns 302 and the pages are not interactive.
 * Shared build settings are in `src/Directory.Build.props` (C# 12, nullable enabled).
 * Nullable reference types are on. Do not add new nullable warnings. The build has 135 warnings
   now (2026-10-27); do not fix them outside the task.

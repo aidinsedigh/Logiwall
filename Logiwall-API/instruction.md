@@ -14,9 +14,9 @@ in `../Logiwall-Front/`. It calls the `Identity`, `Person`, `Order` and `Common`
 
 The stack (versions from the `*.csproj` files and `global.json`):
 
-* .NET 8 (`net8.0`), C# 12, SDK pinned in `global.json` with `rollForward: disable`
-* ASP.NET Core 8 MVC controllers
-* Entity Framework Core 8 with Microsoft SQL Server
+* .NET 10 (`net10.0`) for every project (`net10.0-<platform>` for MAUI); the clients use Bit 10. C# 12. `global.json` selects SDK 10.0.100 with `rollForward: latestFeature`
+* ASP.NET Core 10 MVC controllers
+* Entity Framework Core 10 with Microsoft SQL Server
 * ASP.NET Core Identity with bearer tokens
 * Serilog (file sink, `src/Logiwall.Server/Logs/`)
 * Riok.Mapperly for mapping
@@ -32,14 +32,17 @@ template leftovers that the server still hosts.
 | Purpose | Command | Notes |
 |---|---|---|
 | Build the server | `dotnet build src/Logiwall.Server/Logiwall.Server.csproj` | Builds 7 projects. Verified 2026-10-27: 0 errors. |
+| Build server and tests | `dotnet build Logiwall.Server.slnf` | Every project except MAUI and IaC. CI builds this. |
+| Unit tests | `dotnet test tests/Logiwall.UnitTests` | |
+| Integration tests | `dotnet test tests/Logiwall.IntegrationTests` | Needs Docker (Testcontainers SQL Server) |
 | Run | `dotnet run --project src/Logiwall.Server` | `http://localhost:5030`, Swagger at `/swagger` |
 | EF tool | `cd src/Logiwall.Server && dotnet tool restore` | |
 | Add a migration | `dotnet ef migrations add <Name> --project ../Logiwall.Infrastructure --startup-project . --output-dir Data/Migrations` | Run from `src/Logiwall.Server` |
 | Update the database | `dotnet ef database update --project ../Logiwall.Infrastructure --startup-project .` | Run from `src/Logiwall.Server` |
 
 Do not build `Logiwall.sln` or `Logiwall.Web.slnf`. Both contain `Logiwall.Client.Maui`, which
-needs MAUI workloads. There are no test projects yet. Plan 005 in
-`docs/work/001-audit-remediation/` adds them and a `Logiwall.Server.slnf`.
+needs MAUI workloads. The tests and `Logiwall.Server.slnf` came with plan 005. CI is
+`../.github/workflows/api-ci.yml` (at the git root).
 
 ---
 
@@ -72,9 +75,9 @@ Logiwall.Server          → Application, Infrastructure, Shared, Client.Web
 
 * Do not make `Domain`, `Application` or `Shared` reference `Infrastructure` or `Server`.
 * Do not add business logic to `Logiwall.Server`. Controllers call a service and shape the HTTP result.
-* `AppDbContext` is in `src/Logiwall.Infrastructure/Data/`, but its namespace is
-  `Logiwall.Server.Data` (a template leftover). Do not rename it outside plan 015.
-* Do not add features to `Client/*` unless the task asks for it. Plan 015 decides their future.
+* `AppDbContext` is in `src/Logiwall.Infrastructure/Data/`, namespace `Logiwall.Infrastructure.Data`
+  (plan 015 renamed it from the template's `Logiwall.Server.Data`).
+* Do not add features to `Client/*` unless the task asks for it. Their future is an open product decision.
 
 Do not migrate to a modular monolith, Minimal APIs or MediatR. A change of
 architecture needs its own ADR and the user's decision (`docs/adr/0002-keep-layered-architecture.md`).
@@ -251,6 +254,8 @@ A change is complete only when the applicable items are satisfied:
 * Authorization and resource ownership implemented
 * Error handling implemented
 * Logging follows the Logiwall conventions
+* Client messages are Persian resource keys (ADR-0003)
+* Logs follow the structured format (ADR-0004)
 * CancellationToken propagated
 * Tests implemented, when a test project exists (plan 005)
 * QA file created/updated for a new or changed endpoint

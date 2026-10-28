@@ -3,11 +3,15 @@
         cssClasses?.forEach(c => document.body.classList.add(c));
         Object.keys(cssVariables).forEach(key => document.body.style.setProperty(key, cssVariables[key]));
     }
+
+    public static removeLoading(): void {
+        document.getElementById('app-loading')?.remove();
+    }
 }
 
-declare class BitTheme { static init(options: any): void; };
+declare const BitBlazorUI: { Theme: { init(options: any): void } };
 
-BitTheme.init({
+BitBlazorUI.Theme.init({
     system: true,
     onChange: (newTheme: string, oldThem: string) => {
         if (newTheme === 'dark') {

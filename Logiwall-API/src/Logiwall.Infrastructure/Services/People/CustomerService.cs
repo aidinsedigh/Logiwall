@@ -1,6 +1,6 @@
 ﻿using Logiwall.Application.Abstractions.People;
 using Logiwall.Domain.Entities.People;
-using Logiwall.Server.Data;
+using Logiwall.Infrastructure.Data;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.People;
 using Microsoft.EntityFrameworkCore;
@@ -9,14 +9,26 @@ namespace Logiwall.Infrastructure.Services.People;
 public class CustomerService : ICustomerService
 {
     private readonly AppDbContext appDbContext;
+    private readonly IStringLocalizer<AppStrings> localizer;
 
-    public CustomerService(AppDbContext appDbContext)
+    public CustomerService(AppDbContext appDbContext,
+        IStringLocalizer<AppStrings> localizer)
     {
         this.appDbContext = appDbContext;
+        this.localizer = localizer;
     }
     public async Task<ServiceResponse<bool>> CreateCustomerContactAsync(CreateCustomerContactRequestDto requestDto)
     {
         var person = await appDbContext.People.Select(t => new { t.UserId, CustomerId = t.Customer.Id }).FirstOrDefaultAsync(t => t.UserId == requestDto.UserId);
+        if (person is null)
+        {
+            return new ServiceResponse<bool>
+            {
+                Data = false,
+                Succuss = false,
+                Message = localizer[nameof(AppStrings.UserIsNotRegistered)]
+            };
+        }
 
         var contactInfo = new CustomerContact
         {
@@ -44,16 +56,16 @@ public class CustomerService : ICustomerService
         };
     }
 
-    public async Task<ServiceResponse<CustomerContactResponseDto>> GetCustomerContactByIdAsync(int id)
+    public async Task<ServiceResponse<CustomerContactResponseDto>> GetCustomerContactByIdAsync(int id, int userId)
     {
-        var contactInfo = await appDbContext.CustomerContacts.FirstOrDefaultAsync(t => t.Id == id);
+        var contactInfo = await appDbContext.CustomerContacts.FirstOrDefaultAsync(t => t.Id == id && t.Customer.Person.UserId == userId);
         if (contactInfo is null)
         {
             return new ServiceResponse<CustomerContactResponseDto>
             {
                 Data = null,
                 Succuss = false,
-                Message = "There is not contact info with this id"
+                Message = localizer[nameof(AppStrings.ContactInfoNotFound)]
             };
         }
         var result = new CustomerContactResponseDto
@@ -83,6 +95,15 @@ public class CustomerService : ICustomerService
     public async Task<ServiceResponse<IEnumerable<CustomerContactResponseDto>>> GetCustomerContactListAsync(GetCustomerContactListRequestDto requestDto)
     {
         var person = await appDbContext.People.Select(t =>new {t.UserId, CustomerId =  t.Customer.Id }).FirstOrDefaultAsync(t => t.UserId == requestDto.UserId);
+        if (person is null)
+        {
+            return new ServiceResponse<IEnumerable<CustomerContactResponseDto>>
+            {
+                Data = null,
+                Succuss = false,
+                Message = localizer[nameof(AppStrings.UserIsNotRegistered)]
+            };
+        }
         var contactList = await appDbContext.CustomerContacts.Where(t => t.CustomerId == person.CustomerId)
             .Select(t => new CustomerContactResponseDto {
                 Id = t.Id,
@@ -106,9 +127,18 @@ public class CustomerService : ICustomerService
         };
     }
 
-    public async Task<ServiceResponse<bool>> UpdateCustomerContactAsync(UpdateCustomerContactRequestDto requestDto)
+    public async Task<ServiceResponse<bool>> UpdateCustomerContactAsync(UpdateCustomerContactRequestDto requestDto, int userId)
     {
-        var contactInfo = await appDbContext.CustomerContacts.FirstOrDefaultAsync(t => t.Id == requestDto.Id);
+        var contactInfo = await appDbContext.CustomerContacts.FirstOrDefaultAsync(t => t.Id == requestDto.Id && t.Customer.Person.UserId == userId);
+        if (contactInfo is null)
+        {
+            return new ServiceResponse<bool>
+            {
+                Data = false,
+                Succuss = false,
+                Message = localizer[nameof(AppStrings.ContactInfoNotFound)]
+            };
+        }
         contactInfo.Title = requestDto.Title;
         contactInfo.Address = requestDto.Address;
         contactInfo.CityId = requestDto.CityId;

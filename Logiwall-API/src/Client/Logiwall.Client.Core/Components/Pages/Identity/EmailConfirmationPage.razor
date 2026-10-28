@@ -13,10 +13,10 @@
         {
             @if (string.IsNullOrEmpty(error) is false)
             {
-                <BitMessageBar Class="form-message-bar"
+                <BitMessage Class="form-message-bar"
                                OnDismiss="() => error = null">
                     @(error)
-                </BitMessageBar>
+                </BitMessage>
             }
 
             @if (emailConfirmed)

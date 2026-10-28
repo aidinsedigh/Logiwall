@@ -9,6 +9,7 @@ namespace Logiwall.Shared.Dtos.Identity;
 public class ConfirmaionOtpRequestDto
 {
     [Required(ErrorMessage = nameof(AppStrings.RequiredAttribute_ValidationError))]
+    [RegularExpression(@"^09\d{9}$")]
     public string PhoneNumber { get; set; } = default!;
 
     [Required(ErrorMessage = nameof(AppStrings.RequiredAttribute_ValidationError))]

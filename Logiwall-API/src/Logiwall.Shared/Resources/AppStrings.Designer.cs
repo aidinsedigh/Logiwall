@@ -61,6 +61,15 @@ namespace Logiwall.Shared.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Your account is disabled.
+        /// </summary>
+        public static string AccountIsDisabled {
+            get {
+                return ResourceManager.GetString("AccountIsDisabled", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Action.
         /// </summary>
         public static string Action {
@@ -323,11 +332,29 @@ namespace Logiwall.Shared.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Contact information not found.
+        /// </summary>
+        public static string ContactInfoNotFound {
+            get {
+                return ResourceManager.GetString("ContactInfoNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Custom color.
         /// </summary>
         public static string CustomColor {
             get {
                 return ResourceManager.GetString("CustomColor", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Customer not found.
+        /// </summary>
+        public static string CustomerNotFound {
+            get {
+                return ResourceManager.GetString("CustomerNotFound", resourceCulture);
             }
         }
         
@@ -701,6 +728,15 @@ namespace Logiwall.Shared.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The callback URL is not valid.
+        /// </summary>
+        public static string InvalidCallbackUrl {
+            get {
+                return ResourceManager.GetString("InvalidCallbackUrl", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Looks like the confirmation link either is invalid or has expired..
         /// </summary>
         public static string InvalidConfirmationLinkMessage {
@@ -715,6 +751,33 @@ namespace Logiwall.Shared.Resources {
         public static string InvalidOrder {
             get {
                 return ResourceManager.GetString("InvalidOrder", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The selected option is not valid.
+        /// </summary>
+        public static string InvalidOrderOption {
+            get {
+                return ResourceManager.GetString("InvalidOrderOption", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The request format is not valid.
+        /// </summary>
+        public static string InvalidRequestFormat {
+            get {
+                return ResourceManager.GetString("InvalidRequestFormat", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The user ID is not valid.
+        /// </summary>
+        public static string InvalidUserId {
+            get {
+                return ResourceManager.GetString("InvalidUserId", resourceCulture);
             }
         }
         
@@ -773,11 +836,38 @@ namespace Logiwall.Shared.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The value is not valid.
+        /// </summary>
+        public static string ModelBindingValueIsInvalid {
+            get {
+                return ResourceManager.GetString("ModelBindingValueIsInvalid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This value is required.
+        /// </summary>
+        public static string ModelBindingValueIsRequired {
+            get {
+                return ResourceManager.GetString("ModelBindingValueIsRequired", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Name.
         /// </summary>
         public static string Name {
             get {
                 return ResourceManager.GetString("Name", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This national code is already registered.
+        /// </summary>
+        public static string NationalCodeIsTaken {
+            get {
+                return ResourceManager.GetString("NationalCodeIsTaken", resourceCulture);
             }
         }
         
@@ -805,6 +895,15 @@ namespace Logiwall.Shared.Resources {
         public static string No {
             get {
                 return ResourceManager.GetString("No", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No payment was found to verify.
+        /// </summary>
+        public static string NoPaymentToVerify {
+            get {
+                return ResourceManager.GetString("NoPaymentToVerify", resourceCulture);
             }
         }
         
@@ -845,6 +944,24 @@ namespace Logiwall.Shared.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to This order can no longer be re-quoted.
+        /// </summary>
+        public static string OrderCannotBeRequoted {
+            get {
+                return ResourceManager.GetString("OrderCannotBeRequoted", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to This order is already paid.
+        /// </summary>
+        public static string OrderIsAlreadyPaid {
+            get {
+                return ResourceManager.GetString("OrderIsAlreadyPaid", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Otp Code Is Expired..
         /// </summary>
         public static string OtpCodeIsExpired {
@@ -872,6 +989,15 @@ namespace Logiwall.Shared.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Please wait before requesting a new code.
+        /// </summary>
+        public static string OtpResendCooldown {
+            get {
+                return ResourceManager.GetString("OtpResendCooldown", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Otp Service Is Not Connected.
         /// </summary>
         public static string OtpServiceIsNotConnected {
@@ -895,6 +1021,33 @@ namespace Logiwall.Shared.Resources {
         public static string PasswordChangedSuccessfullyMessage {
             get {
                 return ResourceManager.GetString("PasswordChangedSuccessfullyMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The payment link was created.
+        /// </summary>
+        public static string PaymentLinkCreated {
+            get {
+                return ResourceManager.GetString("PaymentLinkCreated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The payment link could not be created. Please try again.
+        /// </summary>
+        public static string PaymentLinkFailed {
+            get {
+                return ResourceManager.GetString("PaymentLinkFailed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Payment verification is not available now.
+        /// </summary>
+        public static string PaymentVerificationUnavailable {
+            get {
+                return ResourceManager.GetString("PaymentVerificationUnavailable", resourceCulture);
             }
         }
         
@@ -1025,11 +1178,29 @@ namespace Logiwall.Shared.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The profile is updated.
+        /// </summary>
+        public static string ProfileIsUpdated {
+            get {
+                return ResourceManager.GetString("ProfileIsUpdated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Profile updated successfully..
         /// </summary>
         public static string ProfileUpdatedSuccessfullyMessage {
             get {
                 return ResourceManager.GetString("ProfileUpdatedSuccessfullyMessage", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to No service was received from the service provider.
+        /// </summary>
+        public static string ProviderServiceUnavailable {
+            get {
+                return ResourceManager.GetString("ProviderServiceUnavailable", resourceCulture);
             }
         }
         
@@ -1421,6 +1592,15 @@ namespace Logiwall.Shared.Resources {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to The user is not registered.
+        /// </summary>
+        public static string UserIsNotRegistered {
+            get {
+                return ResourceManager.GetString("UserIsNotRegistered", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to User is locked out. Try again in {0}.
         /// </summary>
         public static string UserLockedOut {
@@ -1435,6 +1615,15 @@ namespace Logiwall.Shared.Resources {
         public static string UserNameNotFound {
             get {
                 return ResourceManager.GetString("UserNameNotFound", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to User not found.
+        /// </summary>
+        public static string UserNotFound {
+            get {
+                return ResourceManager.GetString("UserNotFound", resourceCulture);
             }
         }
         

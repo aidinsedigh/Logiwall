@@ -8,7 +8,7 @@ Logiwall uses **EF Core 8** with **Microsoft SQL Server** only.
 ## 6.1 One `AppDbContext`
 
 * There is one `DbContext`: `AppDbContext` in `src/Logiwall.Infrastructure/Data/AppDbContext.cs`.
-  Its namespace is `Logiwall.Server.Data` (a template leftover; plan 015 renames it).
+  Its namespace is `Logiwall.Infrastructure.Data`.
 * Put entity configuration in `src/Logiwall.Infrastructure/Data/Configurations/<Area>/<Entity>Configuration.cs`
   as an `IEntityTypeConfiguration<T>`. Do not configure entities with attributes when a
   configuration class exists for that entity.

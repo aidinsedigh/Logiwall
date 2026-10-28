@@ -2,26 +2,36 @@
 using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Shared.Dtos.Providers;
 using Logiwall.Shared.Dtos.Providers.Sep724;
+using Logiwall.Infrastructure.Options;
+using Microsoft.Extensions.Options;
 
 namespace Logiwall.Infrastructure.Providers;
 public class Sep724Provider : ISep724Provider
 {
-    private short tryToGetToken = 1;
-    private const short maxTryToGetToken = 3;
+    private const string TokenCacheKey = "sep724:token";
+    private const int MaxAttempts = 2;
     private string getToken = "token";
     private string grantType = "password";
-    private readonly string? terminal = "14385420";
     private readonly IAppSettingService appSettingService;
     private readonly IHttpProvider httpProvider;
+    private readonly Sep724Options options;
+    private readonly ProviderTokenCache tokenCache;
 
     public Sep724Provider(IAppSettingService appSettingService,
-        IHttpProvider httpProvider)
+        IHttpProvider httpProvider,
+        IOptions<Sep724Options> sep724Options,
+        ProviderTokenCache tokenCache)
     {
         this.appSettingService = appSettingService;
         this.httpProvider = httpProvider;
+        this.options = sep724Options.Value;
+        this.tokenCache = tokenCache;
     }
 
-    public async Task<SepResponseBase<GetPaymentTokenResponseDto>> GetPaymentTokenAsync(PaymentTokenRequestDto requestDto)
+    public Task<SepResponseBase<GetPaymentTokenResponseDto>> GetPaymentTokenAsync(PaymentTokenRequestDto requestDto)
+        => GetPaymentTokenAsync(requestDto, attempt: 1);
+
+    private async Task<SepResponseBase<GetPaymentTokenResponseDto>> GetPaymentTokenAsync(PaymentTokenRequestDto requestDto, int attempt)
     {
         var token = await GetTokenAsync();
         if (string.IsNullOrEmpty(token))
@@ -46,7 +56,7 @@ public class Sep724Provider : ISep724Provider
         {
             Amount = amount,
             MobileNo = requestDto.PhoneNumber,
-            Terminal = terminal,
+            Terminal = options.Terminal,
             Channel = requestDto.Channel,
             CallbackUrl = requestDto.CallbackUrl,
             Extensions = new GetPaymentTokenExtensionDto
@@ -69,7 +79,16 @@ public class Sep724Provider : ISep724Provider
                 Request = request,
                 Body = request,
                 HeaderParameters = header
-            },failHandler: GetPaymentTokanFailHandler);
+            }, failHandler: async (_, response) =>
+            {
+                // A 401 means the cached access token has expired on SEP's side: refresh it and retry once.
+                if (response?.Status == 401 && attempt < MaxAttempts)
+                {
+                    tokenCache.Invalidate(TokenCacheKey);
+                    return await GetPaymentTokenAsync(requestDto, attempt + 1);
+                }
+                return response;
+            });
 
         return result;
     }
@@ -79,21 +98,31 @@ public class Sep724Provider : ISep724Provider
         throw new NotImplementedException();
     }
 
-    private async Task<string?> GetTokenAsync()
+    private Task<string?> GetTokenAsync() => tokenCache.GetOrCreateAsync(TokenCacheKey, async () =>
     {
+        var result = await RequestTokenAsync();
+        var lifetime = result?.ExpireIn > 0 ? TimeSpan.FromSeconds(result.ExpireIn) : TimeSpan.FromMinutes(5);
+        return (result?.AccessToken, lifetime);
+    });
+
+    private async Task<GetTokenResponseDto?> RequestTokenAsync()
+    {
+        if (string.IsNullOrEmpty(options.Username) || string.IsNullOrEmpty(options.Password) || string.IsNullOrEmpty(options.BasicAuthorization))
+            throw new InvalidOperationException("Providers:Sep724 credentials are not configured.");
+
         var appSettings = await appSettingService.GetAllSettingsAsync();
         var header = new List<(string, string)>
         {
-            new ("Authorization", $"Basic {appSettings.SepConnectAuthorization}")
+            new ("Authorization", $"Basic {options.BasicAuthorization}")
         };
 
         var body = new List<KeyValuePair<string, string>>
         {
             new ("grant_type", grantType),
-            new ("username" , appSettings.SepConnectUsername),
-            new ("password" , appSettings.SepConnectPassword),
+            new ("username" , options.Username),
+            new ("password" , options.Password),
             new ("scope" , appSettings.SepConnectScope),
-            new ("client" , appSettings.SepConnectClient),
+            new ("client" , options.Client),
         };
         var result = await httpProvider.PostAsync<GetTokenRequestDto, GetTokenResponseDto, List<KeyValuePair<string, string>>>(
             new HttpProviderRequest<List<KeyValuePair<string, string>>, GetTokenRequestDto>
@@ -105,25 +134,6 @@ public class Sep724Provider : ISep724Provider
                 Body = body
             });
 
-        return result?.AccessToken;
-    }
-    private async Task<SepResponseBase<GetPaymentTokenResponseDto>?> GetPaymentTokanFailHandler(
-        GetPaymentTokenRequestDto<GetPaymentTokenExtensionDto>? request,
-        SepResponseBase<GetPaymentTokenResponseDto>? response)
-    {
-        if (response.Status == 401 && tryToGetToken < maxTryToGetToken)
-        {
-            tryToGetToken ++;
-            return await GetPaymentTokenAsync(new PaymentTokenRequestDto
-            {
-                Amount = request.Amount,
-                PhoneNumber = request.MobileNo,
-                CallbackUrl = request.CallbackUrl,
-                Channel= request.Channel,
-                OrderNumber = request.Extensions.OrderNumber,
-            });
-        }
-
-        return response;
+        return result;
     }
 }

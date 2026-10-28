@@ -24,6 +24,9 @@ public partial class PersonController : AppControllerBase, IPersonController
         if (user is null)
             throw new ResourceNotFoundException();
 
+        // The person row and the password must be saved together; disposing without a commit rolls back.
+        await using var tx = await DbContext.Database.BeginTransactionAsync(cancellationToken);
+
         var response = await personService.CreatePersonAsync(new CreatePersonRequestDto
         {
             Name = requestDto.Name,
@@ -45,10 +48,11 @@ public partial class PersonController : AppControllerBase, IPersonController
         {
             return BadRequest(new ServiceResponse<bool>
             {
-                Message = AppStrings.AnErrorOccurrdWhileRegisteration
+                Message = Localizer[nameof(AppStrings.AnErrorOccurrdWhileRegisteration)]
             });
         }
 
+        await tx.CommitAsync(cancellationToken);
         return Ok(response);
     }
 
@@ -77,7 +81,7 @@ public partial class PersonController : AppControllerBase, IPersonController
             {
                 Data = requestDto,
                 Succuss = false,
-                Message = "UserId is not correct"
+                Message = Localizer[nameof(AppStrings.InvalidUserId)]
             });
         }
         requestDto.UserId = userId;
@@ -108,7 +112,7 @@ public partial class PersonController : AppControllerBase, IPersonController
     [HttpGet]
     public async Task<ActionResult> GetCustomerContact([FromQuery] int id, CancellationToken cancellationToken)
     {
-        var result = await customerService.GetCustomerContactByIdAsync(id);
+        var result = await customerService.GetCustomerContactByIdAsync(id, User.GetUserId());
 
         if (!result.Succuss)
         {
@@ -135,7 +139,7 @@ public partial class PersonController : AppControllerBase, IPersonController
     [HttpPost]
     public async Task<ActionResult> UpdateCustomerContact(UpdateCustomerContactRequestDto requestDto, CancellationToken cancellationToken)
     {
-        var result = await customerService.UpdateCustomerContactAsync(requestDto);
+        var result = await customerService.UpdateCustomerContactAsync(requestDto, User.GetUserId());
 
         if (!result.Succuss)
         {

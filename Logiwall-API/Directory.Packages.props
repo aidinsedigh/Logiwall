@@ -7,89 +7,85 @@
   </PropertyGroup>
 
   <ItemGroup Label="ASP.NET Core and Identity">
-    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.AspNetCore.OData" Version="9.0.0" />
-    <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Identity.Stores" Version="8.0.8" />
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="6.7.3" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Authorization" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.DataProtection.EntityFrameworkCore" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.WebUtilities" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Identity.Stores" Version="10.0.14" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="9.0.6" />
   </ItemGroup>
 
   <ItemGroup Label="Entity Framework Core">
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="8.0.8" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.14" />
+    <!-- Pinned for CVE fix (GHSA-846f-f764-76mx); remove when Microsoft.Data.SqlClient brings a patched version. -->
+    <PackageVersion Include="System.Security.Cryptography.Pkcs" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup Label="Microsoft.Extensions">
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="8.0.2" />
-    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.1" />
-    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.Extensions.Http" Version="8.0.0" />
-    <PackageVersion Include="Microsoft.Extensions.Localization" Version="8.0.8" />
-    <PackageVersion Include="System.Text.Json" Version="8.0.4" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Json" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.Extensions.Localization" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup Label="Health checks">
-    <PackageVersion Include="AspNetCore.HealthChecks.Network" Version="8.0.1" />
-    <PackageVersion Include="AspNetCore.HealthChecks.System" Version="8.0.1" />
-    <PackageVersion Include="AspNetCore.HealthChecks.UI" Version="8.0.2" />
-    <PackageVersion Include="AspNetCore.HealthChecks.UI.Client" Version="8.0.1" />
-    <PackageVersion Include="AspNetCore.HealthChecks.UI.InMemory.Storage" Version="8.0.1" />
+    <PackageVersion Include="AspNetCore.HealthChecks.System" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="Logging">
-    <PackageVersion Include="Serilog" Version="4.0.1" />
-    <PackageVersion Include="Serilog.AspNetCore" Version="8.0.2" />
-    <PackageVersion Include="Serilog.Extensions.Hosting" Version="8.0.0" />
-    <PackageVersion Include="Serilog.Extensions.Logging" Version="8.0.0" />
-    <PackageVersion Include="Serilog.Sinks.File" Version="6.0.0" />
+    <PackageVersion Include="Serilog" Version="4.4.0" />
+    <PackageVersion Include="Serilog.AspNetCore" Version="10.0.0" />
+    <PackageVersion Include="Serilog.Sinks.File" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="Libraries">
     <PackageVersion Include="FluentEmail.Smtp" Version="3.0.2" />
-    <PackageVersion Include="Magick.NET-Q16-AnyCPU" Version="14.0.0" />
-    <PackageVersion Include="MimeTypeMapOfficial" Version="1.0.17" />
-    <PackageVersion Include="Newtonsoft.Json" Version="13.0.3" />
-    <PackageVersion Include="RestSharp" Version="112.0.0" />
-    <PackageVersion Include="Riok.Mapperly" Version="3.6.0" />
+    <PackageVersion Include="Riok.Mapperly" Version="4.3.1" />
   </ItemGroup>
 
   <ItemGroup Label="bit platform">
-    <PackageVersion Include="Bit.BlazorUI" Version="8.10.0" />
-    <PackageVersion Include="Bit.BlazorUI.Assets" Version="8.10.0" />
-    <PackageVersion Include="Bit.BlazorUI.Extras" Version="8.10.0" />
-    <PackageVersion Include="Bit.BlazorUI.Icons" Version="8.10.0" />
-    <PackageVersion Include="Bit.Bswup" Version="8.10.0" />
-    <PackageVersion Include="Bit.Butil" Version="8.10.0" />
-    <PackageVersion Include="Bit.CodeAnalyzers" Version="8.10.0" />
-    <PackageVersion Include="Bit.SourceGenerators" Version="8.10.0" />
+    <PackageVersion Include="Bit.BlazorUI" Version="10.7.0" />
+    <PackageVersion Include="Bit.BlazorUI.Assets" Version="10.7.0" />
+    <PackageVersion Include="Bit.BlazorUI.Extras" Version="10.7.0" />
+    <PackageVersion Include="Bit.BlazorUI.Icons" Version="10.7.0" />
+    <PackageVersion Include="Bit.Bswup" Version="10.7.0" />
+    <PackageVersion Include="Bit.Butil" Version="10.7.0" />
+    <PackageVersion Include="Bit.CodeAnalyzers" Version="10.7.0" />
+    <PackageVersion Include="Bit.SourceGenerators" Version="10.7.0" />
   </ItemGroup>
 
   <ItemGroup Label="Blazor clients">
-    <PackageVersion Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.8" />
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.8" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Authorization" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="10.0.14" />
   </ItemGroup>
 
   <ItemGroup Label="MAUI client">
-    <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="8.0.82" />
-    <PackageVersion Include="Microsoft.Maui.Controls" Version="8.0.82" />
-    <PackageVersion Include="Microsoft.Maui.Controls.Compatibility" Version="8.0.82" />
-    <PackageVersion Include="Microsoft.Maui.Essentials" Version="8.0.82" />
+    <PackageVersion Include="Microsoft.AspNetCore.Components.WebView.Maui" Version="10.0.120" />
+    <PackageVersion Include="Microsoft.Maui.Controls" Version="10.0.120" />
+    <PackageVersion Include="Microsoft.Maui.Controls.Compatibility" Version="10.0.120" />
+    <PackageVersion Include="Microsoft.Maui.Essentials" Version="10.0.120" />
     <PackageVersion Include="Oscore.Maui.AppStoreInfo" Version="1.0.7" />
     <PackageVersion Include="Plugin.StoreReview" Version="6.2.0" />
   </ItemGroup>
 
   <ItemGroup Label="Infrastructure as code">
     <PackageVersion Include="Pulumi.AzureNative" Version="2.59.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Tests">
+    <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.14" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+    <PackageVersion Include="Testcontainers.MsSql" Version="4.16.0" />
+    <PackageVersion Include="xunit" Version="2.9.3" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
   </ItemGroup>
 </Project>

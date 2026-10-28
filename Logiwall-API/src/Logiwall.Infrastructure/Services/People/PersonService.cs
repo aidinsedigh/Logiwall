@@ -1,23 +1,30 @@
 ﻿using Logiwall.Application.Abstractions.People;
 using Logiwall.Domain.Entities.Identity;
 using Logiwall.Domain.Entities.People;
-using Logiwall.Server.Data;
+using Logiwall.Infrastructure.Data;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.People;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Logiwall.Infrastructure.Services.People;
 public class PersonService : IPersonService
 {
     private readonly AppDbContext dbContext;
     private readonly UserManager<User> userManager;
+    private readonly ILogger<PersonService> logger;
+    private readonly IStringLocalizer<AppStrings> localizer;
 
     public PersonService(AppDbContext dbContext,
-        UserManager<User> userManager)
+        UserManager<User> userManager,
+        ILogger<PersonService> logger,
+        IStringLocalizer<AppStrings> localizer)
     {
         this.dbContext = dbContext;
         this.userManager = userManager;
+        this.logger = logger;
+        this.localizer = localizer;
     }
     public async Task<ServiceResponse<bool>> CreatePersonAsync(CreatePersonRequestDto requestDto)
     {
@@ -28,7 +35,18 @@ public class PersonService : IPersonService
             {
                 Data = false,
                 Succuss = false,
-                Message = AppStrings.YouRegisteredBefore
+                Message = localizer[nameof(AppStrings.YouRegisteredBefore)]
+            };
+        }
+
+        // The unique index stays the last guard; this check gives a clear answer instead of HTTP 500.
+        if (await dbContext.PersonalInfos.AnyAsync(p => p.NationalCode == requestDto.NationalCode))
+        {
+            return new ServiceResponse<bool>
+            {
+                Data = false,
+                Succuss = false,
+                Message = localizer[nameof(AppStrings.NationalCodeIsTaken)]
             };
         }
 
@@ -67,7 +85,7 @@ public class PersonService : IPersonService
             {
                 Data = null,
                 Succuss = false,
-                Message = "User is not registered"
+                Message = localizer[nameof(AppStrings.UserIsNotRegistered)]
             };
         }
         var person = await dbContext.People.Include(t => t.PersonalInfo).FirstOrDefaultAsync(t => t.UserId == userId);
@@ -78,7 +96,7 @@ public class PersonService : IPersonService
             {
                 Data = null,
                 Succuss = false,
-                Message = "User is not registered"
+                Message = localizer[nameof(AppStrings.UserIsNotRegistered)]
             };
         }
 
@@ -116,14 +134,19 @@ public class PersonService : IPersonService
             {
                 Data = requestDto,
                 Succuss = false,
-                Message = "User Not Found"
+                Message = localizer[nameof(AppStrings.UserNotFound)]
             };
         }
         try
         {
-            user.Email = requestDto.Email;
-            user.NormalizedEmail = requestDto.Email?.Normalize();
-            await userManager.UpdateAsync(user);
+            // The email change and the person rows are saved together; disposing without a commit rolls back.
+            await using var tx = await dbContext.Database.BeginTransactionAsync();
+
+            var setEmail = await userManager.SetEmailAsync(user, requestDto.Email);
+            if (setEmail.Succeeded is false)
+            {
+                return new ServiceResponse<UserProfileDto> { Data = requestDto, Succuss = false, Message = localizer[nameof(AppStrings.EmailAddressAttribute_ValidationError), localizer[nameof(AppStrings.Email)]] };
+            }
 
             var person = await dbContext.People.Include(t => t.PersonalInfo).FirstOrDefaultAsync(t => t.UserId == requestDto.UserId);
             if (person is null)
@@ -132,7 +155,7 @@ public class PersonService : IPersonService
                 {
                     Data = null,
                     Succuss = false,
-                    Message = "User is not registered"
+                    Message = localizer[nameof(AppStrings.UserIsNotRegistered)]
                 };
             }
 
@@ -164,21 +187,23 @@ public class PersonService : IPersonService
                 dbContext.Update(personalInfo);
             }
             await dbContext.SaveChangesAsync();
+            await tx.CommitAsync();
 
             return new ServiceResponse<UserProfileDto>
             {
                 Data = requestDto,
                 Succuss = true,
-                Message = "Profile is updated"
+                Message = localizer[nameof(AppStrings.ProfileIsUpdated)]
             };
         }
         catch (Exception exc)
         {
+            logger.LogError(exc, "[Person][UpdateUserProfile][{UserId}] Profile update failed.", requestDto.UserId);
             return new ServiceResponse<UserProfileDto>
             {
                 Data = requestDto,
                 Succuss = false,
-                Message = exc.Message
+                Message = localizer[nameof(AppStrings.UnknownException)]
             };
         }
         

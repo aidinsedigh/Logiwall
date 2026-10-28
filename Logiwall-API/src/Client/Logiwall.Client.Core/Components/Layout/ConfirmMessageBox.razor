@@ -4,7 +4,7 @@
     <div class="main-container">
         <div class="header">
             <span class="title">@title</span>
-            <BitIconButton IconName="@BitIconName.ChromeClose" OnClick="@(() => Confirm(false))" />
+            <BitButton IconOnly Variant="BitVariant.Text" IconName="@BitIconName.ChromeClose" OnClick="@(() => Confirm(false))" />
         </div>
         <div class="body">
             @message

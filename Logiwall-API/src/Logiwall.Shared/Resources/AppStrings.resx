@@ -598,4 +598,67 @@ Please confirm your email by clicking on the link.</value>
   <data name="YouRegisteredBefore" xml:space="preserve">
     <value>You registered before</value>
   </data>
+  <data name="OtpResendCooldown" xml:space="preserve">
+    <value>Please wait before requesting a new code.</value>
+  </data>
+  <data name="AccountIsDisabled" xml:space="preserve">
+    <value>Your account is disabled.</value>
+  </data>
+  <data name="CustomerNotFound" xml:space="preserve">
+    <value>Customer not found.</value>
+  </data>
+  <data name="OrderCannotBeRequoted" xml:space="preserve">
+    <value>This order can no longer be re-quoted.</value>
+  </data>
+  <data name="ProviderServiceUnavailable" xml:space="preserve">
+    <value>No service was received from the service provider.</value>
+  </data>
+  <data name="UserIsNotRegistered" xml:space="preserve">
+    <value>The user is not registered.</value>
+  </data>
+  <data name="InvalidOrderOption" xml:space="preserve">
+    <value>The selected option is not valid.</value>
+  </data>
+  <data name="OrderIsAlreadyPaid" xml:space="preserve">
+    <value>This order is already paid.</value>
+  </data>
+  <data name="InvalidCallbackUrl" xml:space="preserve">
+    <value>The callback URL is not valid.</value>
+  </data>
+  <data name="PaymentLinkFailed" xml:space="preserve">
+    <value>The payment link could not be created. Please try again.</value>
+  </data>
+  <data name="PaymentLinkCreated" xml:space="preserve">
+    <value>The payment link was created.</value>
+  </data>
+  <data name="NoPaymentToVerify" xml:space="preserve">
+    <value>No payment was found to verify.</value>
+  </data>
+  <data name="PaymentVerificationUnavailable" xml:space="preserve">
+    <value>Payment verification is not available now.</value>
+  </data>
+  <data name="ContactInfoNotFound" xml:space="preserve">
+    <value>Contact information not found.</value>
+  </data>
+  <data name="UserNotFound" xml:space="preserve">
+    <value>User not found.</value>
+  </data>
+  <data name="ProfileIsUpdated" xml:space="preserve">
+    <value>The profile is updated.</value>
+  </data>
+  <data name="InvalidUserId" xml:space="preserve">
+    <value>The user ID is not valid.</value>
+  </data>
+  <data name="NationalCodeIsTaken" xml:space="preserve">
+    <value>This national code is already registered.</value>
+  </data>
+  <data name="InvalidRequestFormat" xml:space="preserve">
+    <value>The request format is not valid.</value>
+  </data>
+  <data name="ModelBindingValueIsInvalid" xml:space="preserve">
+    <value>The value is not valid.</value>
+  </data>
+  <data name="ModelBindingValueIsRequired" xml:space="preserve">
+    <value>This value is required.</value>
+  </data>
 </root>

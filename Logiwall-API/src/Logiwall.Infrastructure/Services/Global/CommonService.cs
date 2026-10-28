@@ -1,5 +1,5 @@
 ﻿using Logiwall.Application.Abstractions.Global;
-using Logiwall.Server.Data;
+using Logiwall.Infrastructure.Data;
 using Logiwall.Shared.Dtos.Global;
 using Microsoft.EntityFrameworkCore;
 
@@ -33,11 +33,5 @@ public class CommonService : ICommonService
             Succuss = true,
             Message = string.Empty
         };
-    }
-
-    public async Task<string?> GetStaticDataByIdAsync(int id)
-    {
-        var result = await appDbContext.StaticDatas.FindAsync(id);
-        return result.Title;
     }
 }

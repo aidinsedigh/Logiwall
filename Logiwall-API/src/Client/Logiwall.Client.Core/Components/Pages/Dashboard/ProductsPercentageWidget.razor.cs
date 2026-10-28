@@ -7,13 +7,14 @@ public partial class ProductsPercentageWidget : AppComponentBase
     [AutoInject] IDashboardController dashboardController = default!;
 
     private bool isLoading;
-    private BitChartPieConfig config = default!;
+    private BitChartConfig config = default!;
 
     protected override async Task OnInitAsync()
     {
-        config = new BitChartPieConfig
+        config = new BitChartConfig
         {
-            Options = new BitChartPieOptions
+            Type = BitChartType.Pie,
+            Options = new BitChartOptions
             {
                 Responsive = true,
             }

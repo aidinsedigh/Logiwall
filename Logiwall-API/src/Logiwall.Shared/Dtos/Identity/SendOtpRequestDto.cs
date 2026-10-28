@@ -5,6 +5,7 @@ public class SendOtpRequestDto
 {
     [Required(ErrorMessage = nameof(AppStrings.RequiredAttribute_ValidationError))]
     [Display(Name = nameof(AppStrings.PhoneNumber))]
+    [RegularExpression(@"^09\d{9}$")]
     public string PhoneNumber { get; set; } = default!;
 
     [Required, StringLength(7)]

@@ -5,27 +5,11 @@ public class AppSettingsDto
 
     public string? SepConnectUrl { get; set; }
 
-    public string? SepConnectUsername { get; set; }
-
-    public string? SepConnectPassword { get; set; }
-
     public string? SepConnectScope { get; set; }
-
-    public string? SepConnectClient { get; set; }
-
-    public string? SepConnectAuthorization { get; set; }
 
     public string? SepPayBaseUrl { get; set; }
 
     public string? MyTipaxBaseUrl { get; set; }
-
-    public string? MyTipaxUsernameToken { get; set; }
-
-    public string? MyTipaxPasswordToken { get; set; }
-
-    public string? MyTipaxUsernameLogin { get; set; }
-
-    public string? MyTipaxPasswordLogin { get; set; }
 
     public string? MyTipaxInquiryVersion { get; set; }
 

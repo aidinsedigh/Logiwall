@@ -16,6 +16,7 @@ range, not in full.
 | Cycle | Area | Status | Folder |
 |---|---|---|---|
 | 1 | Audit remediation: 16 independent plans (security, tests/CI, .NET 10, cleanup) | In progress — see its `tasks.md` | `work/001-audit-remediation/` |
+| 017 | Persian client messages, structured logs, open items from cycle 1 | Done 2026-10-28 — archived; results in its `tasks.md` | `archive/cycles/017-persian-messages-and-structured-logs/` |
 
 Cycle 1 has no `spec.md` or `plan.md`. The audit produced one self-contained plan file for each
 task (`NNN-*.md`), so the cycle folder holds those files and a `tasks.md` status table.
@@ -24,8 +25,10 @@ task (`NNN-*.md`), so the cycle folder holds those files and a `tasks.md` status
 
 | ADR | Title | Status |
 |---|---|---|
-| 0001 | Currency units (rial/toman) | Reserved. Plan 010 writes `adr/0001-currency-units.md`. |
+| 0001 | Currency units (rial/toman) | Open, verdict (c): provider confirmation required |
 | 0002 | Keep the layered architecture | Accepted |
+| 0003 | Client messages are Persian | Accepted |
+| 0004 | Structured log format and correlation ID | Accepted |
 
 Give a new ADR the next free number.
 

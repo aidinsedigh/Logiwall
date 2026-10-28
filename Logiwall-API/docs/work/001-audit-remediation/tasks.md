@@ -15,22 +15,22 @@ The user asked for plans covering **all** audit findings (15 findings, plus a .N
 
 | Plan | Title | Priority | Effort | Depends on | Status |
 |------|-------|----------|--------|------------|--------|
-| [001](001-remove-shared-default-password.md) | OTP-created accounts have no password; existing shared default passwords cleared | P1 | S | — | TODO |
-| [002](002-enforce-resource-ownership.md) | Contacts, orders, options and payments resolve only for their owner (IDOR) | P1 | S | — | TODO |
-| [003](003-remove-committed-secrets-and-redact-logs.md) | Credentials out of source, migrations and logs; config-based options | P1 | M | — | TODO |
-| [004](004-patch-dotnet8-and-vulnerable-packages.md) | SDK roll-forward and 8.0.x patch bumps; no High/Critical advisories | P1 | S | — | TODO |
-| [005](005-establish-test-and-ci-baseline.md) | xUnit + Testcontainers SQL Server harness, regression tests, GitHub Actions CI | P1 | M | 001, 002, 004 | TODO |
-| [006](006-add-agent-and-setup-docs.md) | README, CLAUDE.md, AGENTS.md | P2 | S | 003, 004, 005 | TODO (CLAUDE.md, AGENTS.md, instruction.md and docs/ exist since 2026-10-27; README and commands after 005 remain — see the plan's amendment) |
-| [007](007-rate-limit-otp-and-login.md) | OTP attempt cap, resend cooldown, per-IP rate limits, phone validation | P1 | M | 001, 005 | TODO |
-| [008](008-fix-otp-send-path-and-async-sms.md) | Async SMS with timeout, correct OTP ordering, logging, disabled accounts refused | P2 | M | 003, 005, 007 | TODO |
-| [009](009-harden-production-defaults.md) | Swagger flag, sample endpoint and SignUp removed, CORS/forwarded headers configurable, no `ex.Message` leaks | P2 | S | 005 | TODO |
-| [010](010-investigate-currency-units.md) | **Investigation**: rial/toman units across quote → payment | P1 | S | — | TODO |
-| [011](011-make-order-quote-flow-idempotent-and-stateful.md) | Idempotent quotes, DI-resolved providers, order state and history, transactions | P2 | M | 002, 005, 009 | TODO |
-| [012](012-verify-payments-server-side.md) | Server-side payment verification (Phase A: pending/no client trust; Phase B: SEP verify) | P1 | L | 002, 005, 010, 011 | TODO |
-| [013](013-harden-http-provider-and-cache-settings.md) | HttpProvider timeouts, cancellation, disposal, error bodies; settings and token caching | P2 | M | 003, 005 | TODO |
-| [014](014-page-and-validate-order-list.md) | Order list: async, bounded, ordered, type-safe allow-listed filters | P3 | S | 005 | TODO |
-| [015](015-remove-dead-code-and-template-leftovers.md) | Remove unused packages, OData, dead middleware, commented code; namespace rename | P3 | S–M | 005, 008, 012 (run after 001–014) | TODO |
-| [016](016-migrate-server-to-net10.md) | Server-side projects to .NET 10 LTS (clients stay net8) | P2 | L | 004, 005, 015 | TODO |
+| [001](001-remove-shared-default-password.md) | OTP-created accounts have no password; existing shared default passwords cleared | P1 | S | — | DONE (migration `ClearSharedDefaultPasswords`; manual DB check skipped, no local SQL Server) |
+| [002](002-enforce-resource-ownership.md) | Contacts, orders, options and payments resolve only for their owner (IDOR) | P1 | S | — | DONE |
+| [003](003-remove-committed-secrets-and-redact-logs.md) | Credentials out of source, migrations and logs; config-based options | P1 | M | — | DONE (operator: rotate credentials, set `Providers:*` and `Sms:PersiaFava:*` incl. the SMS `Url`) |
+| [004](004-patch-dotnet8-and-vulnerable-packages.md) | SDK roll-forward and 8.0.x patch bumps; no High/Critical advisories | P1 | S | — | DONE (8.0.33; exception: transitive SSH.NET 2023.0.0 High via `AspNetCore.HealthChecks.Network`, fix only in 2026.0.0 major; KubernetesClient Moderate) |
+| [005](005-establish-test-and-ci-baseline.md) | xUnit + Testcontainers SQL Server harness, regression tests, GitHub Actions CI | P1 | M | 001, 002, 004 | DONE (4 unit + 8 integration tests pass locally; finding: committed dev `IdentityCertificate.pfx` expired 2025-01, tests generate their own) |
+| [006](006-add-agent-and-setup-docs.md) | README, CLAUDE.md, AGENTS.md | P2 | S | 003, 004, 005 | DONE (README rewritten; commands in `instruction.md` §1.1; security notes in `auth-and-security.md`) |
+| [007](007-rate-limit-otp-and-login.md) | OTP attempt cap, resend cooldown, per-IP rate limits, phone validation | P1 | M | 001, 005 | DONE (per-IP limits are correct only after plan 009 configures forwarded headers) |
+| [008](008-fix-otp-send-path-and-async-sms.md) | Async SMS with timeout, correct OTP ordering, logging, disabled accounts refused | P2 | M | 003, 005, 007 | DONE (product decision to confirm: archived or inactive accounts cannot log in) |
+| [009](009-harden-production-defaults.md) | Swagger flag, sample endpoint and SignUp removed, CORS/forwarded headers configurable, no `ex.Message` leaks | P2 | S | 005 | DONE (operator: set `Cors__AllowedOrigins__0`, `ForwardedHeaders__TrustAllProxies=true` on App Service, `AllowedHosts`) |
+| [010](010-investigate-currency-units.md) | **Investigation**: rial/toman units across quote → payment | P1 | S | — | DONE (verdict c; see `docs/adr/0001-currency-units.md`) |
+| [011](011-make-order-quote-flow-idempotent-and-stateful.md) | Idempotent quotes, DI-resolved providers, order state and history, transactions | P2 | M | 002, 005, 009 | DONE (Register rollback test skipped: no password-policy gap; `IPostalServiceBase.Payment` stub kept, see 015) |
+| [012](012-verify-payments-server-side.md) | Server-side payment verification (Phase A: pending/no client trust; Phase B: SEP verify) | P1 | L | 002, 005, 010, 011 | BLOCKED (Phase A done; Phase B needs SEP verify API docs and the ADR-0001 unit answer) |
+| [013](013-harden-http-provider-and-cache-settings.md) | HttpProvider timeouts, cancellation, disposal, error bodies; settings and token caching | P2 | M | 003, 005 | DONE |
+| [014](014-page-and-validate-order-list.md) | Order list: async, bounded, ordered, type-safe allow-listed filters | P3 | S | 005 | DONE |
+| [015](015-remove-dead-code-and-template-leftovers.md) | Remove unused packages, OData, dead middleware, commented code; namespace rename | P3 | S–M | 005, 008, 012 (run after 001–014) | DONE (24 migrations before and after; `src/Client` untouched) |
+| [016](016-migrate-server-to-net10.md) | Server-side projects to .NET 10 LTS (extended on request: Shared and the clients too, Bit 8.10 → 10.7.0) | P2 | L | 004, 005, 015 | DONE (operator: confirm `DOTNETCORE|10.0` with `az webapp list-runtimes`; `MapStaticAssets()` added, `blazor.web.js` returned 302 since the server moved to net10; MAUI retargeted but not built (no MAUI workload); SSH.NET High removed with `AspNetCore.HealthChecks.Network`; KubernetesClient Moderate remains via `AspNetCore.HealthChecks.UI`) |
 
 Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJECTED (with one-line rationale)
 
@@ -59,7 +59,7 @@ Status values: TODO | IN PROGRESS | DONE | BLOCKED (with one-line reason) | REJE
 
 - **Archived or inactive accounts** cannot log in (plan 008 default). Confirm, or request "re-register archived numbers" as a feature.
 - **Auth model**: OTP-only, or OTP plus password? The frontend calls `api/Person/ChangePassword`, which doesn't exist.
-- **Blazor/MAUI clients**: keep them, or go API-only? This blocks the client side of the .NET 10 migration (016) and the template-DTO cleanup (015).
+- **Blazor/MAUI clients**: keep them, or go API-only? This blocks the template-DTO cleanup (015). The clients are on .NET 10 and Bit 10 now (016).
 - **Frontend/API contract gaps**: the frontend calls `/api/Order/SelectPaymentType` and `/odata/Tipax/DspContractTrackings/...`, and neither exists. `use-query-orders.ts` calls the POST-only `GetOrders` with GET.
 
 ## Direction (not planned; options for the maintainer)

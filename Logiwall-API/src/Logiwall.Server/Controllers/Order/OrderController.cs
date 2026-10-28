@@ -34,7 +34,7 @@ public partial class OrderController : AppControllerBase, IOrderController
     [HttpGet]
     public async Task<ActionResult> GetOptions([FromQuery]GetOptionnsRequestDto requestDto, CancellationToken cancellationToken)
     {
-        var result = await orderService.GetOptionsAsync(requestDto);
+        var result = await orderService.GetOptionsAsync(requestDto, User.GetUserId());
         if (!result.Succuss)
         {
             ModelState.AddModelError(string.Empty, result.Message);
