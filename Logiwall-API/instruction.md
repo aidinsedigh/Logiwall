@@ -235,7 +235,7 @@ If you discover an unrelated issue:
 2. do not silently fix it
 3. continue the requested task unless it blocks implementation
 
-The audit plans in `docs/work/001-audit-remediation/` already cover many known issues. If an
+The audit plans in `docs/archive/cycles/001-*` to `016-*` already cover many known issues. If an
 issue you find is in a plan, name the plan instead of fixing it.
 
 ---

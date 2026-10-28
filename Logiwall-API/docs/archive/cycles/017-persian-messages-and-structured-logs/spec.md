@@ -39,7 +39,7 @@ This cycle does three things:
 
 1. Every message that the server sends to a client is Persian. No English text reaches a client.
 2. Every log entry has one structure: `[Class][Method][{Field}...] Message.`, plus a correlation ID.
-3. It closes 19 open items that cycle 1 (`docs/work/001-audit-remediation/`) and the .NET 10
+3. It closes 19 open items that cycle 1 (`docs/archive/audit-2026-10-27.md`) and the .NET 10
    migration left: 14 audit findings, 1 new bug, 2 .NET 10 warnings and 2 client defects.
 
 It also records decisions 1 and 2 as ADRs and conventions, so future features follow them.
@@ -78,7 +78,7 @@ It also records decisions 1 and 2 as ADRs and conventions, so future features fo
 * Changing the Blazor client language selector (`CultureInfoManager.SupportedCultures`).
 * Plan 012 Phase B (SEP verify call). It stays BLOCKED in cycle 1 until the operator gives the
   SEP 724 verify API documentation.
-* Operator actions and product decisions from `docs/work/001-audit-remediation/tasks.md`
+* Operator actions and product decisions from `docs/archive/audit-2026-10-27.md`
   (credential rotation, history purge, currency units, auth model, frontend contract gaps).
 * IaC (`src/Logiwall.Iac/`). The user excluded it on 2026-10-27.
 * Building `Logiwall.Client.Maui`. This machine has no MAUI workload.

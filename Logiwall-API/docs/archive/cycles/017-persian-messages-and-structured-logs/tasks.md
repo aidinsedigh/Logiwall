@@ -30,7 +30,7 @@ Scope, in one line each:
 
 ## Not in this cycle
 
-* Plan 012 Phase B (SEP verify): stays BLOCKED in `docs/work/001-audit-remediation/tasks.md`.
+* Plan 012 Phase B (SEP verify): stays BLOCKED in `docs/archive/cycles/012-verify-payments-server-side/tasks.md`.
 * Operator actions and product decisions in cycle 1's `tasks.md`.
 * IaC, the MAUI build, and the old client CSS variables (`spec.md` §2).
 

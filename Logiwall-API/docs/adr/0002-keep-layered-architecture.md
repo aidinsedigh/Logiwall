@@ -16,8 +16,8 @@ It does not move to:
 ## Context
 
 The React front end (`Logiwall-Front`) depends on the `api/[controller]/[action]` routes and on
-the `ServiceResponse<T>` shape, including the misspelled `Succuss` property. The open audit plans
-in `docs/work/001-audit-remediation/` are written against the current layers and files.
+the `ServiceResponse<T>` shape, including the misspelled `Succuss` property. The audit plans
+in `docs/archive/cycles/001-*` to `016-*` were written against the current layers and files.
 
 ## Consequences
 

@@ -15,11 +15,14 @@ range, not in full.
 
 | Cycle | Area | Status | Folder |
 |---|---|---|---|
-| 1 | Audit remediation: 16 independent plans (security, tests/CI, .NET 10, cleanup) | In progress — see its `tasks.md` | `work/001-audit-remediation/` |
-| 017 | Persian client messages, structured logs, open items from cycle 1 | Done 2026-10-28 — archived; results in its `tasks.md` | `archive/cycles/017-persian-messages-and-structured-logs/` |
+| 001-016 | Audit remediation: one cycle for each audit plan (security, tests/CI, .NET 10, cleanup) | Done 2026-10-27 — archived; 012 Phase B BLOCKED | `archive/cycles/001-*` to `016-*` |
+| 017 | Persian client messages, structured logs, open items from cycles 001-016 | Done 2026-10-28 — archived; results in its `tasks.md` | `archive/cycles/017-persian-messages-and-structured-logs/` |
 
-Cycle 1 has no `spec.md` or `plan.md`. The audit produced one self-contained plan file for each
-task (`NNN-*.md`), so the cycle folder holds those files and a `tasks.md` status table.
+No cycle is active, so `work/` is empty.
+
+Cycles 001-016 come from one audit (2026-10-27). Each cycle folder has `spec.md`, `plan.md` and
+`tasks.md`, like 017. `archive/audit-2026-10-27.md` keeps the notes for more than one cycle: the
+order, the open operator actions and the open product decisions.
 
 ## ADR numbers
 
@@ -68,8 +71,8 @@ reason to load `api-design.md`.
    mid-cycle is durable (not specific to this feature), give it its own file in `adr/` and link it
    from the plan and `tasks.md`.
 3. **When the cycle is done** (final verification checked, self-review written) → move the folder
-   to `docs/archive/cycles/NNN-name/`. Drop `tasks.md` if the plan has its own checkboxes; keep it
-   if it is the only status record (cycle 1). Add the numbered TOC described below.
+   to `docs/archive/cycles/NNN-name/`. Keep `tasks.md`: it holds the cycle's
+   status and results. Add the numbered TOC described below to `spec.md` and `plan.md`.
 
 ## The line-numbered TOC convention
 
@@ -89,7 +92,7 @@ Archived files are never edited again, so these line numbers stay correct. Read 
 instead of in full:
 
 ```bash
-sed -n '380,704p' docs/archive/cycles/001-audit-remediation/012-verify-payments-server-side.md
+sed -n '131,168p' docs/archive/cycles/012-verify-payments-server-side/plan.md
 ```
 
 Generate a TOC only for a file you are about to archive:
@@ -104,7 +107,7 @@ An in-progress `work/` doc does not need a TOC. Its line numbers change on every
 ## Solution items
 
 `Logiwall.sln` shows `docs/` under `.SolutionItems` → `docs`, with one solution folder for each
-subfolder (`adr`, `conventions`, `work` → `001-audit-remediation`). When you add, move or delete a
+subfolder (`adr`, `conventions`, `work`, `archive` → `cycles` → one folder per cycle). When you add, move or delete a
 file in `docs/`, make the same change in `Logiwall.sln`. When you start or archive a cycle, add or
 move its solution folder.
 

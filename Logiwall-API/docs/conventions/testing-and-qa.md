@@ -5,7 +5,7 @@
 
 ## 12.1 Testing
 
-There are no test projects yet. Plan 005 in `docs/work/001-audit-remediation/` creates them.
+There are no test projects yet. Plan 005 (`docs/archive/cycles/005-establish-test-and-ci-baseline/`) creates them.
 Until it lands, verify a change with `dotnet build src/Logiwall.Server/Logiwall.Server.csproj`
 and state in your report that no tests ran.
 
