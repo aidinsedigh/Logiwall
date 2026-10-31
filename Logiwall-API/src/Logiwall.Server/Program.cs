@@ -20,7 +20,6 @@ public static partial class Program
             builder.Host.UseSerilog((context, services, configuration) => configuration
                 .ReadFrom.Configuration(context.Configuration)
                 .ReadFrom.Services(services));
-            builder.Configuration.AddClientConfigurations();
 
             // The following line (using the * in the URL), allows the emulators and mobile devices to access the app using the host IP address.
             if (BuildConfiguration.IsDebug() && OperatingSystem.IsWindows())

@@ -197,38 +197,6 @@ public static partial class Program
         return message.Value.Any(char.IsAsciiLetter) ? localizer[nameof(AppStrings.ModelBindingValueIsInvalid)] : message;
     }
 
-    private static void AddBlazor(WebApplicationBuilder builder)
-    {
-        var services = builder.Services;
-        var configuration = builder.Configuration;
-
-        services.TryAddTransient<IAuthTokenProvider, ServerSideAuthTokenProvider>();
-
-        // AddHttpClient() already registers an HttpClient with no BaseAddress, so a TryAdd here never runs.
-        services.AddTransient(sp =>
-        {
-            Uri.TryCreate(configuration.GetApiServerAddress(), UriKind.RelativeOrAbsolute, out var apiServerAddress);
-
-            if (apiServerAddress!.IsAbsoluteUri is false)
-            {
-                apiServerAddress = new Uri(sp.GetRequiredService<IHttpContextAccessor>().HttpContext!.Request.GetBaseUrl(), apiServerAddress);
-            }
-
-            return new HttpClient(sp.GetRequiredKeyedService<HttpMessageHandler>("DefaultMessageHandler"))
-            {
-                BaseAddress = apiServerAddress
-            };
-        });
-
-        services.AddRazorComponents()
-            .AddInteractiveServerComponents()
-            .AddInteractiveWebAssemblyComponents();
-
-        services.AddMvc();
-
-       services.AddClientWebProjectServices();
-    }
-
     private static void AddIdentity(WebApplicationBuilder builder)
     {
         var services = builder.Services;

@@ -2,7 +2,6 @@
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Web;
-using Logiwall.Client.Core.Services;
 using Microsoft.AspNetCore.Components.Endpoints;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Localization;
@@ -36,8 +35,6 @@ public static partial class Program
             RequestCultureProviders = [], // Persian only (ADR-0003): ignore Accept-Language, cookie and query.
             ApplyCurrentCultureToResponseHeaders = true
         });
-
-#endif
 
         app.UseExceptionHandler("/", createScopeForErrors: true);
 
