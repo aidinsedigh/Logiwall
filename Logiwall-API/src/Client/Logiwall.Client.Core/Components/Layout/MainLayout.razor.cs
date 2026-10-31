@@ -15,6 +15,8 @@ public partial class MainLayout : LayoutComponentBase, IDisposable
 
     [AutoInject] private AuthenticationManager authManager = default!;
 
+    [AutoInject] private IJSRuntime jsRuntime = default!;
+
     [CascadingParameter] public Task<AuthenticationState> AuthenticationStateTask { get; set; } = default!;
 
     protected override void OnParametersSet()
@@ -40,6 +42,16 @@ public partial class MainLayout : LayoutComponentBase, IDisposable
         {
             exceptionHandler.Handle(exp);
         }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await jsRuntime.RemoveLoading();
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
     }
 
     async void VerifyUserIsAuthenticatedOrNot(Task<AuthenticationState> task)

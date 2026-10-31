@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.Providers;
-public sealed class HttpProviderRequest<TBody, TRequest>
+public sealed record HttpProviderRequest<TBody, TRequest>
 {
     public required TRequest? Request { get; init; }
 

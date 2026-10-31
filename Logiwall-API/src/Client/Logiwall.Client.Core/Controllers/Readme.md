@@ -43,14 +43,5 @@ Task<TokenResponseDto> Refresh(RefreshRequestDto body);
 While following the Convention over Configuration principle, methods like `Create` in `ICategoryController` send requests to `api/Category/Create`,
 you are not bound by this convention. Use any `RoutePrefix` you prefer, as long as your API is accepting/returning json you're all set!
 
-**Advanced sample**:
-Explore `IMinimalApiController` for example of ASP.NET Core Minimal API that has the following characteristics:
-
-1- No server-side web api controllers because of ASP.NET Core Minimal API.
-
-2- Receiving output as `JsonElement`.
-
-3- Example of Query String.
-
 **Note:** We supprt [RFC6570](https://datatracker.ietf.org/doc/html/rfc6570) for request url templates thanks to [DoLess.UriTemplates](https://github.com/letsar/DoLess.UriTemplates?tab=readme-ov-file#examples)!
 

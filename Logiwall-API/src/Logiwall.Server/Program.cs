@@ -1,5 +1,4 @@
-
-using Serilog.Events;
+﻿
 using Serilog;
 
 namespace Logiwall.Server;
@@ -8,21 +7,20 @@ public static partial class Program
 {
     public static async Task Main(string[] args)
     {
-        // Configure Serilog
+        // Bootstrap logger for start-up and fatal errors; UseSerilog replaces it with the configured one.
         Log.Logger = new LoggerConfiguration()
-            .MinimumLevel.Override("Microsoft", LogEventLevel.Warning) // Set minimum log level for Microsoft components
-            .Enrich.FromLogContext()
             .WriteTo.Console()
-            .WriteTo.File("Logs/log-.txt", rollingInterval: RollingInterval.Day) // Log to file with daily rotation
-            .CreateLogger();
+            .CreateBootstrapLogger();
         try
         {
-            Log.Information("Starting web host");
+            Log.Information("[Program][Main] Web host is starting.");
 
             var builder = WebApplication.CreateBuilder(args);
-            // Add Serilog to logging
-            builder.Host.UseSerilog();
-
+            // Levels and sinks come from the Serilog section of appsettings.json (ADR-0004).
+            builder.Host.UseSerilog((context, services, configuration) => configuration
+                .ReadFrom.Configuration(context.Configuration)
+                .ReadFrom.Services(services));
+            builder.Configuration.AddClientConfigurations();
 
             // The following line (using the * in the URL), allows the emulators and mobile devices to access the app using the host IP address.
             if (BuildConfiguration.IsDebug() && OperatingSystem.IsWindows())
@@ -34,14 +32,13 @@ public static partial class Program
 
             var app = builder.Build();
 
-            app.ConfiureMiddlewares();
+            app.ConfigureMiddlewares();
 
             await app.RunAsync();
         }
-        catch (Exception exc)
+        catch (Exception exc) when (exc is not HostAbortedException)
         {
-            Log.Fatal(exc, "Host terminated unexpectedly");
-            throw;
+            Log.Fatal(exc, "[Program][Main] Web host stopped unexpectedly.");
         }
         finally
         {

@@ -11,7 +11,7 @@ You also need a Map method to convert DTO to Entity and vice versa.
 You also need a `Patch` method for the update scenario, to perform update operation, first get the Entity from the database with its Id,
 then patch the latest changes from the DTO sent by the client, and finally save it.
 
-These methods (`Project`, `Map` and `Patch`) are gets called in controllers.
+These methods (`Project`, `Map` and `Patch`) are called in the Infrastructure services.
 
 For more information and to learn about customizing the mapping process, visit the website below:
 https://mapperly.riok.app/docs/intro/

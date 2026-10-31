@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
     <PropertyGroup>
-        <TargetFramework>net8.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <!--If you don't need to use the time zone and your app is in WASM format, you can reduce the output size of the app by disabling the time zone.-->
         <BlazorEnableTimeZoneSupport>true</BlazorEnableTimeZoneSupport>
         <BlazorWebAssemblyPreserveCollationData>false</BlazorWebAssemblyPreserveCollationData>
@@ -26,14 +26,14 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.8" />
-        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="8.0.8" PrivateAssets="all" />
-        <PackageReference Include="Bit.Bswup" Version="8.10.0" />
-        <PackageReference Include="Bit.CodeAnalyzers" Version="8.10.0">
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" PrivateAssets="all" />
+        <PackageReference Include="Bit.Bswup" />
+        <PackageReference Include="Bit.CodeAnalyzers">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Bit.SourceGenerators" Version="8.10.0">
+        <PackageReference Include="Bit.SourceGenerators">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
@@ -50,8 +50,4 @@
         <Using Include="Logiwall.Client.Core.Components.Layout" />
     </ItemGroup>
 
-        <ItemGroup>
-        <BlazorWebAssemblyLazyLoad Include="Newtonsoft.Json.wasm" />
-    </ItemGroup>
-    
 </Project>

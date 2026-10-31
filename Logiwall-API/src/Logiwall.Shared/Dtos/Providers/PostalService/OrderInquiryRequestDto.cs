@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.Providers.PostalService;
-public class OrderInquiryRequestDto
+public record OrderInquiryRequestDto
 {
     [JsonPropertyName("originCity")]
     public string OriginCity { get; set; }

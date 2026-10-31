@@ -8,10 +8,10 @@
     <div class="content-container profile-panel">
         @if (string.IsNullOrEmpty(editProfileMessage) is false)
         {
-            <BitMessageBar Class="form-message-bar"
+            <BitMessage Class="form-message-bar"
                            OnDismiss="() => editProfileMessage = null">
                 @editProfileMessage
-            </BitMessageBar>
+            </BitMessage>
         }
 
         <h1 class="page-title">
@@ -21,39 +21,15 @@
         @if (isLoading)
         {
             <div class="loading-container">
-                <BitSpinner Size="BitSpinnerSize.Large"></BitSpinner>
+                <BitSpinnerLoading Size="BitSize.Large" />
             </div>
         }
         else
         {
             <div class="form-profile-container">
-                <BitPersona ImageUrl="@(user.ProfileImageName is not null ? $"{profileImageUrl}&file={user.ProfileImageName}" : null)"
-                            Size=@BitPersonaSize.Size72
+                <BitPersona Size=@BitPersonaSize.Size72
                             Text="@user.FullName"
                             SecondaryText="@user.UserName" />
-            </div>
-
-            <div class="form-input-container">
-                @if (user.ProfileImageName is not null)
-                {
-                    <BitButton IsLoading="isRemoving"
-                               ButtonStyle="BitButtonStyle.Standard"
-                               OnClick="RemoveProfileImage">
-                        @Localizer[nameof(AppStrings.Remove)]
-                    </BitButton>
-                }
-
-                <BitLabel>@Localizer[nameof(AppStrings.ProfileImage)]</BitLabel>
-                <BitFileUpload @onfocus="() => profileImageError = null"
-                               Label="@Localizer[nameof(AppStrings.UploadNewProfileImage)]"
-                               Accept="image/*"
-                               AutoUploadEnabled="true"
-                               UploadUrl="@profileImageUploadUrl"
-                               OnUploadComplete="WrapHandled(RefreshProfileData)"
-                               OnUploadFailed="() => profileImageError = Localizer[nameof(AppStrings.FileUploadFailed)]"
-                               MaxSize="1024 * 1024 * 10"
-                               ChunkedUploadEnabled="false" />
-                <div class="form-input-error">@profileImageError</div>
             </div>
 
             <EditForm Model="userToEdit" OnValidSubmit="WrapHandled(DoSave)" class="edit-profile-form">
@@ -101,14 +77,14 @@
     </div>
     <br />
     <div class="content-container danger-panel">
-        <BitTypography Variant="BitTypographyVariant.H5" Style="color: #dc0000;border-bottom: 1px solid #dc0000">
+        <BitText Typography="BitTypography.H5" Style="color: #dc0000;border-bottom: 1px solid #dc0000">
             @Localizer[nameof(AppStrings.DeleteAccount)]
-        </BitTypography>
+        </BitText>
         <br />
         <br />
-        <BitTypography Variant="BitTypographyVariant.Body1">
+        <BitText Typography="BitTypography.Body1">
             @Localizer[nameof(AppStrings.DeleteAccountPrompt)]
-        </BitTypography>
+        </BitText>
         <br />
         <br />
         <BitButton ButtonStyle="BitButtonStyle.Standard"

@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.Global;
-public class GetStaticDataResponseDto
+public record GetStaticDataResponseDto
 {
     public int Id { get; set; }
 

@@ -128,9 +128,9 @@ public class AppStack : Stack
                 AlwaysOn = true,
                 Http20Enabled = true,
                 WebSocketsEnabled = true,
-                NetFrameworkVersion = "v8.0",
+                NetFrameworkVersion = "v10.0",
                 FtpsState = FtpsState.Disabled,
-                LinuxFxVersion = "DOTNETCORE|8.0",
+                LinuxFxVersion = "DOTNETCORE|10.0",
                 AppCommandLine = "dotnet Logiwall.Server.dll",
                 AppSettings = new()
                 {

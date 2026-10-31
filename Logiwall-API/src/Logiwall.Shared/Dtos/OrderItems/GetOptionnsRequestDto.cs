@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.OrderItems;
-public class GetOptionnsRequestDto
+public record GetOptionnsRequestDto
 {
     public int OrderId { get; set; }
 }

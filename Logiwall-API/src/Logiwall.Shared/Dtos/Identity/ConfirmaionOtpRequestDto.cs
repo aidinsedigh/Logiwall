@@ -6,9 +6,10 @@ using System.Threading.Tasks;
 using static Logiwall.Shared.Enums.Constants;
 
 namespace Logiwall.Shared.Dtos.Identity;
-public class ConfirmaionOtpRequestDto
+public record ConfirmaionOtpRequestDto
 {
     [Required(ErrorMessage = nameof(AppStrings.RequiredAttribute_ValidationError))]
+    [RegularExpression(@"^09\d{9}$")]
     public string PhoneNumber { get; set; } = default!;
 
     [Required(ErrorMessage = nameof(AppStrings.RequiredAttribute_ValidationError))]

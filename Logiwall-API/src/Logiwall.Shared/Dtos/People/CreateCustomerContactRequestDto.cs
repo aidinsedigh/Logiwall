@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace Logiwall.Shared.Dtos.People;
-public class CreateCustomerContactRequestDto
+public record CreateCustomerContactRequestDto
 {
     [Required, MaxLength(100)]
     public string Title { get; set; } = default!;

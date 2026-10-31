@@ -7,8 +7,6 @@ public partial class NavMenu : AppComponentBase, IDisposable
 {
     private bool disposed;
     private bool isSignOutModalOpen;
-    private string? profileImageUrl;
-    private string? profileImageUrlBase;
     private UserDto user = new();
     private List<BitNavItem> navItems = [];
     private Action unsubscribe = default!;
@@ -31,24 +29,9 @@ public partial class NavMenu : AppComponentBase, IDisposable
             },
             new BitNavItem
             {
-                Text = Localizer[nameof(AppStrings.ProductCategory)],
-                IconName = BitIconName.Product,
-                IsExpanded = true,
-                ChildItems =
-                [
-                    new() {
-                        Text = Localizer[nameof(AppStrings.Dashboard)],
-                        Url = "/dashboard",
-                    },
-                    new() {
-                        Text = Localizer[nameof(AppStrings.Products)],
-                        Url = "/products",
-                    },
-                    new() {
-                        Text = Localizer[nameof(AppStrings.Categories)],
-                        Url = "/categories",
-                    },
-                ]
+                Text = Localizer[nameof(AppStrings.Dashboard)],
+                IconName = BitIconName.ViewDashboard,
+                Url = "/dashboard",
             },
             new BitNavItem
             {
@@ -70,22 +53,10 @@ public partial class NavMenu : AppComponentBase, IDisposable
 
             user = (UserDto)payload;
 
-            SetProfileImageUrl();
-
             await InvokeAsync(StateHasChanged);
         });
 
         user = (await PrerenderStateService.GetValue(() => HttpClient.GetFromJsonAsync("api/User/GetCurrentUser", AppJsonContext.Default.UserDto, CurrentCancellationToken)))!;
-
-        var access_token = await PrerenderStateService.GetValue(() => AuthTokenProvider.GetAccessTokenAsync());
-        profileImageUrlBase = $"{Configuration.GetApiServerAddress()}api/Attachment/GetProfileImage?access_token={access_token}&file=";
-
-        SetProfileImageUrl();
-    }
-
-    private void SetProfileImageUrl()
-    {
-        profileImageUrl = user.ProfileImageName is not null ? profileImageUrlBase + user.ProfileImageName : null;
     }
 
     private async Task DoSignOut()

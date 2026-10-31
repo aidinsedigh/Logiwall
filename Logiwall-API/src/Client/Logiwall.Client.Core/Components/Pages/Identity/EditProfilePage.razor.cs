@@ -3,19 +3,14 @@ using Logiwall.Shared.Dtos.Identity;
 
 namespace Logiwall.Client.Core.Components.Pages.Identity;
 
-[Authorize]
+[Authorize(Policy = "AdminsOnly")]
 public partial class EditProfilePage : AppComponentBase
 {
     [AutoInject] IUserController userController = default!;
 
     private bool isSaving;
-    private bool isRemoving;
     private bool isLoading;
-    private string? profileImageUrl;
-    private string? profileImageError;
     private string? editProfileMessage;
-    private string? profileImageUploadUrl;
-    private string? profileImageRemoveUrl;
     //private BitMessageBarType editProfileMessageType;
     private UserDto user = new();
     private readonly EditUserDto userToEdit = new();
@@ -28,12 +23,6 @@ public partial class EditProfilePage : AppComponentBase
         try
         {
             await LoadEditProfileData();
-
-            var access_token = await PrerenderStateService.GetValue(() => AuthTokenProvider.GetAccessTokenAsync());
-
-            profileImageUploadUrl = $"{Configuration.GetApiServerAddress()}api/Attachment/UploadProfileImage?access_token={access_token}";
-            profileImageUrl = $"{Configuration.GetApiServerAddress()}api/Attachment/GetProfileImage?access_token={access_token}";
-            profileImageRemoveUrl = $"api/Attachment/RemoveProfileImage?access_token={access_token}";
         }
         finally
         {
@@ -48,13 +37,6 @@ public partial class EditProfilePage : AppComponentBase
         user = await GetCurrentUser() ?? new();
 
         user.Patch(userToEdit);
-    }
-
-    private async Task RefreshProfileData()
-    {
-        await LoadEditProfileData();
-
-        PubSubService.Publish(PubSubMessages.PROFILE_UPDATED, user);
     }
 
     private Task<UserDto> GetCurrentUser() => userController.GetCurrentUser(CurrentCancellationToken);
@@ -86,29 +68,6 @@ public partial class EditProfilePage : AppComponentBase
         finally
         {
             isSaving = false;
-        }
-    }
-
-    private async Task RemoveProfileImage()
-    {
-        if (isRemoving) return;
-
-        isRemoving = true;
-
-        try
-        {
-            await HttpClient.DeleteAsync(profileImageRemoveUrl, CurrentCancellationToken);
-
-            await RefreshProfileData();
-        }
-        catch (KnownException e)
-        {
-            editProfileMessage = e.Message;
-            //editProfileMessageType = BitMessageBarType.Error;
-        }
-        finally
-        {
-            isRemoving = false;
         }
     }
 }

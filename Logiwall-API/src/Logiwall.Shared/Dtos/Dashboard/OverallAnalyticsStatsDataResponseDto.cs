@@ -1,12 +1,12 @@
 ﻿namespace Logiwall.Shared.Dtos.Dashboard;
 
-public class OverallAnalyticsStatsDataResponseDto
+/// <summary>The signed-in user's own order counts.</summary>
+public record OverallAnalyticsStatsDataResponseDto
 {
-    public int Last30DaysProductCount { get; set; }
+    public int TotalOrders { get; set; }
 
-    public int Last30DaysCategoryCount { get; set; }
+    public int Last30DaysOrders { get; set; }
 
-    public int TotalProducts { get; set; }
-
-    public int TotalCategories { get; set; }
+    /// <summary>Orders with a successful payment.</summary>
+    public int PaidOrders { get; set; }
 }

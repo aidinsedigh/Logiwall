@@ -1,62 +1,80 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
+using System.Text;
 using Logiwall.Application.Abstractions.Global;
 using Logiwall.Application.Abstractions.Identity;
 using Logiwall.Application.Abstractions.Tools;
 using Logiwall.Domain.Entities.Identity;
 using Logiwall.Domain.Entities.People;
-using Logiwall.Server.Data;
+using Logiwall.Infrastructure.Data;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.Identity;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Logiwall.Infrastructure.Services.Tools;
 
 namespace Logiwall.Infrastructure.Services.Identity;
-public class AuthenticationService : IAuthenticationService
+public class AuthenticationService(AppDbContext dbContext,
+    UserManager<User> userManager,
+    ISMSService smsService,
+    IAppSettingService appSettingService,
+    IStringLocalizer<AppStrings> localizer,
+    ILogger<AuthenticationService> logger) : IAuthenticationService
 {
-    private readonly string? defaultPassword = "123456";
-    private readonly AppDbContext dbContext;
-    private readonly UserManager<User> userManager;
-    private readonly ISMSService smsService;
-    private readonly IAppSettingService appSettingService;
-    private readonly IStringLocalizer<AppStrings> localizer;
-
-    public AuthenticationService(AppDbContext dbContext,
-        UserManager<User> userManager,
-        ISMSService smsService,
-        IAppSettingService appSettingService,
-        IStringLocalizer<AppStrings> localizer)
-    {
-        this.dbContext = dbContext;
-        this.userManager = userManager;
-        this.smsService = smsService;
-        this.appSettingService = appSettingService;
-        this.localizer = localizer;
-    }
+    private const int MaxOtpAttempts = 5;
+    private static readonly TimeSpan OtpValidity = TimeSpan.FromMinutes(2);
+    private static readonly TimeSpan OtpResendCooldown = TimeSpan.FromSeconds(60);
     public async Task<ServiceResponse<bool>> SendOtpCodeAsync([NotNull] SendOtpRequestDto requestDto)
     {
         try
         {
-            var code = GenerateRandomCode();
-            var settings = await appSettingService.GetAllSettingsAsync();
-            var message = settings.LoginOtpText?.Replace("{CODE}", code);
-            var response = smsService.SendSMS(message ?? code, requestDto.PhoneNumber);
-            //todo : send code to sms provider
-
             var user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
 
-            if (user == null || user.IsArchive)
+            // The cooldown check must run before the SMS is sent: each SMS costs money.
+            if (user is not null)
             {
-                var result = await userManager.CreateAsync(new User
+                var lastTimestamp = await userManager.GetAuthenticationTokenAsync(user, "OTP", "timestamp");
+                if (DateTimeOffset.TryParse(lastTimestamp, CultureInfo.InvariantCulture, out var lastExpiry)
+                    && lastExpiry - OtpValidity + OtpResendCooldown > DateTimeOffset.Now)
+                {
+                    return new ServiceResponse<bool> { Data = false, Succuss = false, Message = localizer.GetString(nameof(AppStrings.OtpResendCooldown)) };
+                }
+            }
+
+            if (user is not null && (user.IsArchive || user.Active is false))
+            {
+                return new ServiceResponse<bool> { Data = false, Succuss = false, Message = localizer.GetString(nameof(AppStrings.AccountIsDisabled)) };
+            }
+
+            if (user is null)
+            {
+                // OTP users have no password; password sign-in (GetToken) is only possible after Person/Register sets one.
+                var createResult = await userManager.CreateAsync(new User
                 {
                     UserName = requestDto.PhoneNumber,
                     NormalizedUserName = requestDto.PhoneNumber,
                     PhoneNumber = requestDto.PhoneNumber,
                     Active = true
-                }, defaultPassword!);
+                });
+
+                if (createResult.Succeeded is false)
+                {
+                    logger.LogWarning("[Authentication][SendOtpCode][{ErrorCodes}] OTP user was not created.", string.Join(", ", createResult.Errors.Select(e => e.Code)));
+                    return new ServiceResponse<bool>
+                    {
+                        Data = false,
+                        Succuss = false,
+                        Message = localizer.GetString(nameof(AppStrings.OtpServiceIsNotConnected))
+                    };
+                }
+
                 user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
             }
-            var expiryTime = DateTimeOffset.Now.AddMinutes(2);
+
+            // Store the code before the SMS goes out, so a delivered code always works.
+            var code = GenerateRandomCode();
+            var expiryTime = DateTimeOffset.Now.Add(OtpValidity);
             var userOtp = new UserOtp
             {
                 Code = code,
@@ -70,8 +88,24 @@ public class AuthenticationService : IAuthenticationService
 
             await userManager.SetAuthenticationTokenAsync(user, "OTP", "otp", code);
             await userManager.SetAuthenticationTokenAsync(user, "OTP", "timestamp", expiryTime.ToString("o"));
-            //todo: Send the OTP through a communication channel (e.g., email, SMS)
-            // Code to send OTP to the user (e.g., via email, SMS) goes here
+            await userManager.SetAuthenticationTokenAsync(user, "OTP", "attempts", "0");
+
+            var settings = await appSettingService.GetAllSettingsAsync();
+            var message = settings.LoginOtpText?.Replace("{CODE}", code);
+            var smsResult = await smsService.SendSmsAsync(message ?? code, requestDto.PhoneNumber);
+            if (smsResult != "OK")
+            {
+                logger.LogWarning("[Authentication][SendOtpCode][{Destination}] OTP SMS was not sent.", SMSService.MaskPhone(requestDto.PhoneNumber));
+                // No SMS went out, so the resend cooldown must not start.
+                await userManager.RemoveAuthenticationTokenAsync(user, "OTP", "timestamp");
+                return new ServiceResponse<bool>
+                {
+                    Data = false,
+                    Succuss = false,
+                    Message = localizer.GetString(nameof(AppStrings.OtpServiceIsNotConnected))
+                };
+            }
+
             return new ServiceResponse<bool>
             {
                 Data = true,
@@ -81,7 +115,7 @@ public class AuthenticationService : IAuthenticationService
         }
         catch (Exception exc)
         {
-            _ = exc;
+            logger.LogError(exc, "[Authentication][SendOtpCode] Sending the OTP failed.");
             return new ServiceResponse<bool>
             {
                 Data = false,
@@ -94,6 +128,15 @@ public class AuthenticationService : IAuthenticationService
     public async Task<ServiceResponse<ConfirmationOtpResponseDto>> ConfirmationOtpCodeAsync(ConfirmaionOtpRequestDto requestDto)
     {
         var user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
+        if (user is null)
+        {
+            // Same answer as a wrong code, so the response does not reveal which numbers exist.
+            return new ServiceResponse<ConfirmationOtpResponseDto>
+            {
+                Succuss = false,
+                Message = localizer.GetString(nameof(AppStrings.OtpCodeIsNotCorrect))
+            };
+        }
         //var otp = await dbContext.UserOtps.Where(t => t.UserId == user.Id);
         //if (requestDto.Code != otp.Code)
         //{
@@ -104,9 +147,19 @@ public class AuthenticationService : IAuthenticationService
         //    };
         //}
         var storedOTP = await userManager.GetAuthenticationTokenAsync(user, "OTP", "otp");
+        // Raise the counter before the compare, in one statement, so parallel guesses each get their own count.
+        var attempts = storedOTP is null ? 0 : await RaiseOtpAttemptsAsync(user.Id);
 
-        if (storedOTP == null || storedOTP != requestDto.Code)
+        if (storedOTP is null || attempts > MaxOtpAttempts || CodesEqual(storedOTP, requestDto.Code) is false)
         {
+            if (storedOTP is not null && attempts >= MaxOtpAttempts)
+            {
+                // Too many wrong guesses: burn the code so the remaining keyspace can't be searched.
+                await dbContext.UserTokens
+                    .Where(t => t.UserId == user.Id && t.LoginProvider == "OTP" && (t.Name == "otp" || t.Name == "timestamp"))
+                    .ExecuteDeleteAsync();
+            }
+
             return new ServiceResponse<ConfirmationOtpResponseDto>
             {
                 Succuss = false,
@@ -127,6 +180,7 @@ public class AuthenticationService : IAuthenticationService
 
         await userManager.RemoveAuthenticationTokenAsync(user, "OTP", "otp");
         await userManager.RemoveAuthenticationTokenAsync(user, "OTP", "timestamp");
+        await userManager.RemoveAuthenticationTokenAsync(user, "OTP", "attempts");
 
         var person = await dbContext.People.FirstOrDefaultAsync(t => t.UserId == user.Id);
         await LogUserLoginAsync(new LogUserLoginRequestDto
@@ -141,7 +195,7 @@ public class AuthenticationService : IAuthenticationService
             return new ServiceResponse<ConfirmationOtpResponseDto>
             {
                 Succuss = true,
-                Message = localizer.GetString(nameof(AppStrings.OtpCodeIsSent)),
+                Message = localizer.GetString(nameof(AppStrings.OtpLoginSucceeded)),
                 Data = new ConfirmationOtpResponseDto
                 {
                     FullName = person.FullName,
@@ -154,22 +208,22 @@ public class AuthenticationService : IAuthenticationService
         {
             Data = new ConfirmationOtpResponseDto { },
             Succuss = true,
-            Message = localizer.GetString(nameof(AppStrings.OtpCodeIsSent))
+            Message = localizer.GetString(nameof(AppStrings.OtpLoginSucceeded))
         }; //todo
 
     }
 
     public async Task LogUserLoginAsync(LogUserLoginRequestDto requestDto)
     {
+        User? user = null;
         try
         {
-        
-            var user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
+            user = await userManager.FindByNameAsync(requestDto.PhoneNumber!);
 
             var userlogin = new UserLogin
             {
                 Channel = requestDto.Channel,
-                ProviderKey = DateTimeOffset.Now.ToString(),
+                ProviderKey = Guid.NewGuid().ToString(),
                 ProviderDisplayName = string.Empty,
                 UserId = user.Id,
                 LoginProvider = Enum.GetName(requestDto.LoginProvider) 
@@ -180,12 +234,28 @@ public class AuthenticationService : IAuthenticationService
         }
         catch (Exception exc)
         {
-            _ = exc;
+            logger.LogError(exc, "[Authentication][LogUserLogin][{UserId}] Login record was not saved.", user?.Id);
         }
     }
 
+    /// <returns>The new attempt count; a missing counter counts as over the cap.</returns>
+    private async Task<int> RaiseOtpAttemptsAsync(int userId)
+    {
+        var values = await dbContext.Database.SqlQuery<string>($"""
+            UPDATE UserTokens SET Value = CAST(ISNULL(TRY_CAST(Value AS int), 0) + 1 AS nvarchar(10))
+            OUTPUT inserted.Value
+            WHERE UserId = {userId} AND LoginProvider = 'OTP' AND Name = 'attempts'
+            """).ToListAsync();
+
+        return values.Count == 1 ? int.Parse(values[0], CultureInfo.InvariantCulture) : MaxOtpAttempts + 1;
+    }
+
+    private static bool CodesEqual(string expected, string? actual)
+        => actual is not null && CryptographicOperations.FixedTimeEquals(
+               Encoding.UTF8.GetBytes(expected), Encoding.UTF8.GetBytes(actual));
+
     private static string GenerateRandomCode()
     {
-        return RandomNumberGenerator.GetInt32(10000, 99999).ToString();
+        return RandomNumberGenerator.GetInt32(10000, 100000).ToString();
     }
 }

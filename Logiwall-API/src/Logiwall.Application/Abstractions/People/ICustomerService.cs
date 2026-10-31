@@ -6,10 +6,10 @@ public interface ICustomerService
 {
     Task<ServiceResponse<bool>> CreateCustomerContactAsync(CreateCustomerContactRequestDto requestDto);
 
-    Task<ServiceResponse<bool>> UpdateCustomerContactAsync(UpdateCustomerContactRequestDto requestDto);
+    Task<ServiceResponse<bool>> UpdateCustomerContactAsync(UpdateCustomerContactRequestDto requestDto, int userId);
 
     Task<ServiceResponse<IEnumerable<CustomerContactResponseDto>>> GetCustomerContactListAsync(GetCustomerContactListRequestDto requestDto);
 
-    Task<ServiceResponse<CustomerContactResponseDto>> GetCustomerContactByIdAsync(int id);
+    Task<ServiceResponse<CustomerContactResponseDto>> GetCustomerContactByIdAsync(int id, int userId);
 
 }

@@ -1,6 +1,6 @@
 ﻿namespace Logiwall.Shared.Dtos.Global;
 
-public class ServiceResponse<T>
+public record ServiceResponse<T>
 {
     public T? Data { get; set; } = default;
 

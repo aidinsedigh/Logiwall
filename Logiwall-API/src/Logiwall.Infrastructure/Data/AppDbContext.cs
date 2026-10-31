@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace Logiwall.Server.Data;
+namespace Logiwall.Infrastructure.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options)
     : IdentityDbContext<User, Role, int, IdentityUserClaim<int>, IdentityUserRole<int>

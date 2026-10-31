@@ -1,7 +1,7 @@
 ﻿using Logiwall.Shared.Dtos.Global;
 
 namespace Logiwall.Shared.Dtos.Providers.Sep724;
-public class GetPaymentTokenRequestDto<T> : IHttpRequest
+public record GetPaymentTokenRequestDto<T> : IHttpRequest
 {
     [JsonPropertyName("amount")]
     public long Amount { get; set; }

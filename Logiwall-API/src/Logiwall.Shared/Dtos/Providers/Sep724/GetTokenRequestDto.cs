@@ -1,7 +1,7 @@
 ﻿using Logiwall.Shared.Dtos.Global;
 
 namespace Logiwall.Shared.Dtos.Providers.Sep724;
-public class GetTokenRequestDto : IHttpRequest
+public record GetTokenRequestDto : IHttpRequest
 {
     [JsonPropertyName("grant_type")]
     public string GrantType { get; set; }

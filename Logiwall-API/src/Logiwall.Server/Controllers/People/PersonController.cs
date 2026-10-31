@@ -2,6 +2,7 @@ using Logiwall.Application.Abstractions.People;
 using Logiwall.Domain.Entities.Identity;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.People;
+using Microsoft.AspNetCore.RateLimiting;
 
 namespace Logiwall.Server.Controllers.People;
 
@@ -23,6 +24,9 @@ public partial class PersonController : AppControllerBase
         if (user is null)
             throw new ResourceNotFoundException();
 
+        // The person row and the password must be saved together; disposing without a commit rolls back.
+        await using var tx = await DbContext.Database.BeginTransactionAsync(cancellationToken);
+
         var response = await personService.CreatePersonAsync(new CreatePersonRequestDto
         {
             Name = requestDto.Name,
@@ -38,16 +42,28 @@ public partial class PersonController : AppControllerBase
             return BadRequest(response);
         }
 
+        // GetUserProfile reads the e-mail from the Identity user.
+        if (string.IsNullOrWhiteSpace(requestDto.Email) is false
+            && (await userManager.SetEmailAsync(user, requestDto.Email)).Succeeded is false)
+        {
+            return BadRequest(new ServiceResponse<bool>
+            {
+                Succuss = false,
+                Message = Localizer[nameof(AppStrings.EmailAddressAttribute_ValidationError), Localizer[nameof(AppStrings.Email)]]
+            });
+        }
+
         var token = await userManager.GeneratePasswordResetTokenAsync(user);
         var result = await userManager.ResetPasswordAsync(user, token, requestDto.Password!);
         if (!result.Succeeded)
         {
             return BadRequest(new ServiceResponse<bool>
             {
-                Message = AppStrings.AnErrorOccurrdWhileRegisteration
+                Message = Localizer[nameof(AppStrings.AnErrorOccurrdWhileRegisteration)]
             });
         }
 
+        await tx.CommitAsync(cancellationToken);
         return Ok(response);
     }
 
@@ -76,11 +92,22 @@ public partial class PersonController : AppControllerBase
             {
                 Data = requestDto,
                 Succuss = false,
-                Message = "UserId is not correct"
+                Message = Localizer[nameof(AppStrings.InvalidUserId)]
             });
         }
         requestDto.UserId = userId;
         var response = await personService.UpdateUserProfileAsync(requestDto);
+        if (!response.Succuss)
+        {
+            return BadRequest(response);
+        }
+        return Ok(response);
+    }
+
+    [HttpPost, EnableRateLimiting("auth-verify")]
+    public async Task<ActionResult> ChangePassword(ChangePasswordRequestDto requestDto, CancellationToken cancellationToken)
+    {
+        var response = await personService.ChangePasswordAsync(User.GetUserId(), requestDto);
         if (!response.Succuss)
         {
             return BadRequest(response);
@@ -107,7 +134,7 @@ public partial class PersonController : AppControllerBase
     [HttpGet]
     public async Task<ActionResult> GetCustomerContact([FromQuery] int id, CancellationToken cancellationToken)
     {
-        var result = await customerService.GetCustomerContactByIdAsync(id);
+        var result = await customerService.GetCustomerContactByIdAsync(id, User.GetUserId());
 
         if (!result.Succuss)
         {
@@ -134,7 +161,7 @@ public partial class PersonController : AppControllerBase
     [HttpPost]
     public async Task<ActionResult> UpdateCustomerContact(UpdateCustomerContactRequestDto requestDto, CancellationToken cancellationToken)
     {
-        var result = await customerService.UpdateCustomerContactAsync(requestDto);
+        var result = await customerService.UpdateCustomerContactAsync(requestDto, User.GetUserId());
 
         if (!result.Succuss)
         {

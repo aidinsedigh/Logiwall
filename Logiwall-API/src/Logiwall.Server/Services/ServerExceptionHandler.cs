@@ -8,23 +8,33 @@ namespace Logiwall.Server.Services;
 
 public partial class ServerExceptionHandler : IExceptionHandler
 {
-    [AutoInject] private IWebHostEnvironment webHostEnvironment = default!;
     [AutoInject] private IStringLocalizer<AppStrings> localizer = default!;
+    [AutoInject] private ILogger<ServerExceptionHandler> logger = default!;
     [AutoInject] private JsonSerializerOptions jsonSerializerOptions = default!;
 
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception e, CancellationToken cancellationToken)
     {
-        // Using the Request-Id header, one can find the log for server-related exceptions
+        // Using the Request-Id header, one can find the log for server-related exceptions.
+        // UseExceptionHandler cleared the headers, so X-Correlation-Id is set again (ADR-0004).
         httpContext.Response.Headers.Append(HeaderNames.RequestId, httpContext.TraceIdentifier);
+        httpContext.Response.Headers[CorrelationIdMiddleware.HeaderName] = httpContext.TraceIdentifier;
 
         var exception = UnWrapException(e);
         var knownException = exception as KnownException;
 
-        // The details of all of the exceptions are returned only in dev mode. in any other modes like production, only the details of the known exceptions are returned.
+        // Only known exceptions return their own message; an unknown one never shows its details, Development too (ADR-0003).
         var key = knownException?.Key ?? nameof(UnknownException);
-        var message = knownException?.Message ?? (webHostEnvironment.IsDevelopment() ? exception.Message : localizer[nameof(UnknownException)]);
+        var message = knownException?.Message ?? localizer[nameof(UnknownException)];
 
         var statusCode = (int)(exception is RestException restExp ? restExp.StatusCode : HttpStatusCode.InternalServerError);
+
+        // The only log of a handled exception: .NET 10 ExceptionHandlerMiddleware does not log when TryHandleAsync returns true.
+        // UseExceptionHandler("/") has already changed Request.Path; the feature keeps the original path.
+        var path = httpContext.Features.Get<IExceptionHandlerFeature>()?.Path ?? httpContext.Request.Path.Value;
+        if (knownException is not null)
+            logger.LogWarning(exception, "[ServerException][Handle][{Path}][{ExceptionType}][{StatusCode}] Request failed with a known exception.", path, exception.GetType().Name, statusCode);
+        else
+            logger.LogError(exception, "[ServerException][Handle][{Path}][{ExceptionType}] Request failed with an unknown exception.", path, exception.GetType().Name);
 
         if (exception is KnownException && message == key)
         {

@@ -1,7 +1,7 @@
 ﻿using Logiwall.Shared.Dtos.Global;
 
 namespace Logiwall.Shared.Dtos.Providers.Sep724;
-public class GetTokenResponseDto : IHttpResponse
+public record GetTokenResponseDto : IHttpResponse
 {
     [JsonPropertyName("access_token")]
     public string? AccessToken { get; set; }

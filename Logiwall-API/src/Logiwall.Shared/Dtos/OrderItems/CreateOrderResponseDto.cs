@@ -1,5 +1,5 @@
 ﻿namespace Logiwall.Shared.Dtos.OrderItems;
-public class CreateOrderResponseDto
+public record CreateOrderResponseDto
 {
     public string? OrderNumber { get; set; }
 

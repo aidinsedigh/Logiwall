@@ -2,7 +2,7 @@
 using Logiwall.Shared.Dtos.Identity;
 using Riok.Mapperly.Abstractions;
 
-namespace Logiwall.Server.Mappers;
+namespace Logiwall.Infrastructure.Mapper;
 
 /// <summary>
 /// More info at Server/Mappers/README.md

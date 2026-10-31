@@ -2,7 +2,7 @@
 namespace Logiwall.Shared.Dtos.Identity;
 
 [DtoResourceType(typeof(AppStrings))]
-public class SendResetPasswordEmailRequestDto
+public record SendResetPasswordEmailRequestDto
 {
     [Required(ErrorMessage = nameof(AppStrings.RequiredAttribute_ValidationError))]
     [EmailAddress(ErrorMessage = nameof(AppStrings.EmailAddressAttribute_ValidationError))]

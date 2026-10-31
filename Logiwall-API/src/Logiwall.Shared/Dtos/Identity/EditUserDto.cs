@@ -3,7 +3,7 @@
 namespace Logiwall.Shared.Dtos.Identity;
 
 [DtoResourceType(typeof(AppStrings))]
-public class EditUserDto
+public record EditUserDto
 {
     [Required(ErrorMessage = nameof(AppStrings.RequiredAttribute_ValidationError))]
     [Display(Name = nameof(AppStrings.FullName))]

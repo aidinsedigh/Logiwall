@@ -1,7 +1,7 @@
 ﻿using static Logiwall.Shared.Enums.Constants;
 
 namespace Logiwall.Shared.Dtos.People;
-public class UserProfileDto
+public record UserProfileDto
 {
     public int? UserId { get; set; }
 
