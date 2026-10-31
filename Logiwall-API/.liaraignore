@@ -238,3 +238,4 @@ custom.aprof
 /src/Logiwall.Iac/
 /Logiwall.sln
 /src/Logiwall.Server/Logs/
+/IdentityCertificate.pfx

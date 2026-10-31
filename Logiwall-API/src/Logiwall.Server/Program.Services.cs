@@ -153,7 +153,7 @@ public static partial class Program
 
         if (appSettings.EmailSettings.UseLocalFolderForEmails)
         {
-            var sentEmailsFolderPath = Path.Combine(AppContext.BaseDirectory, "sent-emails");
+            var sentEmailsFolderPath = Path.Combine(Path.GetTempPath(), "logiwall", "sent-emails");
 
             Directory.CreateDirectory(sentEmailsFolderPath);
 
@@ -206,7 +206,11 @@ public static partial class Program
         var settings = appSettings.IdentitySettings;
 
         var certificatePath = Path.Combine(AppContext.BaseDirectory, "IdentityCertificate.pfx");
-        var certificate = X509CertificateLoader.LoadPkcs12FromFile(certificatePath, appSettings.IdentitySettings.IdentityCertificatePassword, OperatingSystem.IsWindows() ? X509KeyStorageFlags.EphemeralKeySet : X509KeyStorageFlags.DefaultKeySet);
+        var certificate = string.IsNullOrWhiteSpace(settings.IdentityCertificateBase64)
+            ? X509CertificateLoader.LoadPkcs12FromFile(certificatePath,
+                settings.IdentityCertificatePassword, X509KeyStorageFlags.EphemeralKeySet)
+            : X509CertificateLoader.LoadPkcs12(Convert.FromBase64String(settings.IdentityCertificateBase64),
+                settings.IdentityCertificatePassword, X509KeyStorageFlags.EphemeralKeySet);
 
         bool isTestCertificate = certificate.Thumbprint is "8C8176BAD0AEB08C998EE7D41512940AABA837AA"; // The committed development certificate is still in use
         if (isTestCertificate && env.IsDevelopment() is false)

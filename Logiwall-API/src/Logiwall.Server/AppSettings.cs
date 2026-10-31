@@ -23,6 +23,7 @@ public class IdentitySettings
     public string Issuer { get; set; } = default!;
     public string Audience { get; set; } = default!;
     public string IdentityCertificatePassword { get; set; } = default!;
+    public string? IdentityCertificateBase64 { get; set; }
     public bool PasswordRequireDigit { get; set; }
     public int PasswordRequiredLength { get; set; }
     public bool PasswordRequireNonAlphanumeric { get; set; }

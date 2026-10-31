@@ -48,6 +48,12 @@ Replace it locally with a new certificate (see the error text in `Program.Servic
 
 ## Configuration
 
+On Liara, set `AppSettings__IdentitySettings__IdentityCertificateBase64` to the Base64 encoding of the production PFX.
+Set `AppSettings__IdentitySettings__IdentityCertificatePassword` to its matching password.
+These settings override the development certificate included with the application. Keep both values outside Git.
+Preserve the production certificate across deployments so existing tokens and Data Protection keys remain readable.
+Production logs go to the console. Local pickup emails use the operating system temporary directory.
+
 Set secrets with `dotnet user-secrets set "<key>" "<value>" --project src/Logiwall.Server`
 in development, and with Key Vault or App Service settings in Azure (`Providers__Sep724__Password`).
 `appsettings.json` keeps these keys with empty values.

@@ -38,6 +38,7 @@ public static partial class Program
         catch (Exception exc) when (exc is not HostAbortedException)
         {
             Log.Fatal(exc, "[Program][Main] Web host stopped unexpectedly.");
+            throw;
         }
         finally
         {
