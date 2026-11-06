@@ -10,9 +10,13 @@ using Microsoft.Extensions.Options;
 namespace Logiwall.Infrastructure.Providers.PostalServices;
 
 public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> settings,
-    Microsoft.Extensions.Localization.IStringLocalizer<Logiwall.Shared.Resources.AppStrings> localizer) : IShippingCarrier
+    Microsoft.Extensions.Localization.IStringLocalizer<Logiwall.Shared.Resources.AppStrings> localizer,
+    ProviderTokenCache tokens) : IShippingCarrier
 {
     public string Code => "etipax";
+    private const string TokenKey = "etipax";
+    // shortcut: the token reply may omit its lifetime; 10 minutes is then assumed. A 401 drops the cached token.
+    private static readonly TimeSpan DefaultTokenLifetime = TimeSpan.FromMinutes(10);
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private static int PaymentCode(int method) => (Constants.PaymentMethod)method switch
     {
@@ -40,7 +44,16 @@ public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> s
         catch (JsonException) { return false; }
     }
 
-    private async Task<string> GetTokenAsync(CancellationToken ct)
+    private async Task<string> GetTokenAsync(CancellationToken ct) =>
+        await tokens.GetOrCreateAsync(TokenKey, () => RequestTokenAsync(ct))
+            ?? throw new JsonException("ETipax did not return an access token.");
+
+    private void ForgetTokenOnUnauthorized(HttpResponseMessage response)
+    {
+        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized) tokens.Invalidate(TokenKey);
+    }
+
+    private async Task<(string? Token, TimeSpan Lifetime)> RequestTokenAsync(CancellationToken ct)
     {
         var o = settings.Value;
         if (string.IsNullOrWhiteSpace(o.Username) || string.IsNullOrWhiteSpace(o.Password) || string.IsNullOrWhiteSpace(o.ApiKey))
@@ -52,8 +65,10 @@ public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> s
         if (!response.IsSuccessStatusCode)
             throw new CarrierRequestException(CarrierErrorMessage.Parse(raw, localizer["ShippingCarrierValidationFailed"]), CarrierStatus((int)response.StatusCode));
         using var body = JsonDocument.Parse(raw);
-        return String(body.RootElement, "accessToken", "access_token", "token")
-            ?? throw new JsonException("ETipax did not return an access token.");
+        var seconds = String(body.RootElement, "expiresIn", "expires_in");
+        return (String(body.RootElement, "accessToken", "access_token", "token"),
+            int.TryParse(seconds, NumberStyles.Integer, CultureInfo.InvariantCulture, out var s) && s > 0
+                ? TimeSpan.FromSeconds(s) : DefaultTokenLifetime);
     }
 
     public string SerializeRegistration(CarrierShipmentRequest request) => JsonSerializer.Serialize(new
@@ -103,6 +118,7 @@ public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> s
         using var client = clients.CreateClient("etipax");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         using var response = await client.PostAsJsonAsync("/api/OM/v3/Pricing", payload, cancellationToken);
+        ForgetTokenOnUnauthorized(response);
         if (!response.IsSuccessStatusCode)
         {
             throw new CarrierRequestException(CarrierErrorMessage.Parse(await response.Content.ReadAsStringAsync(cancellationToken),
@@ -140,12 +156,16 @@ public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> s
 
     private async Task<CarrierRegistrationResult> SendMutationAsync(string path, string? requestJson, CancellationToken ct)
     {
-        // Token failures occur before a shipping request; callers may explicitly retry those.
+        // Any login failure happens before the shipping request is sent, so it is a definite rejection the customer may retry.
         string token;
         try { token = await GetTokenAsync(ct); }
         catch (CarrierRequestException error)
         {
             return new(false, false, (int)error.StatusCode, null, [], null, "CarrierAuthenticationRejected", ErrorMessage: error.Message);
+        }
+        catch (Exception e) when (e is HttpRequestException or OperationCanceledException or JsonException or InvalidOperationException)
+        {
+            return new(false, false, null, null, [], null, "CarrierAuthenticationUnavailable");
         }
         try
         {
@@ -153,6 +173,7 @@ public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> s
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             using var content = requestJson is null ? null : new StringContent(requestJson, Encoding.UTF8, "application/json");
             using var response = await client.PostAsync(path, content, ct);
+            ForgetTokenOnUnauthorized(response);
             var raw = await response.Content.ReadAsStringAsync(ct);
             if (!response.IsSuccessStatusCode)
                 return new(false, (int)response.StatusCode >= 500 || (int)response.StatusCode is 408 or 429,
@@ -188,6 +209,7 @@ public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> s
             using var client = clients.CreateClient("etipax");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             using var response = await client.GetAsync("/api/OM/v3/" + path, cancellationToken);
+            ForgetTokenOnUnauthorized(response);
             response.EnsureSuccessStatusCode();
             using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
             var root = doc.RootElement;

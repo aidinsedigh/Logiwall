@@ -14,6 +14,8 @@ namespace Logiwall.Infrastructure.Services.OrderItems;
 public class ShipmentService(AppDbContext db, IEnumerable<IShippingCarrier> carriers,
     ILogger<ShipmentService> logger) : IShipmentService
 {
+    private static readonly TimeSpan UnmatchedEventRetryWindow = TimeSpan.FromDays(2);
+
     public async Task<ShipmentResponseDto> RegisterAsync(int orderId, int userId, CancellationToken cancellationToken)
     {
         Shipment shipment;
@@ -118,26 +120,7 @@ public class ShipmentService(AppDbContext db, IEnumerable<IShippingCarrier> carr
     }
 
     public async Task<ShipmentResponseDto> GetAsync(int orderId, int userId, CancellationToken cancellationToken)
-    {
-        var shipment = await OwnedAsync(orderId, userId, cancellationToken);
-        var response = Response(shipment);
-        // Older accepted shipments can predate persistence of the initial carrier status.
-        if (shipment.ServiceProvider.Code != "etipax" || shipment.RegisteredAt is null
-            || string.IsNullOrWhiteSpace(shipment.ExternalOrderId)
-            || shipment.State != ShipmentRegistrationState.Registered)
-            return response;
-
-        var initial = await db.ProviderReferenceItems.AsNoTracking().SingleOrDefaultAsync(r =>
-            r.ServiceProviderId == shipment.ServiceProviderId && r.Category == "status" && r.ExternalCode == "59", cancellationToken);
-        var parcels = response.Parcels.Select(p => p.StatusCode is null && p.StatusTitle is null
-            ? p with { StatusCode = "59", StatusTitle = initial?.Title,
-                MappedOrderStatus = (short)OrderStatusCode.Registered,
-                MappedOrderStatusName = OrderStatusCode.Registered.GetDescription() }
-            : p).ToArray();
-        var sameStatus = parcels.Length > 0 && parcels.Select(p => p.StatusCode).Distinct().Count() == 1;
-        return response with { Parcels = parcels, StatusCode = sameStatus ? parcels[0].StatusCode : null,
-            StatusTitle = sameStatus ? parcels[0].StatusTitle : null };
-    }
+        => Response(await OwnedAsync(orderId, userId, cancellationToken));
 
     public async Task<ShipmentResponseDto> CancelAsync(int orderId, int userId, CancellationToken cancellationToken)
     {
@@ -211,7 +194,10 @@ public class ShipmentService(AppDbContext db, IEnumerable<IShippingCarrier> carr
         await db.Orders.Where(o => db.Shipments.Any(s => s.OrderId == o.Id && s.State == ShipmentRegistrationState.Unknown && s.RegisteredAt == null))
             .ExecuteUpdateAsync(s => s.SetProperty(o => o.OverallStatus, OrderStatusCode.Draft), cancellationToken);
         // No carrier polling endpoint has been confirmed. Reconcile only actual received events.
-        var ids = await db.ShipmentEvents.AsNoTracking().Where(e => !e.Processed).OrderBy(e => e.LastReconciledAt).ThenBy(e => e.Id)
+        // An event still unmatched after the retry window stays stored for investigation but is not retried.
+        var retryFrom = DateTimeOffset.UtcNow - UnmatchedEventRetryWindow;
+        var ids = await db.ShipmentEvents.AsNoTracking().Where(e => !e.Processed && e.ReceivedAt > retryFrom)
+            .OrderBy(e => e.LastReconciledAt).ThenBy(e => e.Id)
             .Select(e => e.Id).Take(100).ToListAsync(cancellationToken);
         foreach (var id in ids)
         {

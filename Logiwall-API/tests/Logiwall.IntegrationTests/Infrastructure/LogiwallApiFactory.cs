@@ -1,6 +1,5 @@
 using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Application.Abstractions.Tools;
-using Logiwall.Infrastructure.Providers.PostalServices;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -14,17 +13,15 @@ public class LogiwallApiFactory : WebApplicationFactory<Logiwall.Server.AppSetti
 {
     private readonly string connectionString;
     private readonly bool relaxRateLimits;
-    private readonly bool useLegacyPostalProvider;
 
     /// <summary>The log events of this host and of the hosts made from it with <c>WithWebHostBuilder</c>.</summary>
     public CapturingLogSink LogSink { get; } = new();
 
     /// <param name="relaxRateLimits">Tests share one IP address, so most tests lift the per-IP limits.</param>
-    public LogiwallApiFactory(string connectionString, bool relaxRateLimits = true, bool useLegacyPostalProvider = true)
+    public LogiwallApiFactory(string connectionString, bool relaxRateLimits = true)
     {
         this.connectionString = connectionString;
         this.relaxRateLimits = relaxRateLimits;
-        this.useLegacyPostalProvider = useLegacyPostalProvider;
         // Program.Services.cs reads the connection string while it builds the host,
         // so the override must also be visible as an environment variable.
         Environment.SetEnvironmentVariable("ConnectionStrings__SqlServerConnectionString", connectionString);
@@ -51,8 +48,6 @@ public class LogiwallApiFactory : WebApplicationFactory<Logiwall.Server.AppSetti
             services.RemoveAll<ISep724Provider>();
             services.AddSingleton<FakeSep724Provider>();
             services.AddSingleton<ISep724Provider>(sp => sp.GetRequiredService<FakeSep724Provider>());
-            services.RemoveAll<PostalServiceBase>();
-            if (useLegacyPostalProvider) services.AddTransient<PostalServiceBase, FakePostalProvider>();
             services.RemoveAll<IShippingCarrier>();
             services.AddSingleton<FakeShippingCarrier>();
             services.AddSingleton<IShippingCarrier>(sp => sp.GetRequiredService<FakeShippingCarrier>());

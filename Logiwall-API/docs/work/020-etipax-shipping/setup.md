@@ -69,7 +69,8 @@ Carrier cancellation uses `POST /api/Shipment/Cancel`; it does not refund paymen
 Register `POST /api/Shipment/Webhook` with `X-Tipax-Webhook-Secret` at the carrier.
 Body: parcelEventId, parcelEventTypeId, barcode, optional eventTypeTitle/barcodeTitle.
 Bearer login cannot substitute for the webhook secret. Event IDs are deduplicated per provider.
-The job retries unmatched events and marks operations left Submitting for over 10 minutes as Unknown.
+The job retries unmatched events for 2 days after they arrive; older unmatched events stay stored but are not retried. It marks operations left Submitting for over 10 minutes as Unknown.
+A Tipax login failure (network, missing credentials, no token) happens before the order request, so it is a definite rejection the customer may retry. It never creates Unknown. The access token is cached in ProviderTokenCache and dropped on a 401.
 No registration retry or fabricated status polling takes place. Unknown results need investigation using traceCode and attempts.
 
 ## Verification commands

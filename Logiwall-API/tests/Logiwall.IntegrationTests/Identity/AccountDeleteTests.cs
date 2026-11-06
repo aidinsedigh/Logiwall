@@ -14,8 +14,8 @@ public class AccountDeleteTests(SqlServerFixture fixture)
     public async Task Delete_archives_the_user_and_keeps_orders_and_payments()
     {
         var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
-        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
-        await OrderTestData.PendingPaymentAsync(client, orderId);
+        var orderId = await OrderTestData.InsertQuotableOrderAsync(fixture, customerId);
+        await OrderTestData.PendingPaymentAsync(fixture, client, orderId);
 
         var response = await client.DeleteAsync("api/User/Delete");
 

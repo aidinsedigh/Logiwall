@@ -141,29 +141,6 @@ public class ShipmentTests(SqlServerFixture fixture)
         }
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public async Task Legacy_initial_status_is_only_inferred_after_confirmed_registration(bool unknown)
-    {
-        var (client, id, _) = await ArrangeAsync(unknown: unknown);
-        await client.PostAsJsonAsync("api/Shipment/Register", new { orderId = id });
-        await fixture.WithDbAsync(async db =>
-        {
-            await db.ShipmentParcels.Where(p => p.Shipment.OrderId == id)
-                .ExecuteUpdateAsync(s => s.SetProperty(p => p.ExternalStatusCode, (string?)null)
-                    .SetProperty(p => p.StatusTitle, (string?)null));
-            return true;
-        });
-        var data = (await ApiClient.ReadJsonAsync(await client.GetAsync($"api/Shipment/Get?orderId={id}"))).GetProperty("data");
-        var initialTitle = await fixture.WithDbAsync(db => db.ProviderReferenceItems
-            .Where(r => r.ServiceProvider.Code == "etipax" && r.Category == "status" && r.ExternalCode == "59")
-            .Select(r => r.Title).SingleAsync());
-        Assert.Equal(unknown ? null : "59", data.GetProperty("courierStatusCode").GetString());
-        Assert.Equal(unknown ? null : initialTitle, data.GetProperty("courierStatus").GetString());
-        Assert.Equal(unknown ? null : initialTitle, data.GetProperty("parcels")[0].GetProperty("courierStatus").GetString());
-    }
-
     [Fact]
     public async Task Parallel_registration_sends_exactly_one_carrier_request()
     {
@@ -254,6 +231,25 @@ public class ShipmentTests(SqlServerFixture fixture)
         using var scope = fixture.Factory.Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<ShipmentService>().ReconcileEventsAsync(CancellationToken.None);
         Assert.True(await fixture.WithDbAsync(db => db.ShipmentEvents.Where(e => e.TrackingCode == barcode).Select(e => e.Applied).SingleAsync()));
+    }
+
+    [Fact]
+    public async Task Unmatched_webhook_older_than_the_retry_window_is_kept_but_not_retried()
+    {
+        using var webhook = fixture.Factory.CreateClient();
+        webhook.DefaultRequestHeaders.Add("X-Tipax-Webhook-Secret", "integration-webhook-secret");
+        var barcode = "foreign-" + Guid.NewGuid().ToString("N");
+        (await webhook.PostAsJsonAsync("api/Shipment/Webhook", new { parcelEventId = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(), parcelEventTypeId = 3, barcode })).EnsureSuccessStatusCode();
+        await fixture.WithDbAsync(db => db.ShipmentEvents.Where(e => e.TrackingCode == barcode)
+            .ExecuteUpdateAsync(s => s.SetProperty(e => e.ReceivedAt, DateTimeOffset.UtcNow.AddDays(-3))));
+
+        using var scope = fixture.Factory.Services.CreateScope();
+        await scope.ServiceProvider.GetRequiredService<ShipmentService>().ReconcileEventsAsync(CancellationToken.None);
+
+        var stored = await fixture.WithDbAsync(db => db.ShipmentEvents.Where(e => e.TrackingCode == barcode)
+            .Select(e => new { e.Processed, e.LastReconciledAt }).SingleAsync());
+        Assert.False(stored.Processed);
+        Assert.Null(stored.LastReconciledAt);
     }
 
     [Fact]

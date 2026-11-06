@@ -24,7 +24,7 @@ public class OrderOwnershipTests(SqlServerFixture fixture)
 
         var response = await other.GetAsync($"api/Order/GetOptions?orderId={orderId}");
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.InvalidOrder));
     }
 

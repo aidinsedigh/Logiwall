@@ -11,8 +11,11 @@ public class FakeShippingCarrier : IShippingCarrier
     public ConcurrentDictionary<string, ConcurrentQueue<CarrierRegistrationResult>> Results { get; } = new();
     public ConcurrentDictionary<string, (TaskCompletionSource Started, TaskCompletionSource Continue)> QuoteGates { get; } = new();
     private readonly ConcurrentDictionary<string, Logiwall.Shared.Enums.Constants.PaymentMethod> quotedMethods = new();
+    /// <summary>While set, quotes fail the way an unreachable carrier does.</summary>
+    public volatile bool FailQuotes;
     public async Task<IReadOnlyList<CarrierQuote>> QuoteAsync(CarrierShipmentRequest request, CancellationToken ct)
     {
+        if (FailQuotes) throw new HttpRequestException("Fake carrier is down.");
         QuoteRequests.Add(request);
         if (QuoteGates.TryGetValue(request.TraceCode, out var gate))
         {

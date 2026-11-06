@@ -31,7 +31,6 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.TryAddSingleton<ProviderTokenCache>();
 
-        // Active carriers use IShippingCarrier; legacy MyTipax is not registered.
         services.AddHttpClient("etipax", (sp, client) =>
         {
             var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<ETipaxOptions>>().Value;

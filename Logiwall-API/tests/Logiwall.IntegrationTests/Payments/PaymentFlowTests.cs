@@ -18,8 +18,8 @@ public class PaymentFlowTests(SqlServerFixture fixture)
     private async Task<(HttpClient Client, int OrderId, int OptionId)> SelectedOrderAsync()
     {
         var (owner, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
-        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
-        var optionId = await OrderTestData.QuoteAsync(owner, orderId);
+        var orderId = await OrderTestData.InsertQuotableOrderAsync(fixture, customerId);
+        var optionId = await OrderTestData.QuoteAsync(fixture, owner, orderId);
         (await OrderTestData.SelectAsync(owner, orderId, optionId)).EnsureSuccessStatusCode();
         return (owner, orderId, optionId);
     }
@@ -52,7 +52,17 @@ public class PaymentFlowTests(SqlServerFixture fixture)
     public async Task Option_that_was_not_selected_cannot_be_paid()
     {
         var (client, orderId, optionId) = await SelectedOrderAsync();
-        var otherOptionId = await fixture.WithDbAsync(db => db.OrderInqueryOptions.Where(t => t.OrderId == orderId && t.Id != optionId).Select(t => t.Id).FirstAsync());
+        // The carrier quotes only the selected service, so the second, unselected option is arranged directly.
+        var otherOptionId = await fixture.WithDbAsync(async db =>
+        {
+            var chosen = await db.OrderInqueryOptions.AsNoTracking().SingleAsync(t => t.Id == optionId);
+            var other = new OrderInqueryOption { OrderId = orderId, ServiceProviderId = chosen.ServiceProviderId, FinalAmount = 500,
+                PaymentMethod = chosen.PaymentMethod, CarrierRequestJson = chosen.CarrierRequestJson, ExternalServiceId = chosen.ExternalServiceId,
+                ExpiresAt = chosen.ExpiresAt, DelivereDate = string.Empty };
+            db.OrderInqueryOptions.Add(other);
+            await db.SaveChangesAsync();
+            return other.Id;
+        });
 
         var response = await OrderTestData.PayAsync(client, orderId, otherOptionId);
 
@@ -101,9 +111,9 @@ public class PaymentFlowTests(SqlServerFixture fixture)
 
         var payment = Assert.Single(await PaymentsAsync(orderId));
         Assert.Equal(PaymentStatus.Pending, payment.Status);
-        Assert.Equal(1100m, payment.Amount); // FakePostalProvider quotes FinalAmount = 1100
+        Assert.Equal(1000m, payment.Amount); // FakeShippingCarrier quotes 1000
         Assert.NotNull(payment.Reference);
-        Assert.Equal(1100m, fixture.Factory.Services.GetRequiredService<FakeSep724Provider>().LastAmount);
+        Assert.Equal(1000m, fixture.Factory.Services.GetRequiredService<FakeSep724Provider>().LastAmount);
         var state = await fixture.WithDbAsync(db => db.Orders.Where(t => t.Id == orderId).Select(t => t.State).SingleAsync());
         Assert.Equal((short)OrderState.PaymentPending, state);
     }

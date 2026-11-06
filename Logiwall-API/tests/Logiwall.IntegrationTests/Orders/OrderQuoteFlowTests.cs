@@ -4,43 +4,49 @@ using Logiwall.IntegrationTests.Infrastructure;
 using Logiwall.Shared.Resources;
 using Logiwall.Shared.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Logiwall.IntegrationTests.Orders;
 
 // Tests for plan 011: idempotent quotes, provider isolation and the recorded selection.
+// The quotes go through the production path: GetOptions -> CarrierQuoteService -> FakeShippingCarrier.
 [Collection("api")]
 public class OrderQuoteFlowTests(SqlServerFixture fixture)
 {
     private Task<int> OptionCountAsync(int orderId) =>
         fixture.WithDbAsync(db => db.OrderInqueryOptions.CountAsync(t => t.OrderId == orderId));
 
+    private async Task<(HttpClient Client, int OrderId)> ArrangeAsync()
+    {
+        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
+        return (client, await OrderTestData.InsertQuotableOrderAsync(fixture, customerId));
+    }
+
     [Fact]
     public async Task GetOptions_twice_returns_same_count_not_double()
     {
-        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
-        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+        var (client, orderId) = await ArrangeAsync();
 
-        (await client.GetAsync($"api/Order/GetOptions?orderId={orderId}")).EnsureSuccessStatusCode();
-        var second = await client.GetAsync($"api/Order/GetOptions?orderId={orderId}");
+        (await OrderTestData.GetOptionsAsync(fixture, client, orderId)).EnsureSuccessStatusCode();
+        var second = await OrderTestData.GetOptionsAsync(fixture, client, orderId);
 
         second.EnsureSuccessStatusCode();
         var provider = Assert.Single((await ApiClient.ReadJsonAsync(second)).GetProperty("data").EnumerateArray());
-        Assert.Equal(2, provider.GetProperty("orderOptions").GetArrayLength());
-        Assert.Equal(2, await OptionCountAsync(orderId));
+        Assert.Equal(1, provider.GetProperty("orderOptions").GetArrayLength());
+        Assert.Equal(1, await OptionCountAsync(orderId));
     }
 
     [Fact]
     public async Task GetOptions_returns_the_front_shape_with_parts_that_add_up()
     {
-        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
-        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+        var (client, orderId) = await ArrangeAsync();
 
-        var provider = (await ApiClient.ReadJsonAsync(await client.GetAsync($"api/Order/GetOptions?orderId={orderId}"))).GetProperty("data")[0];
+        var provider = (await ApiClient.ReadJsonAsync(await OrderTestData.GetOptionsAsync(fixture, client, orderId))).GetProperty("data")[0];
 
         Assert.True(provider.GetProperty("providerId").GetInt16() > 0);
         Assert.False(string.IsNullOrEmpty(provider.GetProperty("providerName").GetString()));
         var option = provider.GetProperty("orderOptions")[0];
-        // FakePostalProvider: shippingCost 900 + specialService 100, tax 100, total 1100.
+        // FakeShippingCarrier quotes 1000 rials; the carrier gives no breakdown, so the base is the total.
         Assert.Equal(1000m, option.GetProperty("baseAmount").GetDecimal());
         Assert.Equal(option.GetProperty("totalAmount").GetDecimal(),
             option.GetProperty("baseAmount").GetDecimal() + option.GetProperty("packageAmount").GetDecimal() + option.GetProperty("taxAmount").GetDecimal());
@@ -48,40 +54,64 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
     }
 
     [Fact]
+    public async Task GetOptions_passes_the_selected_service_and_payment_method_to_the_carrier()
+    {
+        var (client, orderId) = await ArrangeAsync();
+        var carrier = fixture.Factory.Services.GetRequiredService<FakeShippingCarrier>();
+        var trace = "logiwall-" + await fixture.WithDbAsync(db => db.Orders.Where(o => o.Id == orderId).Select(o => o.OrderNumber).SingleAsync());
+
+        (await OrderTestData.GetOptionsAsync(fixture, client, orderId, Constants.PaymentMethod.CashOnDelivery)).EnsureSuccessStatusCode();
+
+        var request = Assert.Single(carrier.QuoteRequests, r => r.TraceCode == trace);
+        Assert.Equal(4, request.ServiceId);
+        Assert.Equal((int)Constants.PaymentMethod.CashOnDelivery, request.PaymentType);
+    }
+
+    [Fact]
+    public async Task GetOptions_without_a_service_is_rejected()
+    {
+        var (client, orderId) = await ArrangeAsync();
+
+        var response = await client.GetAsync($"api/Order/GetOptions?orderId={orderId}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal(0, await OptionCountAsync(orderId));
+    }
+
+    [Fact]
     public async Task GetOptions_with_failing_provider_keeps_previous_options()
     {
-        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
-        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
-        (await client.GetAsync($"api/Order/GetOptions?orderId={orderId}")).EnsureSuccessStatusCode();
+        var (client, orderId) = await ArrangeAsync();
+        (await OrderTestData.GetOptionsAsync(fixture, client, orderId)).EnsureSuccessStatusCode();
 
-        FakePostalProvider.Fail = true;
+        var carrier = fixture.Factory.Services.GetRequiredService<FakeShippingCarrier>();
+        carrier.FailQuotes = true;
         try
         {
-            var response = await client.GetAsync($"api/Order/GetOptions?orderId={orderId}");
+            var response = await OrderTestData.GetOptionsAsync(fixture, client, orderId);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.ProviderServiceUnavailable));
-            Assert.Equal(2, await OptionCountAsync(orderId));
+            Assert.Equal(1, await OptionCountAsync(orderId));
         }
         finally
         {
-            FakePostalProvider.Fail = false;
+            carrier.FailQuotes = false;
         }
     }
 
     [Fact]
     public async Task SelectOption_marks_choice_and_state()
     {
-        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
-        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
-        var chosenId = await OrderTestData.QuoteAsync(client, orderId);
+        var (client, orderId) = await ArrangeAsync();
+        var chosenId = await OrderTestData.QuoteAsync(fixture, client, orderId);
 
         var response = await OrderTestData.SelectAsync(client, orderId, chosenId);
 
         response.EnsureSuccessStatusCode();
         var pickupOption = (await ApiClient.ReadJsonAsync(response)).GetProperty("data").GetProperty("pickupOptions")[0];
         Assert.Equal(chosenId, pickupOption.GetProperty("id").GetInt32());
-        Assert.Equal(1100m, pickupOption.GetProperty("finalAmount").GetDecimal());
+        Assert.Equal(1000m, pickupOption.GetProperty("finalAmount").GetDecimal());
         var (options, state, statuses, pickup, payments) = await fixture.WithDbAsync(async db =>
         {
             var options = await db.OrderInqueryOptions.Where(t => t.OrderId == orderId).Select(t => new { t.Id, t.Choosen }).ToListAsync();
@@ -90,8 +120,7 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
             var payments = await db.OrderPayments.CountAsync(t => t.OrderId == orderId);
             return (options, order.State, statuses, order.PickupDateTime, payments);
         });
-        Assert.True(options.Single(t => t.Id == chosenId).Choosen);
-        Assert.False(options.Single(t => t.Id != chosenId).Choosen);
+        Assert.True(Assert.Single(options).Choosen);
         // Payment is a separate step now (SelectPaymentType).
         Assert.Equal((short)OrderState.SelectedServiceProvider, state);
         Assert.Contains((int)OrderState.SelectedServiceProvider, statuses);
@@ -102,9 +131,8 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
     [Fact]
     public async Task SelectOption_accepts_price_confirmation_without_a_pickup_time()
     {
-        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
-        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
-        var optionId = await OrderTestData.QuoteAsync(client, orderId);
+        var (client, orderId) = await ArrangeAsync();
+        var optionId = await OrderTestData.QuoteAsync(fixture, client, orderId);
 
         var response = await client.PostAsJsonAsync("api/Order/SelectOption", new { orderId, orderInqueryOptionId = optionId });
 
@@ -114,13 +142,14 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
     [Fact]
     public async Task Parallel_requotes_leave_one_set_of_options()
     {
-        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
-        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+        var (client, orderId) = await ArrangeAsync();
 
-        var responses = await Task.WhenAll(Enumerable.Range(0, 2).Select(_ => client.GetAsync($"api/Order/GetOptions?orderId={orderId}")));
+        var responses = await Task.WhenAll(Enumerable.Range(0, 2).Select(_ => OrderTestData.GetOptionsAsync(fixture, client, orderId)));
 
-        Assert.All(responses, r => r.EnsureSuccessStatusCode());
-        Assert.Equal(2, await OptionCountAsync(orderId)); // FakePostalProvider quotes two options
+        // A re-quote that finds the order changed during its carrier call is rejected instead of saving stale prices.
+        Assert.Contains(responses, r => r.IsSuccessStatusCode);
+        Assert.All(responses, r => Assert.True(r.IsSuccessStatusCode || r.StatusCode == HttpStatusCode.Conflict, r.StatusCode.ToString()));
+        Assert.Equal(1, await OptionCountAsync(orderId));
     }
 
     [Fact]
