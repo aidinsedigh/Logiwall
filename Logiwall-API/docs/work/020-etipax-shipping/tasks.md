@@ -128,3 +128,12 @@ Architecture decision: ADR 0006. Implementation is reviewable; rollout and live 
 - EF reported no pending model changes. Release compilation succeeded through the test build; existing compiler warnings remain.
 - Tests used an isolated SQL database and fake external providers. No real carrier registration or payment was performed.
 - Known functional limits remain: SEP verification is incomplete; the Tipax no-packaging path still requires a validated carrier contract.
+
+2026-11-06 review fixes (review of commit 3bd0ae0):
+- A Tipax login failure before the order request (network, missing credentials, no token) is now a definite rejection. Before, it set the shipment to Unknown and locked the order with no exit.
+- ETipaxCarrier caches its access token in ProviderTokenCache (10 minutes unless the reply gives expiresIn) and drops it on a 401.
+- ReconcileEventsAsync retries unmatched webhook events for 2 days only; older events stay stored for investigation.
+- Removed the legacy MyTipax quote path (OrderService.GetOptionsAsync body, MyTipaxProvider, PostalServiceBase, MyTipaxOptions, PostalService DTOs, FakePostalProvider). The HTTP tests now quote through CarrierQuoteService and FakeShippingCarrier.
+- Removed the GetAsync status-59 fallback: RegisterAsync always stores the initial status, and UnifiedOrderStatuses backfills older rows.
+- ServerExceptionHandler builds its error JSON options once.
+- Results: 54 unit tests passed; 139 SQL integration tests passed; one existing placeholder skipped.
