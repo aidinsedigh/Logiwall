@@ -139,13 +139,71 @@ public class ETipaxCarrierTests
     {
         public HttpClient CreateClient(string name) => new(handler, false) { BaseAddress = new Uri("https://carrier.test") };
     }
-    private static ETipaxCarrier Create(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond)
-        => new(new Factory(new Handler(respond)), Microsoft.Extensions.Options.Options.Create(new ETipaxOptions
+    private static ETipaxCarrier Create(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond, ETipaxOptions? options = null)
+        => new(new Factory(new Handler(respond)), Microsoft.Extensions.Options.Options.Create(options ?? new ETipaxOptions
         { Username = "test", Password = "test", ApiKey = "test" }),
             new Microsoft.Extensions.Localization.StringLocalizer<Logiwall.Shared.Resources.AppStrings>(
                 new Microsoft.Extensions.Localization.ResourceManagerStringLocalizerFactory(
                     Microsoft.Extensions.Options.Options.Create(new Microsoft.Extensions.Localization.LocalizationOptions()),
-                    Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance)));
+                    Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance)),
+            new Logiwall.Infrastructure.Providers.ProviderTokenCache(
+                new Microsoft.Extensions.Caching.Memory.MemoryCache(new Microsoft.Extensions.Caching.Memory.MemoryCacheOptions())));
+
+    [Theory]
+    [InlineData("network")]
+    [InlineData("no-token")]
+    [InlineData("not-configured")]
+    public async Task Login_failure_before_sending_is_a_definite_rejection(string failure)
+    {
+        var mutations = 0;
+        var carrier = Create((request, _) =>
+        {
+            if (!request.RequestUri!.AbsolutePath.EndsWith("token"))
+            {
+                mutations++;
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
+            }
+            return failure == "network"
+                ? throw new HttpRequestException("DNS failure")
+                : Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") });
+        }, failure == "not-configured" ? new ETipaxOptions() : null);
+
+        var result = await carrier.RegisterAsync("{\"packages\":[]}", CancellationToken.None);
+
+        Assert.False(result.Succeeded);
+        Assert.False(result.IsAmbiguous);
+        Assert.Equal(0, mutations);
+    }
+
+    [Fact]
+    public async Task Token_is_reused_until_the_carrier_rejects_it()
+    {
+        var tokenCalls = 0;
+        var rejectNext = false;
+        var carrier = Create((request, _) =>
+        {
+            if (request.RequestUri!.AbsolutePath.EndsWith("token"))
+            {
+                tokenCalls++;
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"accessToken\":\"t\",\"expiresIn\":3600}") });
+            }
+            if (rejectNext)
+            {
+                rejectNext = false;
+                return Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized) { Content = new StringContent("{}") });
+            }
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"orderId\":1}") });
+        });
+
+        await carrier.RegisterAsync("{}", CancellationToken.None);
+        await carrier.RegisterAsync("{}", CancellationToken.None);
+        Assert.Equal(1, tokenCalls);
+
+        rejectNext = true;
+        await carrier.RegisterAsync("{}", CancellationToken.None); // 401 drops the cached token
+        await carrier.RegisterAsync("{}", CancellationToken.None);
+        Assert.Equal(2, tokenCalls);
+    }
 
     [Theory]
     [InlineData("{\"errors\":{\"packageInputs[0].weight\":[\"وزن نامعتبر است\"],\"packageInputs[0].packingId\":[\"بسته‌بندی نامعتبر است\"]}}", "وزن نامعتبر است؛ بسته‌بندی نامعتبر است")]
