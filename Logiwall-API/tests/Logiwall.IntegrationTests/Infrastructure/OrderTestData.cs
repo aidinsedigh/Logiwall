@@ -80,8 +80,10 @@ public static class OrderTestData
             order.OrderParcels = [new OrderParcel
             {
                 ParcelTypeId = ParcelType.Package, Weight = 1, Length = 10, Width = 10, Height = 10, ParcelValue = 100000,
-                PackagingReferenceId = await references.Where(r => r.Category == "packaging").Select(r => r.Id).FirstAsync(),
-                ContentReferenceId = await references.Where(r => r.Category == "content").Select(r => r.Id).FirstAsync(),
+                // FakeShippingCarrier's rows (code "1"); NoPackagingTests adds other packaging and content rows to the shared database.
+                PackageTypeId = 1,
+                PackagingReferenceId = await references.Where(r => r.Category == "packaging" && r.ExternalCode == "1").Select(r => r.Id).SingleAsync(),
+                ContentReferenceId = await references.Where(r => r.Category == "content" && r.ExternalCode == "1").Select(r => r.Id).SingleAsync(),
             }];
             db.Orders.Add(order);
             await db.SaveChangesAsync();

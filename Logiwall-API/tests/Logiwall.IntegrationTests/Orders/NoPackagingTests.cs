@@ -12,7 +12,7 @@ namespace Logiwall.IntegrationTests.Orders;
 [Collection("api")]
 public class NoPackagingTests(SqlServerFixture fixture) : IAsyncLifetime
 {
-    private readonly LogiwallApiFactory factory = new(fixture.ConnectionString, useLegacyPostalProvider: false);
+    private readonly LogiwallApiFactory factory = new(fixture.ConnectionString);
     public Task InitializeAsync() => Task.CompletedTask;
     public Task DisposeAsync() => factory.DisposeAsync().AsTask();
 
