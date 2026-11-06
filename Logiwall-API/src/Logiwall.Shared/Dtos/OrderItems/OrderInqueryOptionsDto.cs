@@ -2,6 +2,8 @@
 public record OrderInqueryOptionsDto
 {
     public int Id { get; set; }
+    public string? ServiceTitle { get; set; }
+    public Constants.PaymentMethod PaymentType { get; set; }
 
     public string? DelivereDate { get; set; }
 

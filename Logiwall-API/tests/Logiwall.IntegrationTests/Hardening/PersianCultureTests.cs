@@ -23,6 +23,9 @@ public class PersianCultureTests(SqlServerFixture fixture)
         var response = await client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        var raw = await response.Content.ReadAsStringAsync();
+        Assert.Matches("[\u0600-\u06FF]", raw);
+        Assert.DoesNotContain("\\u06", raw, StringComparison.OrdinalIgnoreCase);
         PersianAssert.HasPersianMessage(await ApiClient.ReadJsonAsync(response));
     }
 

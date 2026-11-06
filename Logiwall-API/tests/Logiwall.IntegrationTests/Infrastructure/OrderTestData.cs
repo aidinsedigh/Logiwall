@@ -23,8 +23,6 @@ public static class OrderTestData
         return (client, customerId);
     }
 
-    /// <summary>A pickup time <c>SelectOption</c> accepts now.</summary>
-    public static string PickupId() => PickupSlots.For(DateTimeOffset.Now)[0].Times[0].Id;
 
     /// <summary>Quotes the order the way the front does, and returns the first provider's first option.</summary>
     public static async Task<int> QuoteAsync(HttpClient client, int orderId)
@@ -34,7 +32,7 @@ public static class OrderTestData
     }
 
     public static Task<HttpResponseMessage> SelectAsync(HttpClient client, int orderId, int optionId) =>
-        client.PostAsJsonAsync("api/Order/SelectOption", new { orderId, orderInqueryOptionId = optionId, pickupId = PickupId() });
+        client.PostAsJsonAsync("api/Order/SelectOption", new { orderId, orderInqueryOptionId = optionId });
 
     /// <summary>The front's pay-step body; <c>pickupOptionId</c> is the id <c>SelectOption</c> returned.</summary>
     public static Task<HttpResponseMessage> PayAsync(HttpClient client, int orderId, int pickupOptionId, string callbackUrl = "https://example.test/cb", int paymentType = 71) =>

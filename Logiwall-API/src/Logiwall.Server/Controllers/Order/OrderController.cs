@@ -10,6 +10,10 @@ public partial class OrderController : AppControllerBase
 {
     [AutoInject] private IOrderService orderService = default!;
     [HttpPost]
+    public async Task<ActionResult> UpdateOrder(UpdateOrderRequestDto requestDto, CancellationToken cancellationToken)
+        => Ok(await orderService.UpdateOrderAsync(requestDto, User.GetUserId(), cancellationToken));
+
+    [HttpPost]
     public async Task<ActionResult> CreateOrder(CreateOrderRequestDto requestDto, CancellationToken cancellationToken)
     {
         var userId = User.GetUserId();
@@ -33,7 +37,7 @@ public partial class OrderController : AppControllerBase
     [HttpGet]
     public async Task<ActionResult> GetOptions([FromQuery]GetOptionnsRequestDto requestDto, CancellationToken cancellationToken)
     {
-        var result = await orderService.GetOptionsAsync(requestDto, User.GetUserId());
+        var result = await orderService.GetOptionsAsync(requestDto, User.GetUserId(), cancellationToken);
         if (!result.Succuss)
         {
             ModelState.AddModelError(string.Empty, result.Message);

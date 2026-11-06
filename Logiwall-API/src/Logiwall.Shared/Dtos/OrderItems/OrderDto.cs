@@ -79,6 +79,7 @@ public record OrderDto
     public short ServiceType { get; set; }
 
     public short ServiceProviderId { get; set; }
+    public string? ServiceProviderTitle { get; set; }
 
     public short ServiceSLA { get; set; }
 
@@ -95,6 +96,11 @@ public record OrderDto
 
     /// <summary>The chosen quote's total; 0 before an option is selected.</summary>
     public decimal FinalAmount { get; set; }
+
+    /// <summary>Verified successful payments recorded by Logiwall; not an assertion of carrier settlement.</summary>
+    public decimal PaidAmount { get; set; }
+    public string PaymentStatus { get; set; } = nameof(OrderPaymentState.Unpaid);
+    public string? PaymentStatusName { get; set; }
 
     public short PickupServiceId { get; set; }
 

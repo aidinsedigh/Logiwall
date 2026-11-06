@@ -1,6 +1,8 @@
 ﻿using System.Net;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Net.Http.Headers;
 
@@ -55,7 +57,16 @@ public partial class ServerExceptionHandler : IExceptionHandler
 
         httpContext.Response.StatusCode = statusCode;
 
-        await httpContext.Response.WriteAsJsonAsync(restExceptionPayload, jsonSerializerOptions.GetTypeInfo<RestErrorInfo>(), cancellationToken: cancellationToken);
+        // Preserve Persian characters in the JSON response while retaining the encoder's HTML escaping.
+        var errorJsonOptions = new JsonSerializerOptions(jsonSerializerOptions)
+        {
+            Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
+        };
+        if (exception is CarrierRequestException)
+            await httpContext.Response.WriteAsJsonAsync(new CarrierErrorResponse(message, statusCode),
+                errorJsonOptions.GetTypeInfo<CarrierErrorResponse>(), cancellationToken: cancellationToken);
+        else
+            await httpContext.Response.WriteAsJsonAsync(restExceptionPayload, errorJsonOptions.GetTypeInfo<RestErrorInfo>(), cancellationToken: cancellationToken);
 
         return true;
     }

@@ -9,9 +9,7 @@ namespace Logiwall.IntegrationTests.Infrastructure;
 /// <summary>One SQL Server container and one migrated database for the whole "api" collection.</summary>
 public class SqlServerFixture : IAsyncLifetime
 {
-    private readonly MsSqlContainer container = new MsSqlBuilder()
-        .WithImage("mcr.microsoft.com/mssql/server:2022-latest")
-        .Build();
+    private MsSqlContainer? container;
 
     public string ConnectionString { get; private set; } = string.Empty;
 
@@ -19,10 +17,15 @@ public class SqlServerFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        await container.StartAsync();
-        ConnectionString = new SqlConnectionStringBuilder(container.GetConnectionString())
+        var localServer = Environment.GetEnvironmentVariable("LOGIWALL_TEST_SQLSERVER");
+        if (string.IsNullOrWhiteSpace(localServer))
         {
-            InitialCatalog = "LogiwallTests"
+            container = new MsSqlBuilder().WithImage("mcr.microsoft.com/mssql/server:2022-latest").Build();
+            await container.StartAsync();
+        }
+        ConnectionString = new SqlConnectionStringBuilder(localServer ?? container!.GetConnectionString())
+        {
+            InitialCatalog = "LogiwallTests_" + Guid.NewGuid().ToString("N")
         }.ConnectionString;
 
         Factory = new LogiwallApiFactory(ConnectionString);
@@ -43,7 +46,13 @@ public class SqlServerFixture : IAsyncLifetime
     {
         if (Factory is not null)
             await Factory.DisposeAsync();
-        await container.DisposeAsync();
+        if (!string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable("LOGIWALL_TEST_SQLSERVER")) && !string.IsNullOrEmpty(ConnectionString))
+        {
+            // The test always overrides the supplied catalog with its own random database.
+            await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseSqlServer(ConnectionString).Options);
+            await db.Database.EnsureDeletedAsync();
+        }
+        if (container is not null) await container.DisposeAsync();
     }
 
     /// <summary>Runs <paramref name="action"/> with a fresh scoped <see cref="AppDbContext"/>.</summary>

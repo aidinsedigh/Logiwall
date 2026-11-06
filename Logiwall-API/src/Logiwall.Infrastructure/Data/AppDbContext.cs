@@ -29,6 +29,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options)
     public DbSet<OrderParcel> OrderParcels { get; set; }
     public DbSet<OrderPayment> OrderPayments { get; set; }
     public DbSet<OrderStatus> OrderStatuses { get; set; }
+    public DbSet<ProviderReferenceItem> ProviderReferenceItems { get; set; }
+    public DbSet<Shipment> Shipments { get; set; }
+    public DbSet<ShipmentParcel> ShipmentParcels { get; set; }
+    public DbSet<ShipmentAttempt> ShipmentAttempts { get; set; }
+    public DbSet<ShipmentEvent> ShipmentEvents { get; set; }
+    public DbSet<ShippingJobLease> ShippingJobLeases { get; set; }
 
     public DbSet<Domain.Entities.OrderItems.ServiceProvider> ServiceProviders { get; set; }
 

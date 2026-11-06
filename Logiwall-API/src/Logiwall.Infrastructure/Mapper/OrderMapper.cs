@@ -1,4 +1,4 @@
-﻿using Logiwall.Domain.Entities.OrderItems;
+using Logiwall.Domain.Entities.OrderItems;
 using Logiwall.Shared.Dtos.OrderItems;
 using Riok.Mapperly.Abstractions;
 
@@ -8,8 +8,12 @@ namespace Logiwall.Infrastructure.Mapper;
 public static partial class OrderMapper
 {
     // OrderService.GetOrderListAsync fills the names, which come from other tables.
-    [MapProperty(nameof(Order.State), nameof(OrderDto.Status))]
+    [MapProperty(nameof(Order.OverallStatus), nameof(OrderDto.Status))]
     [MapperIgnoreTarget(nameof(OrderDto.StatusName))]
+    [MapperIgnoreTarget(nameof(OrderDto.ServiceProviderTitle))]
+    [MapperIgnoreTarget(nameof(OrderDto.PaidAmount))]
+    [MapperIgnoreTarget(nameof(OrderDto.PaymentStatus))]
+    [MapperIgnoreTarget(nameof(OrderDto.PaymentStatusName))]
     [MapperIgnoreTarget(nameof(OrderDto.OriginCityName))]
     [MapperIgnoreTarget(nameof(OrderDto.DestinationCityName))]
     public static partial OrderDto Map(this Order source);

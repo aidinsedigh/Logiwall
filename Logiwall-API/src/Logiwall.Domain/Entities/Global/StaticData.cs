@@ -9,4 +9,5 @@ public class StaticData
     public string? Title { get; set; }
 
     public StaticDataType Type { get; set; }
+    [MaxLength(100)] public string? ProvinceTitle { get; set; }
 }

@@ -21,6 +21,10 @@ public class OrderInqueryOption
     public string DelivereDate { get; set; } = string.Empty;
 
     public bool Choosen { get; set; }
+    public string? CarrierRequestJson { get; set; }
+    public int? ExternalServiceId { get; set; }
+    public DateTimeOffset? ExpiresAt { get; set; }
+    public Constants.PaymentMethod PaymentMethod { get; set; } = Constants.PaymentMethod.Online;
 
     public int OrderId { get; set; }
 

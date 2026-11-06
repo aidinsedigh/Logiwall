@@ -24,6 +24,7 @@ namespace Logiwall.Shared.Dtos;
 [JsonSerializable(typeof(SignUpRequestDto))]
 [JsonSerializable(typeof(EditUserDto))]
 [JsonSerializable(typeof(RestErrorInfo))]
+[JsonSerializable(typeof(CarrierErrorResponse))]
 [JsonSerializable(typeof(SendConfirmationEmailRequestDto))]
 [JsonSerializable(typeof(ConfirmEmailRequestDto))]
 [JsonSerializable(typeof(SendResetPasswordEmailRequestDto))]

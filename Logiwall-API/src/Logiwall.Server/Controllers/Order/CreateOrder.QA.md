@@ -52,3 +52,8 @@ Database error: 400 `UnknownException`, and the service logs the exception.
 The front keeps `orderId` in the query string for the next steps.
 
 Automated tests: `ProfileTests.CreateOrder_rejects_an_unknown_parcel_type`.
+# Cycle 020 additions
+
+Each parcel accepts nullable positive packagingReferenceId and contentReferenceId and persists both via the order mapper.
+Existing order creation without them remains compatible; ETipax quotation requires active selections from the correct provider/category.
+Reject zero/negative supplied IDs at model validation. Check two parcels keep their own different selections.

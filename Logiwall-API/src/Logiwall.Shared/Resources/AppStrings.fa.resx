@@ -679,4 +679,35 @@
   <data name="PaymentTypeNotSupported" xml:space="preserve">
     <value>این روش پرداخت پشتیبانی نمی‌شود.</value>
   </data>
+  <data name="ShippingRegistrationFailed" xml:space="preserve"><value>ثبت مرسوله توسط شرکت حمل انجام نشد.</value></data>
+  <data name="ShippingCityNotMapped" xml:space="preserve"><value>شهر انتخاب‌شده برای این شرکت حمل نگاشت نشده است.</value></data>
+  <data name="ShippingRegistrationLocked" xml:space="preserve"><value>ثبت این مرسوله در جریان است یا به بررسی نیاز دارد.</value></data>
+  <data name="ShippingParcelInvalid" xml:space="preserve"><value>اطلاعات بسته یا مختصات معتبر نیست.</value></data>
+  <data name="ShippingQuoteRequired" xml:space="preserve"><value>ابتدا سرویس حمل را انتخاب کنید.</value></data>
+  <data name="ShippingReferenceInvalid" xml:space="preserve"><value>بسته‌بندی و محتوای معتبر شرکت حمل را انتخاب کنید.</value></data>
+  <data name="ShippingPaymentRequired" xml:space="preserve"><value>ثبت مرسوله به پرداخت تأییدشده نیاز دارد.</value></data>
+  <data name="ShippingCancellationFailed" xml:space="preserve"><value>لغو مرسوله توسط شرکت حمل انجام نشد.</value></data>
+  <data name="ShippingOutcomeUnknown" xml:space="preserve"><value>نتیجه درخواست شرکت حمل نامشخص است؛ درخواست را تکرار نکنید.</value></data>
+  <data name="ShippingProviderUnavailable" xml:space="preserve"><value>شرکت حمل انتخاب‌شده در دسترس نیست.</value></data>
+  <data name="ShippingQuoteExpired" xml:space="preserve"><value>اعتبار پیشنهاد حمل تمام شده است؛ دوباره استعلام بگیرید.</value></data>
+  <data name="ShippingPackagingRequired" xml:space="preserve"><value>نوع بسته‌بندی معتبر این بسته را انتخاب کنید.</value></data>
+  <data name="ShippingContentRequired" xml:space="preserve"><value>محتویات معتبر این بسته را انتخاب کنید.</value></data>
+  <data name="ShippingCarrierValidationFailed" xml:space="preserve"><value>تیپاکس اطلاعات مرسوله را نپذیرفت؛ فیلدهای مشخص‌شده را بررسی و اصلاح کنید.</value></data>
+  <data name="ShippingCarrierValueInvalid" xml:space="preserve"><value>ارزش این بسته با محدودیت‌های تیپاکس سازگار نیست.</value></data>
+  <data name="ShippingCarrierDimensionsInvalid" xml:space="preserve"><value>ابعاد این بسته با محدودیت‌های تیپاکس سازگار نیست.</value></data>
+  <data name="ShippingCarrierWeightInvalid" xml:space="preserve"><value>وزن این بسته با محدودیت‌های تیپاکس سازگار نیست.</value></data>
+  <data name="ShippingPaymentMethodMismatch" xml:space="preserve"><value>روش پرداخت با استعلام انتخاب‌شده سازگار نیست؛ با روش پرداخت موردنظر دوباره استعلام بگیرید.</value></data>
+  <data name="ShippingPaymentCollect" xml:space="preserve"><value>سمت گیرنده - نقدی</value></data>
+  <data name="ShippingServiceCatalogMissing" xml:space="preserve"><value>اطلاعات سرویس‌های این شرکت پستی هنوز آماده نیست.</value></data>
+  <data name="ShippingPaymentOnline" xml:space="preserve"><value>سمت فرستنده - پیش‌پرداخت</value></data>
+  <data name="ShippingServiceSelectionRequired" xml:space="preserve"><value>پیش از استعلام قیمت، نوع سرویس معتبر شرکت پستی را انتخاب کنید.</value></data>
+  <data name="ShippingPaymentAgencyCredit" xml:space="preserve"><value>سمت فرستنده - اعتبار نمایندگی</value></data>
+  <data name="ShippingPaymentSenderCash" xml:space="preserve"><value>سمت فرستنده - نقدی</value></data>
+  <data name="ShippingPaymentSettlementUnavailable" xml:space="preserve"><value>تسویه با روش پرداخت انتخاب‌شده هنوز فعال نشده است.</value></data>
+  <data name="ShippingPaymentSenderWallet" xml:space="preserve"><value>سمت فرستنده - پرداخت از کیف پول</value></data>
+  <data name="ShippingPaymentRecipientOnDelivery" xml:space="preserve"><value>سمت گیرنده - پرداخت در محل</value></data>
+  <data name="ShippingPaymentSenderWalletOnDelivery" xml:space="preserve"><value>سمت فرستنده - پرداخت در محل از کیف پول</value></data>
+  <data name="ShippingPaymentSenderCreditOnDelivery" xml:space="preserve"><value>سمت فرستنده - پرداخت در محل از اعتبار</value></data>
+  <data name="ShippingOrderLocked" xml:space="preserve"><value>سفارش در حال ثبت، نیازمند بررسی نتیجه، یا قبلاً در شرکت حمل ثبت شده است؛ ویرایش و استعلام مجدد مجاز نیست.</value></data>
+  <data name="ShippingOrderChanged" xml:space="preserve"><value>اطلاعات سفارش هنگام استعلام تغییر کرده است؛ دوباره استعلام قیمت بگیرید.</value></data>
 </root>

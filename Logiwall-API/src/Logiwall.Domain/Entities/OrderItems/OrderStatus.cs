@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +10,10 @@ public class OrderStatus: ICreationDateAware
     public int Id { get; set; }
 
     public int Status { get; set; }
+    public OrderStatusCode? MappedOrderStatus { get; set; }
+    public int? ShipmentParcelId { get; set; }
+    public string? ExternalStatusCode { get; set; }
+    public long? ShipmentEventId { get; set; }
 
     public int ServiceProviderId { get; set; }
 

@@ -20,6 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Data/Seed/ETipaxCities.v1.json" />
     <ProjectReference Include="..\Logiwall.Application\Logiwall.Application.csproj" />
     <ProjectReference Include="..\Logiwall.Domain\Logiwall.Domain.csproj" />
     <ProjectReference Include="..\Logiwall.Shared\Logiwall.Shared.csproj" />

@@ -44,10 +44,7 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
         Assert.Equal(1000m, option.GetProperty("baseAmount").GetDecimal());
         Assert.Equal(option.GetProperty("totalAmount").GetDecimal(),
             option.GetProperty("baseAmount").GetDecimal() + option.GetProperty("packageAmount").GetDecimal() + option.GetProperty("taxAmount").GetDecimal());
-        // The front selects pickupDates[1].times[0] by default.
-        var dates = provider.GetProperty("pickupDates");
-        Assert.True(dates.GetArrayLength() >= 2);
-        Assert.Equal(OrderTestData.PickupId(), dates[0].GetProperty("times")[0].GetProperty("id").GetString());
+        Assert.False(provider.TryGetProperty("pickupDates", out _));
     }
 
     [Fact]
@@ -98,21 +95,20 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
         // Payment is a separate step now (SelectPaymentType).
         Assert.Equal((short)OrderState.SelectedServiceProvider, state);
         Assert.Contains((int)OrderState.SelectedServiceProvider, statuses);
-        Assert.NotNull(pickup);
+        Assert.Null(pickup);
         Assert.Equal(0, payments);
     }
 
     [Fact]
-    public async Task SelectOption_rejects_a_pickup_time_that_is_not_offered()
+    public async Task SelectOption_accepts_price_confirmation_without_a_pickup_time()
     {
         var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
         var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
         var optionId = await OrderTestData.QuoteAsync(client, orderId);
 
-        var response = await client.PostAsJsonAsync("api/Order/SelectOption", new { orderId, orderInqueryOptionId = optionId, pickupId = "2000-01-01T09" });
+        var response = await client.PostAsJsonAsync("api/Order/SelectOption", new { orderId, orderInqueryOptionId = optionId });
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), nameof(AppStrings.InvalidPickupTime));
+        response.EnsureSuccessStatusCode();
     }
 
     [Fact]
@@ -128,20 +124,21 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
     }
 
     [Fact]
-    public async Task Order_list_shows_the_order_state()
+    public async Task Order_list_shows_general_status_instead_of_payment_state()
     {
         var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
         var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
         await fixture.WithDbAsync(db => db.Orders.Where(o => o.Id == orderId)
-            .ExecuteUpdateAsync(s => s.SetProperty(o => o.State, (short)OrderState.PaymentPending)));
+            .ExecuteUpdateAsync(s => s.SetProperty(o => o.State, (short)OrderState.PaymentPending)
+                .SetProperty(o => o.OverallStatus, OrderStatusCode.Processing)));
 
         var response = await client.PostAsJsonAsync("api/Order/GetOrders", new { });
 
         response.EnsureSuccessStatusCode();
         var order = (await ApiClient.ReadJsonAsync(response)).GetProperty("data").GetProperty("result").EnumerateArray()
             .Single(o => o.GetProperty("id").GetInt32() == orderId);
-        Assert.Equal((short)OrderState.PaymentPending, order.GetProperty("status").GetInt16());
-        Assert.Equal("در انتظار پرداخت", order.GetProperty("statusName").GetString());
+        Assert.Equal((short)OrderStatusCode.Processing, order.GetProperty("status").GetInt16());
+        Assert.Equal("در حال پردازش", order.GetProperty("statusName").GetString());
     }
 
     [Fact(Skip = "no policy gap to exercise")]

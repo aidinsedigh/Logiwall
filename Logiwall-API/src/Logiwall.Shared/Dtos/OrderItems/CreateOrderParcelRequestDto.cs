@@ -21,4 +21,8 @@ public record CreateOrderParcelRequestDto
     public decimal Weight { get; set; }
 
     public int COD { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = nameof(AppStrings.ModelBindingValueIsInvalid))]
+    public int? PackagingReferenceId { get; set; }
+    [Range(1, int.MaxValue, ErrorMessage = nameof(AppStrings.ModelBindingValueIsInvalid))]
+    public int? ContentReferenceId { get; set; }
 }

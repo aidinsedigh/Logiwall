@@ -1,4 +1,4 @@
-﻿using Logiwall.Domain.Entities.People;
+using Logiwall.Domain.Entities.People;
 
 namespace Logiwall.Domain.Entities.OrderItems;
 public class Order : ICreationDateAware, IModificationDateAware
@@ -8,6 +8,8 @@ public class Order : ICreationDateAware, IModificationDateAware
     public short ChannelId { get; set; }
 
     public short State { get; set; }
+
+    public OrderStatusCode OverallStatus { get; set; }
 
     [Required, MaxLength(100)]
     public string SenderName { get; set; } = default!;

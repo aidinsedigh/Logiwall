@@ -13,6 +13,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Logiwall.Infrastructure.Services.Tools;
+using Logiwall.Infrastructure.Options;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace Logiwall.Infrastructure.Services.Identity;
 public class AuthenticationService(AppDbContext dbContext,
@@ -20,7 +23,9 @@ public class AuthenticationService(AppDbContext dbContext,
     ISMSService smsService,
     IAppSettingService appSettingService,
     IStringLocalizer<AppStrings> localizer,
-    ILogger<AuthenticationService> logger) : IAuthenticationService
+    ILogger<AuthenticationService> logger,
+    IOptions<OtpOptions> otpOptions,
+    IHostEnvironment environment) : IAuthenticationService
 {
     private const int MaxOtpAttempts = 5;
     private static readonly TimeSpan OtpValidity = TimeSpan.FromMinutes(2);
@@ -73,7 +78,8 @@ public class AuthenticationService(AppDbContext dbContext,
             }
 
             // Store the code before the SMS goes out, so a delivered code always works.
-            var code = GenerateRandomCode();
+            var developmentCode = environment.IsDevelopment() && otpOptions.Value.UseDevelopmentCode;
+            var code = developmentCode ? "12345" : GenerateRandomCode();
             var expiryTime = DateTimeOffset.Now.Add(OtpValidity);
             var userOtp = new UserOtp
             {
@@ -89,6 +95,13 @@ public class AuthenticationService(AppDbContext dbContext,
             await userManager.SetAuthenticationTokenAsync(user, "OTP", "otp", code);
             await userManager.SetAuthenticationTokenAsync(user, "OTP", "timestamp", expiryTime.ToString("o"));
             await userManager.SetAuthenticationTokenAsync(user, "OTP", "attempts", "0");
+
+            if (developmentCode)
+                return new ServiceResponse<bool>
+                {
+                    Data = true, Succuss = true,
+                    Message = localizer.GetString(nameof(AppStrings.OtpCodeIsSent))
+                };
 
             var settings = await appSettingService.GetAllSettingsAsync();
             var message = settings.LoginOtpText?.Replace("{CODE}", code);

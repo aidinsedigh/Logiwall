@@ -19,6 +19,7 @@ range, not in full.
 | 017 | Persian client messages, structured logs, open items from cycles 001-016 | Done 2026-10-28 — archived; results in its `tasks.md` | `archive/cycles/017-persian-messages-and-structured-logs/` |
 | 018 | Fix the Blazor client's API calls; the client is the admin panel (password sign-in, `AdminsOnly`, global order stats) | In progress — done, not committed | `work/018-fix-blazor-api-calls/` |
 | 019 | Adapt the API to the React app's contracts (E2E report 2026-10-28) | In progress — done, not committed | `work/019-adapt-api-to-front-contracts/` |
+| 020 | ETipax carrier adapter, shipments, reference data and webhook jobs | Implemented; verification and setup in tasks.md | `work/020-etipax-shipping/` |
 
 Cycles 001-016 come from one audit (2026-10-27). Each cycle folder has `spec.md`, `plan.md` and
 `tasks.md`, like 017. `archive/audit-2026-10-27.md` keeps the notes for more than one cycle: the
@@ -33,6 +34,7 @@ order, the open operator actions and the open product decisions.
 | 0003 | Client messages are Persian | Accepted |
 | 0004 | Structured log format and correlation ID | Accepted |
 | 0005 | The Blazor client is the admin panel | Accepted |
+| 0006 | Carrier shipments and provider reference data | Accepted |
 
 Give a new ADR the next free number.
 

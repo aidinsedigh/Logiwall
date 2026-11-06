@@ -20,6 +20,8 @@ public class OrderParcel
     public decimal Weight { get; set; }
 
     public int COD { get; set; }
+    public int? PackagingReferenceId { get; set; }
+    public int? ContentReferenceId { get; set; }
 
     public int OrderId { get; set; }
 

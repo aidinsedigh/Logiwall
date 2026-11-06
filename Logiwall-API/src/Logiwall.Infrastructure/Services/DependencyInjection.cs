@@ -19,8 +19,9 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.Configure<Sep724Options>(configuration.GetSection(Sep724Options.SectionName));
-        services.Configure<MyTipaxOptions>(configuration.GetSection(MyTipaxOptions.SectionName));
+        services.Configure<ETipaxOptions>(configuration.GetSection(ETipaxOptions.SectionName));
         services.Configure<SmsOptions>(configuration.GetSection(SmsOptions.SectionName));
+        services.Configure<OtpOptions>(configuration.GetSection("Otp"));
         services.Configure<PaymentOptions>(configuration.GetSection(PaymentOptions.SectionName));
         services.Configure<AdminSeedOptions>(configuration.GetSection(AdminSeedOptions.SectionName));
         services.AddHostedService<AdminSeeder>();
@@ -30,8 +31,19 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.TryAddSingleton<ProviderTokenCache>();
 
-        // Every carrier is one PostalServiceBase; OrderService queries all of them.
-        services.TryAddEnumerable(ServiceDescriptor.Transient<PostalServiceBase, MyTipaxProvider>());
+        // Active carriers use IShippingCarrier; legacy MyTipax is not registered.
+        services.AddHttpClient("etipax", (sp, client) =>
+        {
+            var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<ETipaxOptions>>().Value;
+            client.BaseAddress = new Uri(options.BaseUrl);
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+        services.TryAddEnumerable(ServiceDescriptor.Transient<IShippingCarrier, ETipaxCarrier>());
+        services.TryAddScoped<ICarrierQuoteService, CarrierQuoteService>();
+        services.TryAddScoped<IShippingReferenceService, ShippingReferenceService>();
+        services.TryAddScoped<ShipmentService>();
+        services.TryAddScoped<IShipmentService>(sp => sp.GetRequiredService<ShipmentService>());
+        services.AddHostedService<ShippingWorker>();
         services.TryAddTransient<IAuthenticationService, AuthenticationService>();
         services.TryAddTransient<IPersonService, PersonService>();
         services.TryAddTransient<ICustomerService, CustomerService>();

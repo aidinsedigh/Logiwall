@@ -3,6 +3,7 @@ using Logiwall.Application.Abstractions.OrderItems;
 using Logiwall.Infrastructure.Services.OrderItems;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.OrderItems;
+using Logiwall.Shared.Extensions;
 
 namespace Logiwall.Server.Controllers.Global;
 
@@ -12,6 +13,26 @@ namespace Logiwall.Server.Controllers.Global;
 public partial class CommonController : AppControllerBase
 {
     [AutoInject] private ICommonService commonService = default!;
+
+    [HttpGet]
+    public ServiceResponse<IReadOnlyList<PaymentMethodResponseDto>> GetPaymentMethods() => new()
+    {
+        Data = [new((int)Constants.PaymentMethod.Online, Localizer["ShippingPaymentOnline"]),
+            new((int)Constants.PaymentMethod.CashOnDelivery, Localizer["ShippingPaymentCollect"]),
+            new((int)Constants.PaymentMethod.RecipientPayOnDelivery, Localizer["ShippingPaymentRecipientOnDelivery"]),
+            new((int)Constants.PaymentMethod.SenderCreditOnDelivery, Localizer["ShippingPaymentSenderCreditOnDelivery"]),
+            new((int)Constants.PaymentMethod.SenderWallet, Localizer["ShippingPaymentSenderWallet"]),
+            new((int)Constants.PaymentMethod.SenderWalletOnDelivery, Localizer["ShippingPaymentSenderWalletOnDelivery"]),
+            new((int)Constants.PaymentMethod.SenderCash, Localizer["ShippingPaymentSenderCash"]),
+            new((int)Constants.PaymentMethod.AgencyCredit, Localizer["ShippingPaymentAgencyCredit"])],
+        Succuss = true
+    };
+
+    [HttpGet]
+    public ServiceResponse<IReadOnlyList<OrderStatusResponseDto>> GetOrderStatuses() => new()
+    {
+        Data = Enum.GetValues<OrderStatusCode>().Select(s => new OrderStatusResponseDto((short)s, s.ToString(), s.GetDescription())).ToArray()
+    };
 
     [HttpGet]
     public async Task<ActionResult> GetStaticDatas([FromQuery] GetStaticDataRequestDto requestDto, CancellationToken cancellationToken)

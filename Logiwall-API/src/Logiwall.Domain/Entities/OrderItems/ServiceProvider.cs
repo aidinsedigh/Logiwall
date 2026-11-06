@@ -14,4 +14,6 @@ public class ServiceProvider
 
     [Required, MaxLength(100)]
     public string Title { get; set; } = default!;
+    public string? Code { get; set; }
+    public bool IsActive { get; set; } = true;
 }

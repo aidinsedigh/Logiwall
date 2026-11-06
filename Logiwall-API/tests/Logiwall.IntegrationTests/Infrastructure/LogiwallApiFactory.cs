@@ -31,6 +31,7 @@ public class LogiwallApiFactory : WebApplicationFactory<Logiwall.Server.AppSetti
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Development");
+        builder.UseSetting("Otp:UseDevelopmentCode", "false");
         // Development MapStaticAssets adds a GET-only {**path:file} fallback, so unknown POSTs get 405. Production has no such route.
         builder.UseSetting("ReloadStaticAssetsAtRuntime", "false");
         builder.UseSetting("ConnectionStrings:SqlServerConnectionString", connectionString);
@@ -50,6 +51,15 @@ public class LogiwallApiFactory : WebApplicationFactory<Logiwall.Server.AppSetti
             services.AddSingleton<ISep724Provider>(sp => sp.GetRequiredService<FakeSep724Provider>());
             services.RemoveAll<PostalServiceBase>();
             services.AddTransient<PostalServiceBase, FakePostalProvider>();
+            services.RemoveAll<IShippingCarrier>();
+            services.AddSingleton<FakeShippingCarrier>();
+            services.AddSingleton<IShippingCarrier>(sp => sp.GetRequiredService<FakeShippingCarrier>());
+            services.PostConfigure<Logiwall.Infrastructure.Options.ETipaxOptions>(o =>
+            {
+                o.WebhookSecret = "integration-webhook-secret";
+                o.ReferenceSyncEnabled = false;
+                o.ReconcileEventsEnabled = false;
+            });
         });
     }
 }

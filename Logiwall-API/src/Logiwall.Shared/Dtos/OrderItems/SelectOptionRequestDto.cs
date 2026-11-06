@@ -5,7 +5,4 @@ public record SelectOptionRequestDto
 
     public int OrderInqueryOptionId { get; set; }
 
-    /// <summary>A <see cref="PickupTimeDto.Id"/> from <c>GetOptions</c>.</summary>
-    [Required]
-    public string? PickupId { get; set; }
 }

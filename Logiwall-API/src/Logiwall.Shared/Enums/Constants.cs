@@ -34,6 +34,12 @@ public class Constants
         Online = 71,
         [Description("پس کرایه")]
         CashOnDelivery = 72,
+        RecipientPayOnDelivery = 73,
+        SenderCreditOnDelivery = 74,
+        SenderWallet = 75,
+        SenderWalletOnDelivery = 76,
+        SenderCash = 77,
+        AgencyCredit = 78,
     }
 
     public enum ParcelType : short

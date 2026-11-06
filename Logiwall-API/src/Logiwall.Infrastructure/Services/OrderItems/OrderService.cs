@@ -1,4 +1,4 @@
-﻿using Logiwall.Application.Abstractions.OrderItems;
+using Logiwall.Application.Abstractions.OrderItems;
 using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Domain.Entities.OrderItems;
 using Logiwall.Infrastructure.Mapper;
@@ -17,12 +17,13 @@ using Microsoft.Extensions.Options;
 using static Logiwall.Shared.Enums.Constants;
 
 namespace Logiwall.Infrastructure.Services.OrderItems;
-public class OrderService(AppDbContext appDbContext,
+public partial class OrderService(AppDbContext appDbContext,
     ISep724Provider sep724Provider,
     IEnumerable<PostalServiceBase> postalProviders,
     ILogger<OrderService> logger,
     IOptions<PaymentOptions> paymentOptions,
-    IStringLocalizer<AppStrings> localizer) : IOrderService
+    IStringLocalizer<AppStrings> localizer,
+    ICarrierQuoteService carrierQuoteService) : IOrderService
 {
     private readonly PaymentOptions paymentOptions = paymentOptions.Value;
 
@@ -44,6 +45,7 @@ public class OrderService(AppDbContext appDbContext,
             order.CustomerId = person.CustomerId;
 
             await appDbContext.AddAsync(order);
+            CarrierOrderStatus.Record(appDbContext, order, DateTimeOffset.UtcNow);
             await appDbContext.SaveChangesAsync();
 
 
@@ -69,8 +71,10 @@ public class OrderService(AppDbContext appDbContext,
         }
     }
 
-    public async Task<ServiceResponse<IList<OrderProviderOptionsDto>>> GetOptionsAsync(GetOptionnsRequestDto requestDto, int userId)
+    public async Task<ServiceResponse<IList<OrderProviderOptionsDto>>> GetOptionsAsync(GetOptionnsRequestDto requestDto, int userId, CancellationToken cancellationToken = default)
     {
+        if (!postalProviders.Any())
+            return await carrierQuoteService.GetAsync(requestDto.OrderId, userId, cancellationToken, requestDto.PaymentType, requestDto.ServiceReferenceId);
         try
         {
             var order = await appDbContext.Orders.Include(t => t.OrderParcels).FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId);
@@ -203,9 +207,8 @@ public class OrderService(AppDbContext appDbContext,
                 }
             }).ToListAsync();
 
-            var pickupDates = PickupSlots.For(DateTimeOffset.Now);
             var lst = rows.GroupBy(t => (t.ServiceProviderId, t.Title))
-                .Select(g => new OrderProviderOptionsDto(g.Key.ServiceProviderId, g.Key.Title, g.Select(t => t.Option).ToList(), pickupDates))
+                .Select(g => new OrderProviderOptionsDto(g.Key.ServiceProviderId, g.Key.Title, g.Select(t => t.Option).ToList()))
                 .ToList();
 
             return new ServiceResponse<IList<OrderProviderOptionsDto>>
@@ -233,8 +236,8 @@ public class OrderService(AppDbContext appDbContext,
         ["id"] = nameof(Order.Id),
         ["originCity"] = nameof(Order.OriginCity),
         ["destinationCity"] = nameof(Order.DestinationCity),
-        ["status"] = nameof(Order.State),
-        ["state"] = nameof(Order.State),
+        ["status"] = nameof(Order.OverallStatus),
+        ["state"] = nameof(Order.OverallStatus),
         ["orderNumber"] = nameof(Order.OrderNumber),
         ["creationDate"] = nameof(Order.CreationDate),
     };
@@ -266,8 +269,10 @@ public class OrderService(AppDbContext appDbContext,
         // Paging needs a stable order, so pages never overlap or skip rows.
         if (query.Expression.Type != typeof(IOrderedQueryable<Order>))
         {
-            query = query.OrderByDescending(t => t.Id);
+            query = query.OrderByDescending(t => t.CreationDate).ThenByDescending(t => t.Id);
         }
+        else
+            query = ((IOrderedQueryable<Order>)query).ThenByDescending(t => t.Id);
 
         query = queryParams.HasPagination
             ? query.ApplyPagination(queryParams.PageNumber, queryParams.PageSize)
@@ -276,18 +281,35 @@ public class OrderService(AppDbContext appDbContext,
         var rows = await query.Select(o => new
         {
             Order = o,
+            ServiceProviderTitle = appDbContext.ServiceProviders.Where(p => p.Id == o.ServiceProviderId)
+                .Select(p => p.Title).FirstOrDefault(),
             // Orders has no FinalAmount column: the chosen quote holds the total.
             FinalAmount = o.OrderInqueryOptions.Where(t => t.Choosen).Select(t => t.FinalAmount).FirstOrDefault(),
+            PaidAmount = o.OrderPayments.Where(p => p.Status == PaymentStatus.Success && p.VerifiedAt != null && p.VerifiedAmount != null)
+                .Sum(p => (decimal?)p.VerifiedAmount) ?? 0m,
+            HasPendingPayment = o.OrderPayments.Any(p => p.Status == PaymentStatus.Pending
+                || p.Status == PaymentStatus.Success && (p.VerifiedAt == null || p.VerifiedAmount == null)),
+            HasFailedPayment = o.OrderPayments.Any(p => p.Status == PaymentStatus.UnSuccess),
             OriginCityName = appDbContext.StaticDatas.Where(s => s.Id == o.OriginCity).Select(s => s.Title).FirstOrDefault(),
             DestinationCityName = appDbContext.StaticDatas.Where(s => s.Id == o.DestinationCity).Select(s => s.Title).FirstOrDefault(),
         }).ToListAsync();
 
-        var result = rows.Select(t => t.Order.Map() with
+        var result = rows.Select(t =>
         {
+            var payment = t.PaidAmount > 0 ? (t.FinalAmount > t.PaidAmount ? OrderPaymentState.PartiallyPaid : OrderPaymentState.Paid)
+                : t.HasPendingPayment ? OrderPaymentState.Unpaid
+                : t.HasFailedPayment ? OrderPaymentState.Failed : OrderPaymentState.Unpaid;
+            return t.Order.Map() with
+            {
             FinalAmount = t.FinalAmount,
-            StatusName = ((OrderState)t.Order.State).GetDescription(),
+            ServiceProviderTitle = t.ServiceProviderTitle,
+            PaidAmount = t.PaidAmount,
+            PaymentStatus = payment.ToString(),
+            PaymentStatusName = payment.GetDescription(),
+            StatusName = t.Order.OverallStatus.GetDescription(),
             OriginCityName = t.OriginCityName,
             DestinationCityName = t.DestinationCityName,
+            };
         }).ToList();
 
         return new ServiceResponse<OrderListResponseDto>
@@ -317,19 +339,21 @@ public class OrderService(AppDbContext appDbContext,
 
     public async Task<ServiceResponse<SelectOptionResponseDto>> SelectOptionAsync(SelectOptionRequestDto requestDto, int userId)
     {
+        await using var selectionTx = await appDbContext.Database.BeginTransactionAsync();
+        await appDbContext.Database.ExecuteSqlInterpolatedAsync($"SELECT Id FROM Orders WITH (UPDLOCK,HOLDLOCK) WHERE Id={requestDto.OrderId}");
         var order = await appDbContext.Orders.FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId);
         if (order is null)
             return Fail<SelectOptionResponseDto>(nameof(AppStrings.InvalidOrder));
 
-        if (order.State == (short)OrderState.Paid)
-            return Fail<SelectOptionResponseDto>(nameof(AppStrings.OrderIsAlreadyPaid));
-
         var orderInquiry = await appDbContext.OrderInqueryOptions.FirstOrDefaultAsync(t => t.Id == requestDto.OrderInqueryOptionId && t.OrderId == order.Id);
         if (orderInquiry is null)
             return Fail<SelectOptionResponseDto>(nameof(AppStrings.InvalidOrderOption));
+        if (await OrderDraftWorkflow.IsLockedAsync(appDbContext, order.Id)
+            || orderInquiry.CarrierRequestJson is null && order.State is (short)OrderState.Paid or (short)OrderState.PaymentPending)
+            return Fail<SelectOptionResponseDto>("ShippingOrderLocked");
+        if (orderInquiry.CarrierRequestJson is not null && (orderInquiry.ExpiresAt is null || orderInquiry.ExpiresAt <= DateTimeOffset.UtcNow))
+            return Fail<SelectOptionResponseDto>("ShippingQuoteExpired");
 
-        if (PickupSlots.Find(requestDto.PickupId, DateTimeOffset.Now) is not { } pickup)
-            return Fail<SelectOptionResponseDto>(nameof(AppStrings.InvalidPickupTime));
 
         // Record the accepted quote, so SelectPaymentType charges what the customer chose.
         var orderOptions = await appDbContext.OrderInqueryOptions.Where(t => t.OrderId == order.Id).ToListAsync();
@@ -343,24 +367,26 @@ public class OrderService(AppDbContext appDbContext,
         order.ServiceType = orderInquiry.ServiceType;
         order.ServiceSLA = orderInquiry.ServiceSLA;
         order.ServiceProviderId = orderInquiry.ServiceProviderId;
-        order.PickupDateTime = pickup.Start;
         order.State = (short)OrderState.SelectedServiceProvider;
+        order.OverallStatus = OrderStatusCode.Draft;
         order.ModificationDate = DateTimeOffset.Now;
         appDbContext.OrderStatuses.Add(new OrderStatus
         {
             OrderId = order.Id,
             Status = (int)OrderState.SelectedServiceProvider,
+            MappedOrderStatus = OrderStatusCode.Draft,
             ServiceProviderId = orderInquiry.ServiceProviderId,
             CityId = order.OriginCity,
             Description = "Service option selected"
         });
         await appDbContext.SaveChangesAsync();
 
+        await selectionTx.CommitAsync();
         return new ServiceResponse<SelectOptionResponseDto>
         {
             Data = new SelectOptionResponseDto(
             [
-                new PickupOptionDto(orderInquiry.Id, null, orderInquiry.FinalAmount, orderInquiry.ServiceAmount, orderInquiry.PackagingAmount, orderInquiry.Tax, pickup.Description)
+                new PickupOptionDto(orderInquiry.Id, null, orderInquiry.FinalAmount, orderInquiry.ServiceAmount, orderInquiry.PackagingAmount, orderInquiry.Tax, string.Empty, orderInquiry.PaymentMethod)
             ]),
             Succuss = true,
             Message = string.Empty
@@ -377,17 +403,24 @@ public class OrderService(AppDbContext appDbContext,
         if (person is null)
             return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.UserIsNotRegistered));
 
+        await using var paymentTx = await appDbContext.Database.BeginTransactionAsync();
+        await appDbContext.Database.ExecuteSqlInterpolatedAsync($"SELECT Id FROM Orders WITH (UPDLOCK,HOLDLOCK) WHERE Id={requestDto.OrderId}");
         var order = await appDbContext.Orders.FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId);
         if (order is null)
             return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.InvalidOrder));
 
-        if (order.State == (short)OrderState.Paid)
+        if (order.State == (short)OrderState.Paid || await OrderDraftWorkflow.IsLockedAsync(appDbContext, order.Id)
+            || await appDbContext.OrderPayments.AnyAsync(p => p.OrderId == order.Id && p.Status == PaymentStatus.Success && p.VerifiedAt != null))
             return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.OrderIsAlreadyPaid));
 
         // Only the option SelectOption recorded can be paid.
         var orderInquiry = await appDbContext.OrderInqueryOptions.FirstOrDefaultAsync(t => t.Id == requestDto.PickupOptionId && t.OrderId == order.Id && t.Choosen);
         if (orderInquiry is null)
             return Fail<SelectPaymentTypeResponseDto>(nameof(AppStrings.InvalidOrderOption));
+        if (orderInquiry.PaymentMethod != requestDto.PaymentType)
+            return Fail<SelectPaymentTypeResponseDto>("ShippingPaymentMethodMismatch");
+        if (orderInquiry.CarrierRequestJson is not null && (orderInquiry.ExpiresAt is null || orderInquiry.ExpiresAt <= DateTimeOffset.UtcNow))
+            return Fail<SelectPaymentTypeResponseDto>("ShippingQuoteExpired");
 
         // The gateway redirects the customer to this URL, so it must point at our own frontend.
         if (Uri.TryCreate(requestDto.CallbackUrl, UriKind.Absolute, out var callbackUri) is false)
@@ -448,6 +481,7 @@ public class OrderService(AppDbContext appDbContext,
         try
         {
             await appDbContext.SaveChangesAsync();
+            await paymentTx.CommitAsync();
         }
         catch (DbUpdateException ex)
         {

@@ -279,6 +279,8 @@ public static partial class Program
         });
 
         services.AddAuthorization();
+        services.AddAuthentication().AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions,
+            ShippingWebhookAuthentication>(ShippingWebhookAuthentication.SchemeName, null);
     }
 
     private static void AddSwaggerGen(WebApplicationBuilder builder)

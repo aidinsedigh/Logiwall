@@ -17,7 +17,7 @@ namespace Logiwall.Infrastructure.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "8.0.33")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -77,6 +77,10 @@ namespace Logiwall.Infrastructure.Data.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ProvinceTitle")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -349,6 +353,9 @@ namespace Logiwall.Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
+                    b.Property<short>("OverallStatus")
+                        .HasColumnType("smallint");
+
                     b.Property<decimal>("PackagingAmount")
                         .HasColumnType("decimal(18,2)");
 
@@ -425,6 +432,9 @@ namespace Logiwall.Infrastructure.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("CarrierRequestJson")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("Choosen")
                         .HasColumnType("bit");
 
@@ -432,6 +442,12 @@ namespace Logiwall.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTimeOffset?>("ExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int?>("ExternalServiceId")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("FinalAmount")
                         .HasColumnType("decimal(18,2)");
@@ -444,6 +460,9 @@ namespace Logiwall.Infrastructure.Data.Migrations
 
                     b.Property<decimal>("PackagingAmount")
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("int");
 
                     b.Property<decimal>("ServiceAmount")
                         .HasColumnType("decimal(18,2)");
@@ -480,6 +499,9 @@ namespace Logiwall.Infrastructure.Data.Migrations
                     b.Property<int>("COD")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ContentReferenceId")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("Height")
                         .HasColumnType("decimal(18,2)");
 
@@ -491,6 +513,9 @@ namespace Logiwall.Infrastructure.Data.Migrations
 
                     b.Property<short>("PackageTypeId")
                         .HasColumnType("smallint");
+
+                    b.Property<int?>("PackagingReferenceId")
+                        .HasColumnType("int");
 
                     b.Property<short>("ParcelTypeId")
                         .HasColumnType("smallint");
@@ -506,7 +531,11 @@ namespace Logiwall.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ContentReferenceId");
+
                     b.HasIndex("OrderId");
+
+                    b.HasIndex("PackagingReferenceId");
 
                     b.ToTable("OrderParcels");
                 });
@@ -591,10 +620,23 @@ namespace Logiwall.Infrastructure.Data.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<string>("ExternalStatusCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<short?>("MappedOrderStatus")
+                        .HasColumnType("smallint");
+
                     b.Property<int>("OrderId")
                         .HasColumnType("int");
 
                     b.Property<int>("ServiceProviderId")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("ShipmentEventId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("ShipmentParcelId")
                         .HasColumnType("int");
 
                     b.Property<int>("Status")
@@ -604,7 +646,60 @@ namespace Logiwall.Infrastructure.Data.Migrations
 
                     b.HasIndex("OrderId");
 
+                    b.HasIndex("ShipmentEventId")
+                        .IsUnique()
+                        .HasFilter("[ShipmentEventId] IS NOT NULL");
+
+                    b.HasIndex("ShipmentParcelId");
+
                     b.ToTable("OrderStatuses");
+                });
+
+            modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.ProviderReferenceItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("ExternalCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<short?>("MappedOrderStatus")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("MetadataJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<short>("ServiceProviderId")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTimeOffset>("SyncedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceProviderId", "Category", "ExternalCode")
+                        .IsUnique();
+
+                    b.ToTable("ProviderReferenceItems");
                 });
 
             modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.ServiceProvider", b =>
@@ -614,6 +709,13 @@ namespace Logiwall.Infrastructure.Data.Migrations
                         .HasColumnType("smallint");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<short>("Id"));
+
+                    b.Property<string>("Code")
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -627,10 +729,244 @@ namespace Logiwall.Infrastructure.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasFilter("[Code] IS NOT NULL");
+
                     b.HasIndex("Name")
                         .IsUnique();
 
                     b.ToTable("ServiceProviders");
+                });
+
+            modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.Shipment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ExternalOrderId")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("LastErrorCode")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<DateTimeOffset?>("LastSyncedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("QuoteId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset?>("RegisteredAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("RequestJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.Property<short>("ServiceProviderId")
+                        .HasColumnType("smallint");
+
+                    b.Property<int>("State")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TraceCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.HasIndex("ServiceProviderId");
+
+                    b.HasIndex("TraceCode")
+                        .IsUnique();
+
+                    b.ToTable("Shipments");
+                });
+
+            modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.ShipmentAttempt", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<string>("ErrorCode")
+                        .HasMaxLength(80)
+                        .HasColumnType("nvarchar(80)");
+
+                    b.Property<int?>("HttpStatusCode")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Operation")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("RequestJson")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ResponseJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ShipmentId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("StartedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShipmentId");
+
+                    b.ToTable("ShipmentAttempts");
+                });
+
+            modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.ShipmentEvent", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
+
+                    b.Property<bool>("Applied")
+                        .HasColumnType("bit");
+
+                    b.Property<long>("ExternalEventId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("LastReconciledAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<bool>("Processed")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<short>("ServiceProviderId")
+                        .HasColumnType("smallint");
+
+                    b.Property<int?>("ShipmentParcelId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StatusCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("StatusTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("TrackingCode")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ShipmentParcelId");
+
+                    b.HasIndex("Processed", "ReceivedAt");
+
+                    b.HasIndex("ServiceProviderId", "ExternalEventId")
+                        .IsUnique();
+
+                    b.ToTable("ShipmentEvents");
+                });
+
+            modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.ShipmentParcel", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ExternalStatusCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<long?>("LastExternalEventId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("LastStatusAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<short?>("MappedOrderStatus")
+                        .HasColumnType("smallint");
+
+                    b.Property<int>("OrderParcelId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Position")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ShipmentId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StatusTitle")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("TrackingCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderParcelId");
+
+                    b.HasIndex("TrackingCode");
+
+                    b.HasIndex("ShipmentId", "Position")
+                        .IsUnique();
+
+                    b.ToTable("ShipmentParcels");
+                });
+
+            modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.ShippingJobLease", b =>
+                {
+                    b.Property<string>("Name")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<Guid>("Owner")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Name");
+
+                    b.ToTable("ShippingJobLeases");
                 });
 
             modelBuilder.Entity("Logiwall.Domain.Entities.People.Customer", b =>
@@ -1018,11 +1354,21 @@ namespace Logiwall.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.OrderParcel", b =>
                 {
+                    b.HasOne("Logiwall.Domain.Entities.OrderItems.ProviderReferenceItem", null)
+                        .WithMany()
+                        .HasForeignKey("ContentReferenceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("Logiwall.Domain.Entities.OrderItems.Order", "Order")
                         .WithMany("OrderParcels")
                         .HasForeignKey("OrderId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("Logiwall.Domain.Entities.OrderItems.ProviderReferenceItem", null)
+                        .WithMany()
+                        .HasForeignKey("PackagingReferenceId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Order");
                 });
@@ -1046,7 +1392,78 @@ namespace Logiwall.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Logiwall.Domain.Entities.OrderItems.ShipmentParcel", null)
+                        .WithMany()
+                        .HasForeignKey("ShipmentParcelId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.ProviderReferenceItem", b =>
+                {
+                    b.HasOne("Logiwall.Domain.Entities.OrderItems.ServiceProvider", "ServiceProvider")
+                        .WithMany()
+                        .HasForeignKey("ServiceProviderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ServiceProvider");
+                });
+
+            modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.Shipment", b =>
+                {
+                    b.HasOne("Logiwall.Domain.Entities.OrderItems.Order", "Order")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Logiwall.Domain.Entities.OrderItems.ServiceProvider", "ServiceProvider")
+                        .WithMany()
+                        .HasForeignKey("ServiceProviderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Order");
+
+                    b.Navigation("ServiceProvider");
+                });
+
+            modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.ShipmentAttempt", b =>
+                {
+                    b.HasOne("Logiwall.Domain.Entities.OrderItems.Shipment", "Shipment")
+                        .WithMany("Attempts")
+                        .HasForeignKey("ShipmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Shipment");
+                });
+
+            modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.ShipmentEvent", b =>
+                {
+                    b.HasOne("Logiwall.Domain.Entities.OrderItems.ShipmentParcel", null)
+                        .WithMany()
+                        .HasForeignKey("ShipmentParcelId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
+            modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.ShipmentParcel", b =>
+                {
+                    b.HasOne("Logiwall.Domain.Entities.OrderItems.OrderParcel", null)
+                        .WithMany()
+                        .HasForeignKey("OrderParcelId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Logiwall.Domain.Entities.OrderItems.Shipment", "Shipment")
+                        .WithMany("Parcels")
+                        .HasForeignKey("ShipmentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Shipment");
                 });
 
             modelBuilder.Entity("Logiwall.Domain.Entities.People.Customer", b =>
@@ -1158,6 +1575,13 @@ namespace Logiwall.Infrastructure.Data.Migrations
                     b.Navigation("OrderPayments");
 
                     b.Navigation("OrderStatuses");
+                });
+
+            modelBuilder.Entity("Logiwall.Domain.Entities.OrderItems.Shipment", b =>
+                {
+                    b.Navigation("Attempts");
+
+                    b.Navigation("Parcels");
                 });
 
             modelBuilder.Entity("Logiwall.Domain.Entities.People.Customer", b =>

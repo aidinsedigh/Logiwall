@@ -10,10 +10,13 @@ public class CommonService(AppDbContext appDbContext) : ICommonService
     {
         var query = appDbContext.StaticDatas.Where(t => t.Type == requestDto.Type
             )
+            .Where(t => (requestDto.Type != Constants.StaticDataType.OriginCity && requestDto.Type != Constants.StaticDataType.DestinationCity)
+                || appDbContext.StaticDataMappers.Any(m => m.StaticDataId == t.Id && m.ProviderType == ProviderType.ETipax))
             .Select(t => new GetStaticDataResponseDto
             {
                 Id = t.Id,
                 Title = t.Title,
+                ProvinceTitle = t.ProvinceTitle,
             });
 
         if (requestDto.SearchBy is not null)

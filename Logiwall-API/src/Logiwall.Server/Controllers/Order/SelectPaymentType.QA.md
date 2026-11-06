@@ -61,3 +61,11 @@ Gateway gives no link: 400 `PaymentLinkFailed`. The provider text goes to the lo
 * The amount unit is not confirmed (ADR-0001).
 
 Automated tests: `PaymentFlowTests`.
+# Cycle 020 addition
+
+The requested online method must match the shared method on the selected quote. Reject a carrier-collection quote before contacting SEP.
+
+Reject an expired ETipax quote before issuing a payment link. The exact quote snapshot must remain attached to the selected service.
+This does not implement SEP verification; shipment registration requires a verified sufficient payment unless explicit carrier collection is configured.
+
+After draft editing/re-quotation, a verified successful payment still prevents issuing another full payment link. Preserve payment history; editing does not create or invalidate successful payment records.
