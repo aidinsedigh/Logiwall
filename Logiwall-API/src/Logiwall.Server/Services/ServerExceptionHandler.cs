@@ -13,6 +13,7 @@ public partial class ServerExceptionHandler : IExceptionHandler
     [AutoInject] private IStringLocalizer<AppStrings> localizer = default!;
     [AutoInject] private ILogger<ServerExceptionHandler> logger = default!;
     [AutoInject] private JsonSerializerOptions jsonSerializerOptions = default!;
+    private JsonSerializerOptions? errorJsonOptions;
 
     public async ValueTask<bool> TryHandleAsync(HttpContext httpContext, Exception e, CancellationToken cancellationToken)
     {
@@ -58,7 +59,8 @@ public partial class ServerExceptionHandler : IExceptionHandler
         httpContext.Response.StatusCode = statusCode;
 
         // Preserve Persian characters in the JSON response while retaining the encoder's HTML escaping.
-        var errorJsonOptions = new JsonSerializerOptions(jsonSerializerOptions)
+        // Built once: each options instance keeps its own metadata cache.
+        var errorJsonOptions = this.errorJsonOptions ??= new JsonSerializerOptions(jsonSerializerOptions)
         {
             Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
         };
