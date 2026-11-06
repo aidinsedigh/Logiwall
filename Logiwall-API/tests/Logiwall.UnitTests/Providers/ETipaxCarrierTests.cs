@@ -10,6 +10,32 @@ namespace Logiwall.UnitTests.Providers;
 public class ETipaxCarrierTests
 {
     [Theory]
+    [InlineData("504", 20)]
+    [InlineData("521", 60)]
+    public async Task No_packaging_uses_the_same_carrier_reference_for_pricing_and_registration(string code, int packType)
+    {
+        var carrier = Create(async (http, ct) =>
+        {
+            if (http.RequestUri!.AbsolutePath.EndsWith("token"))
+                return new(HttpStatusCode.OK) { Content = new StringContent("{\"token\":\"test\"}") };
+            using var body = JsonDocument.Parse(await http.Content!.ReadAsStringAsync(ct));
+            var package = body.RootElement.GetProperty("packageInputs")[0];
+            Assert.Equal(int.Parse(code), package.GetProperty("packingId").GetInt32());
+            Assert.Equal(packType, package.GetProperty("packType").GetInt32());
+            Assert.Equal(42, package.GetProperty("packageContentId").GetInt32());
+            return new(HttpStatusCode.OK) { Content = new StringContent("[{\"regularRate\":{\"serviceId\":4,\"finalPrice\":150000}}]") };
+        });
+        var address = new CarrierAddress("1", "address", 35, 51, "1", null, "name", "09123456789");
+        var request = new CarrierShipmentRequest("test", [new(1, address, address, 2, 1000, 10, 10, 10, code, "42", packType, 0)], 4, 72, 0, 0);
+        var quote = Assert.Single(await carrier.QuoteAsync(request, CancellationToken.None));
+        using var json = JsonDocument.Parse(quote.RequestJson);
+        var parcel = json.RootElement.GetProperty("packages")[0];
+        Assert.Equal(int.Parse(code), parcel.GetProperty("packingId").GetInt32());
+        Assert.Equal(packType, parcel.GetProperty("packType").GetInt32());
+        Assert.Equal(42, parcel.GetProperty("packageContentId").GetInt32());
+    }
+
+    [Theory]
     [InlineData(71, 10)]
     [InlineData(72, 20)]
     [InlineData(73, 30)]

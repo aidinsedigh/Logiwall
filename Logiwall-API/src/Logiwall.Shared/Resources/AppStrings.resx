@@ -710,4 +710,7 @@ Please confirm your email by clicking on the link.</value>
   <data name="ShippingPaymentSenderCreditOnDelivery" xml:space="preserve"><value>Sender - credit on delivery</value></data>
   <data name="ShippingOrderLocked" xml:space="preserve"><value>Order registration is in progress, needs reconciliation, or has already succeeded.</value></data>
   <data name="ShippingOrderChanged" xml:space="preserve"><value>The order changed during pricing. Request a new quote.</value></data>
+  <data name="ShippingNoPackagingUnavailable" xml:space="preserve"><value>برای محتویات انتخاب‌شده، گزینهٔ بدون بسته‌بندی فعال و سازگار موجود نیست؛ محتویات را تغییر دهید.</value></data>
+  <data name="ShippingPackagingIncompatible" xml:space="preserve"><value>نوع بسته‌بندی، محتویات و انتخاب نیاز به بسته‌بندی با یکدیگر سازگار نیستند.</value></data>
+  <data name="ShippingReferenceFilterInvalid" xml:space="preserve"><value>فیلتر اطلاعات پایه معتبر نیست؛ برای محتویات شناسهٔ بسته‌بندی و برای بسته‌بندی شناسهٔ محتویات را بفرستید.</value></data>
 </root>

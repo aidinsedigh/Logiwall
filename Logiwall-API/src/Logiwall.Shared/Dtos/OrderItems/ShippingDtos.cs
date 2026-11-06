@@ -4,6 +4,7 @@ public record ShippingReferenceResponseDto(int Id, string Category, string Title
 {
     public string? ExternalCode { get; init; }
     public short? MappedOrderStatus { get; init; }
+    public bool? RequiresPackaging { get; init; }
 }
 public record ShipmentParcelResponseDto(int OrderParcelId, string? CourierTrackingCode,
     [property: System.Text.Json.Serialization.JsonPropertyName("courierStatusCode")] string? StatusCode,

@@ -10,3 +10,5 @@ Requires customer authentication and ownership. Full CreateOrder body plus posit
 - Edit/pricing/selection/registration lock the same order row; a price calculated from an older form cannot overwrite edited data.
 
 Automated coverage: OrderEditTests (HTTP validation/ownership, invalidation, rejection/retry/history, shipping finality, stale concurrent pricing), ShipmentTests (parallel registration and unknown outcomes).
+
+Allow changing a draft parcel between carrier packaging and no carrier packaging. No packaging uses PackageTypeId=0 and PackagingReferenceId=null. Invalidate the previous quote and resolve a compatible active no-packaging carrier reference on the next quotation.

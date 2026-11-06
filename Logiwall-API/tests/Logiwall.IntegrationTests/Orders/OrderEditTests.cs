@@ -33,7 +33,7 @@ public class OrderEditTests(SqlServerFixture fixture)
             ReceiverName = "Receiver", ReceiverLastName = "Test", ReceiverPhoneNumber = "09123456780",
             DestinationAddress = "Destination", DestinationLat = "37.2", DestinationLng = "49.5", DestinationPlaque = "3", DestinationUnit = "4",
             OrderParcels = [new() { ParcelTypeId = ParcelType.Package, Weight = 1, Length = 10, Width = 10, Height = 10,
-                ParcelValue = 100000, PackagingReferenceId = packaging, ContentReferenceId = content }]
+                ParcelValue = 100000, PackageTypeId = 1, PackagingReferenceId = packaging, ContentReferenceId = content }]
         };
         var setup = await fixture.WithDbAsync(async db =>
         {

@@ -4,6 +4,7 @@ using Logiwall.Application.Abstractions.OrderItems;
 using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Domain.Entities.OrderItems;
 using Logiwall.Infrastructure.Data;
+using Logiwall.Infrastructure.Providers.PostalServices;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.OrderItems;
 using Microsoft.EntityFrameworkCore;
@@ -81,7 +82,13 @@ public class CarrierQuoteService(AppDbContext db, IEnumerable<IShippingCarrier> 
         var maps = await db.StaticDataMappers.AsNoTracking().Where(x => ids.Contains(x.StaticDataId) && x.ProviderType == ProviderType.ETipax).ToListAsync(ct);
         string City(int id) => maps.SingleOrDefault(x => x.StaticDataId == id)?.Code ?? throw new BadRequestException("ShippingCityNotMapped");
         var selections = order.OrderParcels.SelectMany(p => new[] { p.PackagingReferenceId, p.ContentReferenceId }).OfType<int>().Distinct().ToArray();
-        var refs = await db.ProviderReferenceItems.AsNoTracking().Where(x => selections.Contains(x.Id) && x.IsActive && x.ServiceProviderId == provider.Id).ToListAsync(ct);
+        var needsNoPackaging = order.OrderParcels.Any(p => p.PackageTypeId == 0);
+        var refs = await db.ProviderReferenceItems.AsNoTracking().Where(x => x.IsActive && x.ServiceProviderId == provider.Id
+            && (selections.Contains(x.Id) || needsNoPackaging && x.Category == "packaging"
+                && (x.ExternalCode == "504" || x.ExternalCode == "521"))).ToListAsync(ct);
+        ResourceValidationException FieldError(string field, string key, int index) =>
+            new(key, new ErrorResourcePayload { Details =
+                [new() { Name = $"orderParcels[{index}].{field}", Errors = [new() { Key = key, Message = localizer[key] }] }] });
         ProviderReferenceItem Ref(int? id, string category, int index)
         {
             var reference = refs.SingleOrDefault(x => x.Id == id && x.Category == category);
@@ -96,11 +103,25 @@ public class CarrierQuoteService(AppDbContext db, IEnumerable<IShippingCarrier> 
         var parcels = new List<CarrierParcel>();
         foreach (var p in order.OrderParcels.OrderBy(p => p.Id))
         {
-            var packing = Ref(p.PackagingReferenceId, "packaging", parcels.Count);
             var content = Ref(p.ContentReferenceId, "content", parcels.Count);
-            using var metadata = JsonDocument.Parse(packing.MetadataJson);
-            if (!metadata.RootElement.TryGetProperty("packType", out var packType) || !int.TryParse(packType.ToString(), out var type) || type <= 0)
-                throw new BadRequestException("ShippingReferenceInvalid");
+            var contentType = ETipaxPackaging.PackType(content.MetadataJson);
+            ProviderReferenceItem packing;
+            if (p.PackageTypeId == 0 && p.PackagingReferenceId is null)
+            {
+                packing = refs.SingleOrDefault(r => r.Category == "packaging" && ETipaxPackaging.IsNoPackaging(r.ExternalCode)
+                    && contentType is not null && ETipaxPackaging.PackType(r.MetadataJson) == contentType)
+                    ?? throw FieldError("contentReferenceId", "ShippingNoPackagingUnavailable", parcels.Count);
+            }
+            else
+            {
+                packing = Ref(p.PackagingReferenceId, "packaging", parcels.Count);
+                if (ETipaxPackaging.IsNoPackaging(packing.ExternalCode) != (p.PackageTypeId == 0))
+                    throw FieldError("packagingReferenceId", "ShippingPackagingIncompatible", parcels.Count);
+            }
+            var type = ETipaxPackaging.PackType(packing.MetadataJson)
+                ?? throw new BadRequestException("ShippingReferenceInvalid");
+            if ((contentType is not null && contentType != type) || (p.PackageTypeId == 0 && contentType is null))
+                throw FieldError("contentReferenceId", "ShippingPackagingIncompatible", parcels.Count);
             if (p.Weight <= 0 || p.Length <= 0 || p.Width <= 0 || p.Height <= 0 || p.ParcelValue <= 0 || p.COD < 0)
                 throw new BadRequestException("ShippingParcelInvalid");
             CarrierAddress Address(bool origin) => new(origin ? originCity : destinationCity,

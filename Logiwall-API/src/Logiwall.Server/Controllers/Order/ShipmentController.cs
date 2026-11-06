@@ -26,8 +26,9 @@ public partial class ShipmentController : AppControllerBase
 
     [HttpGet]
     public async Task<ServiceResponse<IReadOnlyList<ShippingReferenceResponseDto>>> References(
-        [FromQuery] string category, CancellationToken cancellationToken, [FromQuery] string providerCode = "tipax")
-        => new() { Succuss = true, Data = await references.GetAsync(providerCode, category, cancellationToken) };
+        [FromQuery] string category, [FromQuery] ShippingReferenceFilterDto filter, CancellationToken cancellationToken,
+        [FromQuery] string providerCode = "tipax")
+        => new() { Succuss = true, Data = await references.GetAsync(providerCode, category, cancellationToken, filter) };
 
     [HttpPost, Authorize(Policy = "AdminsOnly")]
     public async Task<ServiceResponse<bool>> SynchronizeReferences(CancellationToken cancellationToken)

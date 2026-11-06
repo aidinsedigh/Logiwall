@@ -710,4 +710,7 @@
   <data name="ShippingPaymentSenderCreditOnDelivery" xml:space="preserve"><value>سمت فرستنده - پرداخت در محل از اعتبار</value></data>
   <data name="ShippingOrderLocked" xml:space="preserve"><value>سفارش در حال ثبت، نیازمند بررسی نتیجه، یا قبلاً در شرکت حمل ثبت شده است؛ ویرایش و استعلام مجدد مجاز نیست.</value></data>
   <data name="ShippingOrderChanged" xml:space="preserve"><value>اطلاعات سفارش هنگام استعلام تغییر کرده است؛ دوباره استعلام قیمت بگیرید.</value></data>
+  <data name="ShippingNoPackagingUnavailable" xml:space="preserve"><value>برای محتویات انتخاب‌شده، گزینهٔ بدون بسته‌بندی فعال و سازگار موجود نیست؛ محتویات را تغییر دهید.</value></data>
+  <data name="ShippingPackagingIncompatible" xml:space="preserve"><value>نوع بسته‌بندی، محتویات و انتخاب نیاز به بسته‌بندی با یکدیگر سازگار نیستند.</value></data>
+  <data name="ShippingReferenceFilterInvalid" xml:space="preserve"><value>فیلتر اطلاعات پایه معتبر نیست؛ برای محتویات شناسهٔ بسته‌بندی و برای بسته‌بندی شناسهٔ محتویات را بفرستید.</value></data>
 </root>

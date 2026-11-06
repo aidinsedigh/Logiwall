@@ -6,7 +6,7 @@ public record CreateOrderParcelRequestDto
     [EnumDataType(typeof(ParcelType), ErrorMessage = nameof(AppStrings.ModelBindingValueIsInvalid))]
     public ParcelType ParcelTypeId { get; set; }
 
-    /// <summary>0: no packing, 1: packing.</summary>
+    /// <summary>0: no carrier packaging (reference may be null); 1: selected carrier packaging is required.</summary>
     [Range(0, 1, ErrorMessage = nameof(AppStrings.ModelBindingValueIsInvalid))]
     public short PackageTypeId { get; set; }
 

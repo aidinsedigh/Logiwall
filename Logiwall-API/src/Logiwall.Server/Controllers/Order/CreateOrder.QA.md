@@ -57,3 +57,5 @@ Automated tests: `ProfileTests.CreateOrder_rejects_an_unknown_parcel_type`.
 Each parcel accepts nullable positive packagingReferenceId and contentReferenceId and persists both via the order mapper.
 Existing order creation without them remains compatible; ETipax quotation requires active selections from the correct provider/category.
 Reject zero/negative supplied IDs at model validation. Check two parcels keep their own different selections.
+
+Accept PackageTypeId=0 with PackagingReferenceId=null and a selected content reference. Preserve this choice for subsequent quotes. PackagingReferenceId=0 remains invalid. Carrier reference compatibility is checked during quotation.

@@ -317,6 +317,7 @@ public class ShipmentTests(SqlServerFixture fixture)
             order.OriginCity = (short)await db.StaticDataMappers.Where(m => m.ProviderType == ProviderType.ETipax && m.StaticData!.Type == StaticDataType.OriginCity).Select(m => m.StaticDataId).FirstAsync();
             order.DestinationCity = (short)await db.StaticDataMappers.Where(m => m.ProviderType == ProviderType.ETipax && m.StaticData!.Type == StaticDataType.DestinationCity).Select(m => m.StaticDataId).FirstAsync();
             order.OrderParcels.Single().PackagingReferenceId = packaging;
+            order.OrderParcels.Single().PackageTypeId = 1;
             order.OrderParcels.Single().ContentReferenceId = content;
             await db.SaveChangesAsync();
             return await db.Orders.Where(o => o.Id == id).Select(o => o.Customer.Person.UserId).SingleAsync();

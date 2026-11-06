@@ -128,3 +128,18 @@ Architecture decision: ADR 0006. Implementation is reviewable; rollout and live 
 - EF reported no pending model changes. Release compilation succeeded through the test build; existing compiler warnings remain.
 - Tests used an isolated SQL database and fake external providers. No real carrier registration or payment was performed.
 - Known functional limits remain: SEP verification is incomplete; the Tipax no-packaging path still requires a validated carrier contract.
+
+2026-11-06 no-carrier-packaging support completed:
+- PackageTypeId=0 accepts PackagingReferenceId=null. Resolve active Tipax no-packaging records 504/521 by the selected content's packType; never invent packingId=0.
+- Expose requiresPackaging on Tipax packaging references. Validate explicit flags and content compatibility before carrier calls. Freeze resolved references in quote snapshots.
+- Document CreateOrder/UpdateOrder payloads, frontend filtering, field errors and mixed parcel choices. Update endpoint QA and ADR.
+- Add six API regressions using the carrier route without legacy fake postal services, plus two adapter payload cases. Update existing packaging fixtures to explicitly request packaging.
+- Validation: 53 unit tests and 144 SQL integration tests passed; one existing placeholder skipped. Release compilation succeeded with existing warnings. No live carrier calls or schema changes.
+- This resolves the earlier no-packaging implementation limitation; SEP verification remains a separate open item.
+
+2026-11-06 compatible reference query filters completed:
+- Compared ShopLink's business-category grouping and packType resolution. Added explicit per-parcel query filters using internal Logiwall reference IDs.
+- References accepts packageTypeId, packagingReferenceId (content category), and contentReferenceId (packaging category). No filters preserve the original catalogue behavior.
+- Filter by active provider-scoped packing/content types; distinguish no-packaging and regular packaging. Reject invalid ranges, contradictory flags, self-category filters, unsupported categories, and foreign/inactive IDs.
+- Added eight API regressions and updated the frontend handoff and endpoint QA. No database migration or external carrier request required.
+- Validation: 53 unit tests and 152 SQL integration tests passed; one existing placeholder skipped. Release compilation and diff whitespace check passed.
