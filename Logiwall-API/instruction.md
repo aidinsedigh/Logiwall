@@ -9,7 +9,7 @@ for the full docs layout.
 Project name: **Logiwall API**
 
 Logiwall API is the backend for Logiwall's parcel-shipping app: OTP login, customers and
-contacts, orders, courier quotes (MyTipax) and payment (SEP 724). The real UI is the React app
+contacts, orders, courier quotes (eTipax) and payment (SEP 724). The real UI is the React app
 in `../Logiwall-Front/`. It calls the `Identity`, `Person`, `Order` and `Common` controllers.
 
 The stack (versions from the `*.csproj` files and `global.json`):
@@ -119,7 +119,7 @@ The request path is:
 <X>Controller  ──calls──▶  I<X>Service (Application)  ──implemented by──▶  <X>Service (Infrastructure)
                                                                                │ reads/writes
                                                                                ▼
-                                                                AppDbContext, providers (MyTipax, SEP, SMS)
+                                                                AppDbContext, providers (eTipax, SEP, SMS)
 ```
 
 * A service method returns `ServiceResponse<T>` (`src/Logiwall.Shared/Dtos/Global/ServiceResponse.cs`).

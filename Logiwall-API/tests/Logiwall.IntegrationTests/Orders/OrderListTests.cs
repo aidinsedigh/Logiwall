@@ -41,17 +41,21 @@ public class OrderListTests(SqlServerFixture fixture)
     public async Task Order_has_city_names_and_the_chosen_total()
     {
         var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
-        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
-        (await OrderTestData.SelectAsync(client, orderId, await OrderTestData.QuoteAsync(client, orderId))).EnsureSuccessStatusCode();
-        var cityName = await fixture.WithDbAsync(db => db.StaticDatas.Where(s => s.Id == 1).Select(s => s.Title).SingleOrDefaultAsync());
+        var orderId = await OrderTestData.InsertQuotableOrderAsync(fixture, customerId);
+        (await OrderTestData.SelectAsync(client, orderId, await OrderTestData.QuoteAsync(fixture, client, orderId))).EnsureSuccessStatusCode();
+        var (originName, destinationName) = await fixture.WithDbAsync(async db =>
+        {
+            var cities = await db.Orders.Where(o => o.Id == orderId).Select(o => new { o.OriginCity, o.DestinationCity }).SingleAsync();
+            return (await db.StaticDatas.Where(s => s.Id == cities.OriginCity).Select(s => s.Title).SingleAsync(),
+                await db.StaticDatas.Where(s => s.Id == cities.DestinationCity).Select(s => s.Title).SingleAsync());
+        });
 
         var response = await client.PostAsJsonAsync("api/Order/GetOrders", new { });
 
         var order = Assert.Single((await ApiClient.ReadJsonAsync(response)).GetProperty("data").GetProperty("result").EnumerateArray());
-        Assert.NotNull(cityName); // the migrations seed StaticDatas, so row 1 exists
-        Assert.Equal(1100m, order.GetProperty("finalAmount").GetDecimal()); // FakePostalProvider's total
-        Assert.Equal(cityName, order.GetProperty("originCityName").GetString());
-        Assert.Equal(cityName, order.GetProperty("destinationCityName").GetString());
+        Assert.Equal(1000m, order.GetProperty("finalAmount").GetDecimal()); // FakeShippingCarrier's total
+        Assert.Equal(originName, order.GetProperty("originCityName").GetString());
+        Assert.Equal(destinationName, order.GetProperty("destinationCityName").GetString());
         var providerTitle = await fixture.WithDbAsync(db => db.ServiceProviders
             .Where(p => p.Id == order.GetProperty("serviceProviderId").GetInt16()).Select(p => p.Title).SingleAsync());
         Assert.NotNull(providerTitle);

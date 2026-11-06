@@ -1,6 +1,5 @@
 using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Application.Abstractions.Tools;
-using Logiwall.Infrastructure.Providers.PostalServices;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -49,8 +48,6 @@ public class LogiwallApiFactory : WebApplicationFactory<Logiwall.Server.AppSetti
             services.RemoveAll<ISep724Provider>();
             services.AddSingleton<FakeSep724Provider>();
             services.AddSingleton<ISep724Provider>(sp => sp.GetRequiredService<FakeSep724Provider>());
-            services.RemoveAll<PostalServiceBase>();
-            services.AddTransient<PostalServiceBase, FakePostalProvider>();
             services.RemoveAll<IShippingCarrier>();
             services.AddSingleton<FakeShippingCarrier>();
             services.AddSingleton<IShippingCarrier>(sp => sp.GetRequiredService<FakeShippingCarrier>());

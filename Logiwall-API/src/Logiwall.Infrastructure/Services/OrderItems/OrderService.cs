@@ -2,12 +2,10 @@ using Logiwall.Application.Abstractions.OrderItems;
 using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Domain.Entities.OrderItems;
 using Logiwall.Infrastructure.Mapper;
-using Logiwall.Infrastructure.Providers.PostalServices;
 using Logiwall.Infrastructure.Data;
 using Logiwall.Shared.Dtos.Dashboard;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.OrderItems;
-using Logiwall.Shared.Dtos.Providers.PostalService;
 using Logiwall.Shared.Dtos.Providers.Sep724;
 using Logiwall.Shared.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +17,6 @@ using static Logiwall.Shared.Enums.Constants;
 namespace Logiwall.Infrastructure.Services.OrderItems;
 public partial class OrderService(AppDbContext appDbContext,
     ISep724Provider sep724Provider,
-    IEnumerable<PostalServiceBase> postalProviders,
     ILogger<OrderService> logger,
     IOptions<PaymentOptions> paymentOptions,
     IStringLocalizer<AppStrings> localizer,
@@ -71,164 +68,8 @@ public partial class OrderService(AppDbContext appDbContext,
         }
     }
 
-    public async Task<ServiceResponse<IList<OrderProviderOptionsDto>>> GetOptionsAsync(GetOptionnsRequestDto requestDto, int userId, CancellationToken cancellationToken = default)
-    {
-        if (!postalProviders.Any())
-            return await carrierQuoteService.GetAsync(requestDto.OrderId, userId, cancellationToken, requestDto.PaymentType, requestDto.ServiceReferenceId);
-        try
-        {
-            var order = await appDbContext.Orders.Include(t => t.OrderParcels).FirstOrDefaultAsync(t => t.Id == requestDto.OrderId && t.Customer.Person.UserId == userId);
-            if (order is null)
-            {
-                return new ServiceResponse<IList<OrderProviderOptionsDto>>
-                {
-                    Data = null,
-                    Succuss = false,
-                    Message = localizer[nameof(AppStrings.InvalidOrder)]
-                };
-            }
-
-            if (order.State is (short)OrderState.Paid or (short)OrderState.PaymentPending)
-            {
-                return new ServiceResponse<IList<OrderProviderOptionsDto>>
-                {
-                    Data = null,
-                    Succuss = false,
-                    Message = localizer[nameof(AppStrings.OrderCannotBeRequoted)]
-                };
-            }
-
-            var staticDataIds = new int[] { order.OriginCity, order.DestinationCity, order.DestinationCountry ?? -1 };
-            var mapperCodes = await appDbContext.StaticDataMappers
-                .Where(t => staticDataIds.Contains(t.StaticDataId))
-                .Select(t => new { t.StaticDataId, t.ProviderType, t.Code })
-                .ToListAsync();
-
-            var newOptions = new List<OrderInqueryOption>();
-            var anyProviderSucceeded = false;
-            foreach (var provider in postalProviders)
-            {
-                string? CodeFor(int? staticDataId) => mapperCodes
-                    .FirstOrDefault(t => t.StaticDataId == staticDataId && t.ProviderType == provider.ProviderType)?.Code;
-
-                List<OrderInquiryOptionDto>? options;
-                try
-                {
-                    options = await provider.GetOrderInquiryAsync(new OrderInquiryRequestDto
-                    {
-                        CountryId = CodeFor(order.DestinationCountry),
-                        OriginCity = CodeFor(order.OriginCity),
-                        DestinationCity = CodeFor(order.DestinationCity),
-                        Parcels = order.OrderParcels.Select(t => new OrderInquiryParcelDto
-                        {
-                            Height = (int)t.Height, //todo
-                            Weight = ((int)t.Weight).ToString(),
-                            Width = (int)t.Width,
-                            Length = (int)t.Length,
-                            Value = (t.ParcelValue/10).ToString(),
-                            ParcelType = Enum.GetName(typeof(ParcelType), t.ParcelTypeId).ToUpper(),
-                            NeedPacking = t.PackageTypeId == 0 ? "0" : "1",
-                            LockerSupport = "0"
-                        }).ToList(),
-                    });
-                }
-                catch (Exception ex)
-                {
-                    // One failing carrier must not fail the whole quote.
-                    logger.LogWarning(ex, "[Order][GetOptions][{OrderId}][{Provider}] Quote request failed.", order.Id, provider.GetType().Name);
-                    continue;
-                }
-
-                if (options is null)
-                    continue;
-
-                var serviceProvider = await appDbContext.ServiceProviders.FirstOrDefaultAsync(t => t.Name == provider.GetType().Name);
-                if (serviceProvider is null)
-                {
-                    logger.LogWarning("[Order][GetOptions][{OrderId}][{Provider}] No ServiceProviders row; options skipped.", order.Id, provider.GetType().Name);
-                    continue;
-                }
-
-                anyProviderSucceeded = true;
-                newOptions.AddRange(options.Select(t => new OrderInqueryOption
-                {
-                    // TODO(plan 010): field meaning unconfirmed (ADR-0001); the parts add up to finalAmount in the E2E run.
-                    ServiceAmount = PartAmount(t.ShippingCost) + PartAmount(t.SpecialService),
-                    Tax = PartAmount(t.Tax),
-                    PackagingAmount = PartAmount(t.PackageService),
-                    // No default: a quote without a total must not become a zero payment.
-                    FinalAmount = decimal.Parse(t.FinalAmount!, CultureInfo.InvariantCulture),
-                    OrderId = order.Id,
-                    ServiceProviderId = serviceProvider.Id,
-                    Choosen = false,
-                    ServiceType = 0,
-                    ServiceSLA = 0,
-                    InsuranceAmount = 0,
-                    DelivereDate = t.DelivereDate ?? string.Empty
-                }));
-            }
-
-            if (anyProviderSucceeded is false)
-            {
-                // Keep the previous quotes: the customer may still select one of them.
-                return new ServiceResponse<IList<OrderProviderOptionsDto>>
-                {
-                    Data = null,
-                    Succuss = false,
-                    Message = localizer[nameof(AppStrings.ProviderServiceUnavailable)]
-                };
-            }
-
-            // Re-quoting replaces the previous options instead of appending to them.
-            await using (var tx = await appDbContext.Database.BeginTransactionAsync())
-            {
-                // Lock the order row, so a parallel re-quote waits and then replaces these options.
-                await appDbContext.Database.ExecuteSqlInterpolatedAsync($"SELECT Id FROM Orders WITH (UPDLOCK, HOLDLOCK) WHERE Id = {order.Id}");
-                var old =await appDbContext.OrderInqueryOptions.Where(t => t.OrderId == order.Id).ToListAsync();
-                appDbContext.OrderInqueryOptions.RemoveRange(old);
-                appDbContext.OrderInqueryOptions.AddRange(newOptions);
-                order.State = (short)OrderState.Created;
-                await appDbContext.SaveChangesAsync();
-                await tx.CommitAsync();
-            }
-
-            var rows = await appDbContext.OrderInqueryOptions.Where(t => t.OrderId == order.Id).OrderBy(t => t.Id).Select(t => new
-            {
-                t.ServiceProviderId,
-                t.ServiceProvider.Title,
-                Option = new OrderInqueryOptionsDto
-                {
-                    Id = t.Id,
-                    BaseAmount = t.ServiceAmount,
-                    DelivereDate = t.DelivereDate,
-                    PackageAmount = t.PackagingAmount,
-                    TaxAmount = t.Tax,
-                    TotalAmount = t.FinalAmount,
-                }
-            }).ToListAsync();
-
-            var lst = rows.GroupBy(t => (t.ServiceProviderId, t.Title))
-                .Select(g => new OrderProviderOptionsDto(g.Key.ServiceProviderId, g.Key.Title, g.Select(t => t.Option).ToList()))
-                .ToList();
-
-            return new ServiceResponse<IList<OrderProviderOptionsDto>>
-            {
-                Data = lst,
-                Succuss = true,
-                Message = string.Empty
-            };
-        }
-        catch (Exception exc)
-        {
-            logger.LogError(exc, "[Order][GetOptions][{OrderId}] Getting options failed.", requestDto.OrderId);
-            return new ServiceResponse<IList<OrderProviderOptionsDto>>
-            {
-                Data = null,
-                Succuss = false,
-                Message = localizer[nameof(AppStrings.ProviderServiceUnavailable)]
-            };
-        }
-    }
+    public Task<ServiceResponse<IList<OrderProviderOptionsDto>>> GetOptionsAsync(GetOptionnsRequestDto requestDto, int userId, CancellationToken cancellationToken = default)
+        => carrierQuoteService.GetAsync(requestDto.OrderId, userId, cancellationToken, requestDto.PaymentType, requestDto.ServiceReferenceId);
 
     /// <summary>The only order properties a client may filter or sort on, by client name.</summary>
     private static readonly Dictionary<string, string> OrderFilterableProperties = new(StringComparer.OrdinalIgnoreCase)
@@ -504,7 +345,4 @@ public partial class OrderService(AppDbContext appDbContext,
     }
 
     private ServiceResponse<T> Fail<T>(string messageKey) => new() { Data = default, Succuss = false, Message = localizer[messageKey] };
-
-    /// <summary>A quote part the provider may leave out counts as 0.</summary>
-    private static decimal PartAmount(string? value) => string.IsNullOrEmpty(value) ? 0 : decimal.Parse(value, CultureInfo.InvariantCulture);
 }

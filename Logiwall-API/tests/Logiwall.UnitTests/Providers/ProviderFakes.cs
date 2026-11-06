@@ -3,8 +3,6 @@ using Logiwall.Application.Abstractions.Global;
 using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Shared.Dtos.Global;
 using Logiwall.Shared.Dtos.Providers;
-using Logiwall.Shared.Dtos.Providers.PostalService;
-using Logiwall.Shared.Dtos.Providers.PostalService.MyTipax;
 using Logiwall.Shared.Dtos.Providers.Sep724;
 
 namespace Logiwall.UnitTests.Providers;
@@ -45,9 +43,6 @@ internal sealed class FakeHttpProvider : IHttpProvider
             {
                 Data = new GetPaymentTokenResponseDto { RequestId = 1, ReferenceCode = Guid.NewGuid(), PaymentLink = "https://pay.test/x" }
             },
-            var t when t == typeof(MyTipaxGetTokenResponseDto) => new MyTipaxGetTokenResponseDto { Token = "tipax-api" },
-            var t when t == typeof(MyTipaxLoginResponseDto) => new MyTipaxLoginResponseDto { Token = "tipax-login" },
-            var t when t == typeof(MyTipaxOrderInquiryResponseDto) => new MyTipaxOrderInquiryResponseDto { Order = new OrderInquiryResponseDto { Options = [] } },
             _ => throw new NotSupportedException(typeof(TResponse).Name),
         };
         return Task.FromResult((TResponse?)response);
