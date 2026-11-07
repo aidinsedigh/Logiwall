@@ -122,8 +122,12 @@ public partial class OrderService(AppDbContext appDbContext,
         var rows = await query.Select(o => new
         {
             Order = o,
-            ServiceProviderTitle = appDbContext.ServiceProviders.Where(p => p.Id == o.ServiceProviderId)
+            ServiceProviderName = appDbContext.ServiceProviders.Where(p => p.Id == o.ServiceProviderId)
                 .Select(p => p.Title).FirstOrDefault(),
+            // shortcut: the card shows one code, so a multi-parcel order shows its first parcel's code; the shipment panel lists all.
+            TrackingCode = o.ServiceProviderTrackingCode ?? appDbContext.ShipmentParcels
+                .Where(p => p.Shipment.OrderId == o.Id && p.TrackingCode != null)
+                .OrderBy(p => p.Position).Select(p => p.TrackingCode).FirstOrDefault(),
             // Orders has no FinalAmount column: the chosen quote holds the total.
             FinalAmount = o.OrderInqueryOptions.Where(t => t.Choosen).Select(t => t.FinalAmount).FirstOrDefault(),
             PaidAmount = o.OrderPayments.Where(p => p.Status == PaymentStatus.Success && p.VerifiedAt != null && p.VerifiedAmount != null)
@@ -143,8 +147,8 @@ public partial class OrderService(AppDbContext appDbContext,
             return t.Order.Map() with
             {
             FinalAmount = t.FinalAmount,
-            ServiceProviderTitle = t.ServiceProviderTitle,
-            PaidAmount = t.PaidAmount,
+            ServiceProviderName = t.ServiceProviderName,
+            ServiceProviderTrackingCode = t.TrackingCode,
             PaymentStatus = payment.ToString(),
             PaymentStatusName = payment.GetDescription(),
             StatusName = t.Order.OverallStatus.GetDescription(),

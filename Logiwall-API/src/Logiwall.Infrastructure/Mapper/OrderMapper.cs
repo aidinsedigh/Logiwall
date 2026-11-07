@@ -8,10 +8,12 @@ namespace Logiwall.Infrastructure.Mapper;
 public static partial class OrderMapper
 {
     // OrderService.GetOrderListAsync fills the names, which come from other tables.
+    // OrderDto has only the fields the front reads, so most Order columns stay unmapped.
+    [MapperRequiredMapping(RequiredMappingStrategy.Target)]
     [MapProperty(nameof(Order.OverallStatus), nameof(OrderDto.Status))]
     [MapperIgnoreTarget(nameof(OrderDto.StatusName))]
-    [MapperIgnoreTarget(nameof(OrderDto.ServiceProviderTitle))]
-    [MapperIgnoreTarget(nameof(OrderDto.PaidAmount))]
+    [MapperIgnoreTarget(nameof(OrderDto.ServiceProviderName))]
+    [MapperIgnoreTarget(nameof(OrderDto.FinalAmount))]
     [MapperIgnoreTarget(nameof(OrderDto.PaymentStatus))]
     [MapperIgnoreTarget(nameof(OrderDto.PaymentStatusName))]
     [MapperIgnoreTarget(nameof(OrderDto.OriginCityName))]

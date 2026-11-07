@@ -59,8 +59,12 @@ public class OrderListTests(SqlServerFixture fixture)
         var providerTitle = await fixture.WithDbAsync(db => db.ServiceProviders
             .Where(p => p.Id == order.GetProperty("serviceProviderId").GetInt16()).Select(p => p.Title).SingleAsync());
         Assert.NotNull(providerTitle);
-        Assert.Equal(providerTitle, order.GetProperty("serviceProviderTitle").GetString());
+        Assert.Equal(providerTitle, order.GetProperty("serviceProviderName").GetString());
         Assert.False(order.TryGetProperty("orderParcels", out _));
+        // Fields the front does not read stay out of the response.
+        Assert.False(order.TryGetProperty("originLat", out _));
+        Assert.False(order.TryGetProperty("paidAmount", out _));
+        Assert.False(order.TryGetProperty("customerId", out _));
     }
 
     [Fact]
@@ -91,12 +95,16 @@ public class OrderListTests(SqlServerFixture fixture)
     }
 
     [Fact]
-    public async Task Paid_amount_counts_only_successful_verified_payments()
+    public async Task Payment_status_counts_only_successful_verified_payments()
     {
         var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
         var id = await OrderTestData.InsertOrderAsync(fixture, customerId);
         await fixture.WithDbAsync(async db =>
         {
+            // 1000 is verified. If the unverified 300 counted too, the 1300 total would read as Paid.
+            var providerId = await db.ServiceProviders.Where(p => p.Code == "etipax").Select(p => p.Id).SingleAsync();
+            db.OrderInqueryOptions.Add(new() { OrderId = id, ServiceProviderId = providerId, Choosen = true,
+                PaymentMethod = Logiwall.Shared.Enums.Constants.PaymentMethod.Online, FinalAmount = 1300 });
             db.OrderPayments.AddRange(
                 new() { OrderId = id, Amount = 9999, VerifiedAmount = 1000, VerifiedAt = DateTimeOffset.UtcNow,
                     Status = Logiwall.Shared.Enums.PaymentStatus.Success, PayTrackingCode = "verified", PayDate = DateTimeOffset.UtcNow },
@@ -109,9 +117,8 @@ public class OrderListTests(SqlServerFixture fixture)
         var response = await client.PostAsJsonAsync("api/Order/GetOrders", new { });
         response.EnsureSuccessStatusCode();
         var order = Assert.Single((await ApiClient.ReadJsonAsync(response)).GetProperty("data").GetProperty("result").EnumerateArray());
-        Assert.Equal(1000, order.GetProperty("paidAmount").GetDecimal());
-        Assert.Equal("Paid", order.GetProperty("paymentStatus").GetString());
-        Assert.Equal(0, order.GetProperty("finalAmount").GetDecimal());
+        Assert.Equal("PartiallyPaid", order.GetProperty("paymentStatus").GetString());
+        Assert.Equal(1300, order.GetProperty("finalAmount").GetDecimal());
     }
 
     [Fact]
@@ -130,7 +137,6 @@ public class OrderListTests(SqlServerFixture fixture)
         response.EnsureSuccessStatusCode();
         var order = Assert.Single((await ApiClient.ReadJsonAsync(response)).GetProperty("data").GetProperty("result").EnumerateArray());
         Assert.Equal("Unpaid", order.GetProperty("paymentStatus").GetString());
-        Assert.Equal(0, order.GetProperty("paidAmount").GetDecimal());
         Assert.Equal(1000, order.GetProperty("finalAmount").GetDecimal());
     }
 

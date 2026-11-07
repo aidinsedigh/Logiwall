@@ -5,15 +5,21 @@ changed the response to the front's `IorderResponse` (`Logiwall-Front/src/types/
 
 Request: `{ hasPagination, pageNumber, pageSize, filterGroups? }`.
 
-Response `data`: `{ totalCount, result[] }`. Each order has the `OrderDto` fields and also:
+Response `data`: `{ totalCount, result[] }`. Each order has only the `OrderDto` fields that the front
+(`Logiwall-Frontend` `v2`: `features/Orders/components/Order.tsx`, `order-details.tsx`) reads. Computed fields:
 
 | Field | Source |
 |---|---|
 | `statusName` | `OrderStatusCode` `[Description]`, for example "ثبت‌شده در شرکت حمل" |
 | `originCityName`, `destinationCityName` | `StaticDatas.Title` for `OriginCity`, `DestinationCity` |
 | `finalAmount` | The chosen `OrderInqueryOption.FinalAmount`. 0 before `SelectOption`. |
+| `serviceProviderName` | `ServiceProviders.Title` of the selected provider; null when none is selected |
+| `serviceProviderTrackingCode` | `Orders.ServiceProviderTrackingCode`, else the first `ShipmentParcels.TrackingCode` by `Position`; null before carrier registration |
 
-`orderParcels`, `orderInqueryOptions`, `orderPayments` and `orderStatuses` are no longer in the response.
+These fields left the response on 2026-11-07: `orderParcels`, `orderInqueryOptions`, `orderPayments`,
+`orderStatuses`, `channelId`, `originCity`, `destinationCity`, `destinationCountry`, the four `*Lat`/`*Lng`,
+`serviceType`, `serviceSLA`, `packagingAmount`, `serviceAmount`, `insuranceAmount`, `tax`, `paidAmount`,
+`pickupServiceId`, `customerId`. `serviceProviderTitle` became `serviceProviderName`, the name the front reads.
 
 ## Acceptance criteria
 
@@ -65,13 +71,14 @@ Database down: 500 with the standard error body.
 The front asks for `pageSize: 3` and computes `Math.ceil(totalCount / 3)` pages.
 
 Automated tests: `OrderListTests`, `OrderQuoteFlowTests.Order_list_shows_the_order_state`,
+`ShipmentTests.Successful_registration_updates_the_order_list_and_preserves_payment_history` (tracking code),
 `QueryableExtensionsTests` (null and text values).
 
 
 Unified statuses: status/statusName now use Orders.OverallStatus, not the legacy payment/selection State. status/state filters refer to OverallStatus. Carrier registration success, cancellation and mapped webhooks update this persisted general status; payment records never imply delivery. Test carrier success appears as Registered=10 and delivery=20; existing rows are backfilled by UnifiedOrderStatuses.
 
-Payment amount: paidAmount sums only verified successful OrderPayments.VerifiedAmount, independently of finalAmount. Pending/unverified rows and requested Amount are excluded. It reports Logiwall verification, not carrier settlement. Coverage: OrderListTests.Paid_amount_counts_only_successful_verified_payments.
+Paid amount: the service sums only verified successful OrderPayments.VerifiedAmount to compute paymentStatus. The sum is not in the response. Pending/unverified rows and requested Amount are excluded. Coverage: OrderListTests.Payment_status_counts_only_successful_verified_payments.
 
 paymentStatus/paymentStatusName are separate from overall order status. Verified sufficient funds => Paid; insufficient verified funds => PartiallyPaid; pending/unverified success and unconfirmed carrier settlement => Unpaid; otherwise failed/unpaid.
 
-Verify serviceProviderTitle matches the selected provider's persisted Title; no selected provider returns null.
+Verify serviceProviderName matches the selected provider's persisted Title; no selected provider returns null.

@@ -39,12 +39,16 @@ public class ShipmentTests(SqlServerFixture fixture)
     [Fact]
     public async Task Successful_registration_updates_the_order_list_and_preserves_payment_history()
     {
-        var (client, id, _) = await ArrangeAsync();
+        var (client, id, snapshot) = await ArrangeAsync();
+        var before = await ApiClient.ReadJsonAsync(await client.PostAsJsonAsync("api/Order/GetOrders", new { }));
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, before.GetProperty("data").GetProperty("result").EnumerateArray()
+            .Single(o => o.GetProperty("id").GetInt32() == id).GetProperty("serviceProviderTrackingCode").ValueKind);
         (await client.PostAsJsonAsync("api/Shipment/Register", new { orderId = id })).EnsureSuccessStatusCode();
         var list = await ApiClient.ReadJsonAsync(await client.PostAsJsonAsync("api/Order/GetOrders", new { }));
         var order = list.GetProperty("data").GetProperty("result").EnumerateArray().Single(o => o.GetProperty("id").GetInt32() == id);
         Assert.Equal((short)OrderStatusCode.Registered, order.GetProperty("status").GetInt16());
         Assert.Equal("ثبت شده", order.GetProperty("statusName").GetString());
+        Assert.Equal("barcode-" + snapshot, order.GetProperty("serviceProviderTrackingCode").GetString());
         Assert.Equal(1, await fixture.WithDbAsync(db => db.OrderPayments.CountAsync(p => p.OrderId == id && p.Status == PaymentStatus.Success)));
     }
 

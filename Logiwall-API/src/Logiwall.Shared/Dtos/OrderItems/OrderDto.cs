@@ -1,114 +1,64 @@
 ﻿namespace Logiwall.Shared.Dtos.OrderItems;
+
+/// <summary>One row of <c>GetOrders</c>. It has only the fields the front's order card and details dialog read.</summary>
 public record OrderDto
 {
     public int Id { get; set; }
-
-    public short ChannelId { get; set; }
 
     public short Status { get; set; }
 
     public string? StatusName { get; set; }
 
-    [Required, MaxLength(100)]
     public string SenderName { get; set; } = default!;
 
-    [Required, MaxLength(100)]
     public string SenderLastName { get; set; } = default!;
 
-    [Required, MaxLength(15)]
     public string SenderPhoneNumber { get; set; } = default!;
-
-    public short OriginCity { get; set; }
 
     public string? OriginCityName { get; set; }
 
-    [Required, MaxLength(100)]
-    public string OriginLat { get; set; } = default!;
-
-    [Required, MaxLength(100)]
-    public string OriginLng { get; set; } = default!;
-
-    [Required, MaxLength(500)]
     public string OriginAddress { get; set; } = default!;
 
-    [MaxLength(10)]
     public string? OriginPostalCode { get; set; }
 
-    [Required, MaxLength(50)]
     public string OriginalPlaque { get; set; } = default!;
 
-    [Required, MaxLength(50)]
     public string OriginalUnit { get; set; } = default!;
 
-    [Required, MaxLength(100)]
     public string ReceiverName { get; set; } = default!;
 
-    [Required, MaxLength(100)]
     public string ReceiverLastName { get; set; } = default!;
 
-    [Required, MaxLength(15)]
     public string ReceiverPhoneNumber { get; set; } = default!;
-
-    public short? DestinationCountry { get; set; }
-
-    public short DestinationCity { get; set; }
 
     public string? DestinationCityName { get; set; }
 
-    [Required, MaxLength(100)]
-    public string DestinationLat { get; set; } = default!;
-
-    [Required, MaxLength(100)]
-    public string DestinationLng { get; set; } = default!;
-
-    [Required, MaxLength(500)]
     public string DestinationAddress { get; set; } = default!;
 
-    [MaxLength(10)]
     public string? DestinationPostalCode { get; set; }
 
-    [Required, MaxLength(50)]
     public string DestinationPlaque { get; set; } = default!;
 
-    [Required, MaxLength(50)]
     public string DestinationUnit { get; set; } = default!;
 
-    [MaxLength(500)]
     public string? Description { get; set; }
 
-    public short ServiceType { get; set; }
-
     public short ServiceProviderId { get; set; }
-    public string? ServiceProviderTitle { get; set; }
 
-    public short ServiceSLA { get; set; }
+    public string? ServiceProviderName { get; set; }
 
-    [MaxLength(50)]
+    /// <summary>The carrier's tracking code; null until the carrier registers the shipment.</summary>
     public string? ServiceProviderTrackingCode { get; set; }
-
-    public decimal PackagingAmount { get; set; }
-
-    public decimal ServiceAmount { get; set; }
-
-    public decimal InsuranceAmount { get; set; }
-
-    public decimal Tax { get; set; }
 
     /// <summary>The chosen quote's total; 0 before an option is selected.</summary>
     public decimal FinalAmount { get; set; }
 
-    /// <summary>Verified successful payments recorded by Logiwall; not an assertion of carrier settlement.</summary>
-    public decimal PaidAmount { get; set; }
     public string PaymentStatus { get; set; } = nameof(OrderPaymentState.Unpaid);
     public string? PaymentStatusName { get; set; }
-
-    public short PickupServiceId { get; set; }
 
     public DateTimeOffset CreationDate { get; set; } = DateTimeOffset.Now;
 
     public DateTimeOffset? ModificationDate { get; set; }
 
     public DateTimeOffset? PickupDateTime { get; set; }
-
-    public int CustomerId { get; set; }
 }
