@@ -701,6 +701,7 @@ Please confirm your email by clicking on the link.</value>
   <data name="ShippingServiceCatalogMissing" xml:space="preserve"><value>Carrier service references are not configured.</value></data>
   <data name="ShippingPaymentOnline" xml:space="preserve"><value>Online payment</value></data>
   <data name="ShippingServiceSelectionRequired" xml:space="preserve"><value>Select a valid active carrier service before requesting a price.</value></data>
+  <data name="ShippingServiceParcelTypeUnsupported" xml:space="preserve"><value>The selected service does not accept this parcel type. Select another service.</value></data>
   <data name="ShippingPaymentAgencyCredit" xml:space="preserve"><value>Sender - agency credit</value></data>
   <data name="ShippingPaymentSenderCash" xml:space="preserve"><value>Sender - cash</value></data>
   <data name="ShippingPaymentSettlementUnavailable" xml:space="preserve"><value>Settlement for the selected payment method is not enabled.</value></data>

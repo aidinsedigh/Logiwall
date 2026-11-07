@@ -152,3 +152,14 @@ Architecture decision: ADR 0006. Implementation is reviewable; rollout and live 
 - Removed the GetAsync status-59 fallback: RegisterAsync always stores the initial status, and UnifiedOrderStatuses backfills older rows.
 - ServerExceptionHandler builds its error JSON options once.
 - Results: 54 unit tests passed; 139 SQL integration tests passed; one existing placeholder skipped.
+
+2026-11-07 eTipax "segment not found" pricing fix:
+- Cause: eTipax services 12 (همان روز) and 15 (اکسپرس هوایی) reject pack types 60 and 70; LTL (10) rejected every pack type on the test account. The customer picked one service before any price, so a valid parcel could get "نوع سگمنت ... یافت نشد". Checked with direct read-only pricing calls to the eTipax test API.
+- GetOptions without serviceReferenceId now prices every active service (first call caches the token, the rest run in parallel). It returns only the services that price, cheapest first, each with its own serviceTitle. Carrier rejections are logged and skipped.
+- With serviceReferenceId the old single-service path stays; the eTipax "segment" text becomes ShippingServiceParcelTypeUnsupported.
+- Migration DisableETipaxLtlService deactivates LTL (10). Front (Logiwall-Frontend) drops the service picker: choosing the payment method asks for prices of all services.
+- Results: 53 of 57 unit tests passed (the 4 layer tests fail only when built outside the repo with --artifacts-path); 156 SQL integration tests passed, 1 existing skip; 19 front create-order tests passed; TypeScript clean.
+
+2026-11-07 quote price rounding (user choice: up to 1,000 rials):
+- eTipax finalPrice has rial fractions (test API: 10395953.649). CarrierQuoteService rounds each price up to the next 1,000 rials before it stores ServiceAmount/FinalAmount, so the front, the order list and the online payment use the same amount. No front change: StepEight already shows totalAmount.
+- Added 3 integration cases (FakeShippingCarrier.QuoteAmounts). Results: 159 SQL integration tests passed, 1 existing skip.

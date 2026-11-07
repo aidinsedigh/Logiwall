@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
@@ -10,7 +10,7 @@ using Microsoft.Extensions.Options;
 namespace Logiwall.Infrastructure.Providers.PostalServices;
 
 public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> settings,
-    Microsoft.Extensions.Localization.IStringLocalizer<Logiwall.Shared.Resources.AppStrings> localizer,
+    IStringLocalizer<AppStrings> localizer,
     ProviderTokenCache tokens) : IShippingCarrier
 {
     public string Code => "etipax";
@@ -50,7 +50,7 @@ public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> s
 
     private void ForgetTokenOnUnauthorized(HttpResponseMessage response)
     {
-        if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized) tokens.Invalidate(TokenKey);
+        if (response.StatusCode == HttpStatusCode.Unauthorized) tokens.Invalidate(TokenKey);
     }
 
     private async Task<(string? Token, TimeSpan Lifetime)> RequestTokenAsync(CancellationToken ct)
@@ -121,8 +121,11 @@ public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> s
         ForgetTokenOnUnauthorized(response);
         if (!response.IsSuccessStatusCode)
         {
-            throw new CarrierRequestException(CarrierErrorMessage.Parse(await response.Content.ReadAsStringAsync(cancellationToken),
-                localizer["ShippingCarrierValidationFailed"]), CarrierStatus((int)response.StatusCode));
+            var message = CarrierErrorMessage.Parse(await response.Content.ReadAsStringAsync(cancellationToken),
+                localizer["ShippingCarrierValidationFailed"]);
+            // shortcut: eTipax sends no error code; its "سگمنت" (segment) text means the service does not accept the pack type. Match a code when eTipax adds one.
+            if (message.Contains("سگمنت", StringComparison.Ordinal)) message = localizer["ShippingServiceParcelTypeUnsupported"];
+            throw new CarrierRequestException(message, CarrierStatus((int)response.StatusCode));
         }
         response.EnsureSuccessStatusCode();
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));

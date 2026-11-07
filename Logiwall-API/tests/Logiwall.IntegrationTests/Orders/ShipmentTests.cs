@@ -353,7 +353,7 @@ public class ShipmentTests(SqlServerFixture fixture)
         Assert.Equal(new[] { 71, 72, 73, 75, 77 }, methods.GetProperty("data").EnumerateArray().Select(x => x.GetProperty("id").GetInt32()));
         var (client, _, _) = await ArrangeAsync();
         var services = await ApiClient.ReadJsonAsync(await client.GetAsync("api/Shipment/Services?providerCode=tipax"));
-        Assert.Equal(new[] { 4, 10, 12, 13, 14, 15 }, services.GetProperty("data").EnumerateArray()
+        Assert.Equal(new[] { 4, 12, 13, 14, 15 }, services.GetProperty("data").EnumerateArray()
             .Select(x => int.Parse(x.GetProperty("externalCode").GetString()!)).Order());
     }
 
@@ -386,8 +386,8 @@ public class ShipmentTests(SqlServerFixture fixture)
         Assert.Equal(0, await fixture.WithDbAsync(db => db.OrderPayments.CountAsync(p => p.OrderId == id)));
     }
 
+    // A missing service means "quote every active service" (OrderQuoteFlowTests); an unknown one is rejected.
     [Theory]
-    [InlineData(null)]
     [InlineData(999999)]
     public async Task Pricing_requires_a_selected_active_service(int? serviceId)
     {

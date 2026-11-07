@@ -68,14 +68,68 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
     }
 
     [Fact]
-    public async Task GetOptions_without_a_service_is_rejected()
+    public async Task GetOptions_without_a_service_quotes_every_active_service_and_skips_rejected_ones()
     {
         var (client, orderId) = await ArrangeAsync();
+        var carrier = fixture.Factory.Services.GetRequiredService<FakeShippingCarrier>();
+        var trace = "logiwall-" + await fixture.WithDbAsync(db => db.Orders.Where(o => o.Id == orderId).Select(o => o.OrderNumber).SingleAsync());
+        carrier.RejectedServices[12] = 0;
+        try
+        {
+            var response = await client.GetAsync($"api/Order/GetOptions?orderId={orderId}&paymentType={(int)Constants.PaymentMethod.CashOnDelivery}");
 
-        var response = await client.GetAsync($"api/Order/GetOptions?orderId={orderId}");
+            response.EnsureSuccessStatusCode();
+            Assert.Equal(new[] { 4, 12, 13, 14, 15 }, carrier.QuoteRequests.Where(r => r.TraceCode == trace).Select(r => r.ServiceId).Order());
+            var options = Assert.Single((await ApiClient.ReadJsonAsync(response)).GetProperty("data").EnumerateArray())
+                .GetProperty("orderOptions").EnumerateArray().ToList();
+            Assert.Equal(4, options.Count);
+            Assert.All(options, o => Assert.False(string.IsNullOrEmpty(o.GetProperty("serviceTitle").GetString())));
+            Assert.Equal(4, options.Select(o => o.GetProperty("serviceTitle").GetString()).Distinct().Count());
+            Assert.Equal(4, await OptionCountAsync(orderId));
+        }
+        finally
+        {
+            carrier.RejectedServices.TryRemove(12, out _);
+        }
+    }
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Equal(0, await OptionCountAsync(orderId));
+    [Theory]
+    [InlineData("10395953.649", "10396000")]
+    [InlineData("13854062.549", "13855000")]
+    [InlineData("10396000", "10396000")]
+    public async Task GetOptions_rounds_the_carrier_price_up_to_1000_rials(string carrierPriceText, string expectedText)
+    {
+        var carrierPrice = decimal.Parse(carrierPriceText, System.Globalization.CultureInfo.InvariantCulture);
+        var expected = decimal.Parse(expectedText, System.Globalization.CultureInfo.InvariantCulture);
+        var (client, orderId) = await ArrangeAsync();
+        var carrier = fixture.Factory.Services.GetRequiredService<FakeShippingCarrier>();
+        carrier.QuoteAmounts["logiwall-" + await fixture.WithDbAsync(db => db.Orders.Where(o => o.Id == orderId).Select(o => o.OrderNumber).SingleAsync())] = carrierPrice;
+
+        var option = (await ApiClient.ReadJsonAsync(await OrderTestData.GetOptionsAsync(fixture, client, orderId))).GetProperty("data")[0].GetProperty("orderOptions")[0];
+
+        Assert.Equal(expected, option.GetProperty("totalAmount").GetDecimal());
+        Assert.Equal(expected, option.GetProperty("baseAmount").GetDecimal());
+        Assert.Equal(expected, await fixture.WithDbAsync(db => db.OrderInqueryOptions.Where(o => o.OrderId == orderId).Select(o => o.FinalAmount).SingleAsync()));
+    }
+
+    [Fact]
+    public async Task GetOptions_for_a_rejected_selected_service_returns_the_carrier_message()
+    {
+        var (client, orderId) = await ArrangeAsync();
+        var carrier = fixture.Factory.Services.GetRequiredService<FakeShippingCarrier>();
+        carrier.RejectedServices[4] = 0;
+        try
+        {
+            var response = await OrderTestData.GetOptionsAsync(fixture, client, orderId);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal("Service does not accept this pack type.", (await ApiClient.ReadJsonAsync(response)).GetProperty("message").GetString());
+            Assert.Equal(0, await OptionCountAsync(orderId));
+        }
+        finally
+        {
+            carrier.RejectedServices.TryRemove(4, out _);
+        }
     }
 
     [Fact]

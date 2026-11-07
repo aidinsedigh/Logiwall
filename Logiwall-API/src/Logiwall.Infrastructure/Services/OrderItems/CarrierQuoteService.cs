@@ -25,34 +25,33 @@ public class CarrierQuoteService(AppDbContext db, IEnumerable<IShippingCarrier> 
         if (order is null) throw new ResourceNotFoundException(nameof(AppStrings.InvalidOrder));
         if (await OrderDraftWorkflow.IsLockedAsync(db, orderId, ct))
             throw new ConflictException("ShippingOrderLocked");
-        var selectedService = await db.ProviderReferenceItems.AsNoTracking().SingleOrDefaultAsync(r => r.Id == serviceReferenceId
-            && r.Category == "service" && r.IsActive && r.ServiceProvider.IsActive, ct)
-            ?? throw new BadRequestException("ShippingServiceSelectionRequired");
-        var providers = await db.ServiceProviders.AsNoTracking().Where(p => p.IsActive && p.Code != null
-            && p.Id == selectedService.ServiceProviderId).ToListAsync(ct);
+        // No service given: quote every active service and offer only the ones the carrier accepts for this parcel.
+        var quoteAll = serviceReferenceId is null;
+        var services = await db.ProviderReferenceItems.AsNoTracking().Include(r => r.ServiceProvider)
+            .Where(r => r.Category == "service" && r.IsActive && r.ServiceProvider.IsActive && r.ServiceProvider.Code != null
+                && (quoteAll || r.Id == serviceReferenceId)).ToListAsync(ct);
+        if (services.Count == 0)
+            throw new BadRequestException(quoteAll ? "ShippingServiceCatalogMissing" : "ShippingServiceSelectionRequired");
         var newQuotes = new List<OrderInqueryOption>();
-        foreach (var provider in providers)
+        var serviceTitles = new Dictionary<(short, int), string>();
+        foreach (var group in services.GroupBy(s => s.ServiceProviderId))
         {
+            var provider = group.First().ServiceProvider;
             var carrier = carriers.SingleOrDefault(x => x.Code == provider.Code);
             if (carrier is null) continue;
             var request = await BuildAsync(order, provider, ct);
-            request = request with { PaymentType = (int)paymentMethod,
-                ServiceId = int.Parse(selectedService.ExternalCode, CultureInfo.InvariantCulture) };
-            try
-            {
-                foreach (var quote in await carrier.QuoteAsync(request, ct))
-                {
-                    if (quote.ServiceId != request.ServiceId) throw new JsonException("Carrier returned a different service.");
-                    newQuotes.Add(new OrderInqueryOption { OrderId = orderId, ServiceProviderId = provider.Id,
-                        ServiceAmount = quote.AmountRials, FinalAmount = quote.AmountRials,
-                        CarrierRequestJson = quote.RequestJson, ExternalServiceId = quote.ServiceId,
-                        PaymentMethod = paymentMethod,
-                        ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15), DelivereDate = string.Empty });
-                }
-            }
-            catch (Exception e) when (e is HttpRequestException or JsonException or InvalidOperationException
-                || e is OperationCanceledException && !ct.IsCancellationRequested)
-            { logger.LogWarning(e, "[CarrierQuote][Get][{OrderId}][{ProviderCode}] Carrier quotation failed.", orderId, provider.Code); }
+            var requests = group.Select(s => request with { PaymentType = (int)paymentMethod,
+                ServiceId = int.Parse(s.ExternalCode, CultureInfo.InvariantCulture) }).ToList();
+            foreach (var s in group) serviceTitles[(provider.Id, int.Parse(s.ExternalCode, CultureInfo.InvariantCulture))] = s.Title;
+            // The first call caches the carrier token, so the parallel calls after it do not each log in.
+            var first = await TryQuoteAsync(carrier, requests[0], rethrowRejection: !quoteAll, orderId, ct);
+            var rest = await Task.WhenAll(requests.Skip(1).Select(r => TryQuoteAsync(carrier, r, rethrowRejection: !quoteAll, orderId, ct)));
+            foreach (var quote in rest.Prepend(first).SelectMany(q => q))
+                newQuotes.Add(new OrderInqueryOption { OrderId = orderId, ServiceProviderId = provider.Id,
+                    ServiceAmount = RoundUpPrice(quote.AmountRials), FinalAmount = RoundUpPrice(quote.AmountRials),
+                    CarrierRequestJson = quote.RequestJson, ExternalServiceId = quote.ServiceId,
+                    PaymentMethod = paymentMethod,
+                    ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15), DelivereDate = string.Empty });
         }
         if (newQuotes.Count == 0)
             return new() { Succuss = false, Message = localizer[nameof(AppStrings.ProviderServiceUnavailable)] };
@@ -67,12 +66,34 @@ public class CarrierQuoteService(AppDbContext db, IEnumerable<IShippingCarrier> 
         db.OrderInqueryOptions.AddRange(newQuotes);
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
-        var titles = providers.ToDictionary(x => x.Id, x => x.Title);
+        var titles = services.Select(s => s.ServiceProvider).DistinctBy(p => p.Id).ToDictionary(x => x.Id, x => x.Title);
         return new() { Succuss = true, Data = newQuotes.GroupBy(x => x.ServiceProviderId)
-            .Select(g => new OrderProviderOptionsDto(g.Key, titles[g.Key], g.Select(q => new OrderInqueryOptionsDto
+            .Select(g => new OrderProviderOptionsDto(g.Key, titles[g.Key], g.OrderBy(q => q.FinalAmount).Select(q => new OrderInqueryOptionsDto
             { Id = q.Id, BaseAmount = q.ServiceAmount, TotalAmount = q.FinalAmount, DelivereDate = q.DelivereDate,
-                PaymentType = q.PaymentMethod, ServiceTitle = selectedService.Title
+                PaymentType = q.PaymentMethod, ServiceTitle = serviceTitles[(q.ServiceProviderId, q.ExternalServiceId!.Value)]
             }).ToList())).ToList() };
+    }
+
+    /// <summary>Rounds a carrier price up to the next 1,000 rials, so the customer never pays less than the carrier asks.</summary>
+    private static decimal RoundUpPrice(decimal rials) => Math.Ceiling(rials / 1000m) * 1000m;
+
+    /// <summary>Returns the carrier's quotes, or none when the carrier fails or (unless <paramref name="rethrowRejection"/>) rejects the request.</summary>
+    private async Task<IReadOnlyList<CarrierQuote>> TryQuoteAsync(IShippingCarrier carrier, CarrierShipmentRequest request,
+        bool rethrowRejection, int orderId, CancellationToken ct)
+    {
+        try
+        {
+            var quotes = await carrier.QuoteAsync(request, ct);
+            if (quotes.Any(q => q.ServiceId != request.ServiceId)) throw new JsonException("Carrier returned a different service.");
+            return quotes;
+        }
+        catch (Exception e) when (e is HttpRequestException or JsonException or InvalidOperationException
+            || e is CarrierRequestException && !rethrowRejection
+            || e is OperationCanceledException && !ct.IsCancellationRequested)
+        {
+            logger.LogWarning(e, "[CarrierQuote][Get][{OrderId}][{ProviderCode}][{ServiceId}] Carrier quotation failed.", orderId, carrier.Code, request.ServiceId);
+            return [];
+        }
     }
 
     private async Task<CarrierShipmentRequest> BuildAsync(Order order, ServiceProvider provider, CancellationToken ct)

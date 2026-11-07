@@ -250,3 +250,18 @@ public class ETipaxCarrierTests
     }
 }
 
+
+    [Fact]
+    public async Task Pricing_segment_rejection_becomes_the_unsupported_parcel_type_message()
+    {
+        var carrier = Create((request, _) => Task.FromResult(request.RequestUri!.AbsolutePath.EndsWith("token")
+            ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"accessToken\":\"test-token\"}") }
+            : new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = new StringContent("{\"message\":\"نوع سگمنت برای یک یا تعدادی از مرسوله ها یافت نشد.\",\"status\":400}") }));
+        var address = new CarrierAddress("1", "address", 35, 51, "1", null, "name", "09123456789");
+        var request = new CarrierShipmentRequest("test", [new(1, address, address, 2, 1000, 10, 10, 10, "521", "30", 60, 0)], 12, 72, 0, 0);
+
+        var error = await Assert.ThrowsAsync<Logiwall.Shared.Exceptions.CarrierRequestException>(() => carrier.QuoteAsync(request, CancellationToken.None));
+
+        Assert.Equal(HttpStatusCode.BadRequest, error.StatusCode);
+        Assert.Equal(Logiwall.Shared.Resources.AppStrings.ResourceManager.GetString("ShippingServiceParcelTypeUnsupported"), error.Message);
+    }

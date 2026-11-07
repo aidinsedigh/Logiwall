@@ -13,17 +13,23 @@ public class FakeShippingCarrier : IShippingCarrier
     private readonly ConcurrentDictionary<string, Logiwall.Shared.Enums.Constants.PaymentMethod> quotedMethods = new();
     /// <summary>While set, quotes fail the way an unreachable carrier does.</summary>
     public volatile bool FailQuotes;
+    /// <summary>Carrier service codes the fake rejects the way eTipax rejects an unsupported pack type.</summary>
+    public ConcurrentDictionary<int, byte> RejectedServices { get; } = new();
+    /// <summary>The price the fake quotes for a trace code; 1000 rials when absent.</summary>
+    public ConcurrentDictionary<string, decimal> QuoteAmounts { get; } = new();
     public async Task<IReadOnlyList<CarrierQuote>> QuoteAsync(CarrierShipmentRequest request, CancellationToken ct)
     {
         if (FailQuotes) throw new HttpRequestException("Fake carrier is down.");
         QuoteRequests.Add(request);
+        if (RejectedServices.ContainsKey(request.ServiceId))
+            throw new Logiwall.Shared.Exceptions.CarrierRequestException("Service does not accept this pack type.", 400);
         if (QuoteGates.TryGetValue(request.TraceCode, out var gate))
         {
             gate.Started.TrySetResult();
             await gate.Continue.Task.WaitAsync(ct);
         }
         quotedMethods[request.TraceCode] = (Logiwall.Shared.Enums.Constants.PaymentMethod)request.PaymentType;
-        return [new(request.ServiceId, 1000, SerializeRegistration(request))];
+        return [new(request.ServiceId, QuoteAmounts.GetValueOrDefault(request.TraceCode, 1000), SerializeRegistration(request))];
     }
     public string SerializeRegistration(CarrierShipmentRequest request) => request.TraceCode;
     public bool MatchesPaymentMethod(string requestJson, Logiwall.Shared.Enums.Constants.PaymentMethod paymentMethod)
