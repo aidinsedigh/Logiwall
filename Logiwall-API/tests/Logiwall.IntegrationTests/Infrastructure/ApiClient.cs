@@ -40,11 +40,20 @@ public class ApiClient(LogiwallApiFactory factory, FakeSmsService sms)
             name = "Test",
             lastName = "User",
             // PersonalInfos.NationalCode has a unique index, so every registration needs its own.
-            nationalCode = RandomNumberGenerator.GetInt32(0, 1_000_000_000).ToString("D10"),
+            nationalCode = NewNationalCode(),
             password,
             confirmPassword = password
         });
         response.EnsureSuccessStatusCode();
+    }
+
+    /// <summary>A random national code with a valid check digit (the API checks it, see NationalCodeAttribute).</summary>
+    public static string NewNationalCode()
+    {
+        var body = RandomNumberGenerator.GetInt32(1, 1_000_000_000).ToString("D9");
+        var remainder = body.Select((c, i) => (c - '0') * (10 - i)).Sum() % 11;
+        var code = body + (remainder < 2 ? remainder : 11 - remainder);
+        return code.Distinct().Count() == 1 ? NewNationalCode() : code;
     }
 
     /// <summary>A random phone number, so tests never collide in the shared database.</summary>

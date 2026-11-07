@@ -23,8 +23,10 @@ the React profile form sends: `{ firstName, lastName, nationalCode, email, gende
 | # | Steps | Expected |
 |---|---|---|
 | N1 | Send a `phoneNumber` that is not the user's. | 200. The phone number does not change. |
-| N2 | Send an invalid e-mail. | 400, e-mail validation message |
+| N2 | Send an invalid e-mail (`a@b`, no dot in the domain). | 400, field error `email` |
 | N3 | Send no `nationalCode`. | 400 validation error (`[Required]`) |
+| N3b | Send `nationalCode` `1234567890` (wrong check digit). | 400, field error `nationalCode`, `InvalidNationalCode` |
+| N3c | Send no `firstName` or `lastName`. | 400 validation error (`[Required]`) |
 | N4 | Call before `Register`. | 400 `UserIsNotRegistered` |
 
 ## Edge cases
@@ -38,7 +40,10 @@ the React profile form sends: `{ firstName, lastName, nationalCode, email, gende
 
 ## Validation
 
-`UserProfileDto`: `nationalCode` `[Required, StringLength(11)]`.
+`UserProfileDto`: `firstName`, `lastName` `[Required, MaxLength(100)]`; `email` must have a dot in the
+domain (Identity alone accepts `a@b`); `nationalCode` `[Required, StringLength(11), NationalCode]`.
+`NationalCodeAttribute` checks the check digit of a 10-digit code and accepts an 11-digit legal-entity ID
+as digits only. Added 2026-11-07 (front E2E report).
 
 ## Concurrency and idempotency
 
@@ -52,4 +57,5 @@ Database error: 400 `UnknownException`, and the service logs the exception.
 
 The front shows its own success toast and reloads `user-profile-info`.
 
-Automated tests: `ProfileTests.UpdateUserProfile_with_the_front_body_keeps_phone_and_kind`.
+Automated tests: `ProfileTests.UpdateUserProfile_with_the_front_body_keeps_phone_and_kind`,
+`ProfileTests.UpdateUserProfile_rejects_an_invalid_national_code_or_email`, `NationalCodeAttributeTests`.

@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Security.Cryptography;
 using Logiwall.IntegrationTests.Infrastructure;
 using Logiwall.Shared.Resources;
 using Microsoft.EntityFrameworkCore;
@@ -31,7 +30,25 @@ public class ProfileTests(SqlServerFixture fixture)
         return (api, client, phone);
     }
 
-    private static string NewNationalCode() => RandomNumberGenerator.GetInt32(0, 1_000_000_000).ToString("D10");
+    private static string NewNationalCode() => ApiClient.NewNationalCode();
+
+    // E2E 2026-11-07: the profile form saved a national code with a wrong check digit and the email "a@b".
+    [Theory]
+    [InlineData("1234567890", "a@example.test", "nationalCode")]
+    [InlineData(null, "a@b", "email")]
+    public async Task UpdateUserProfile_rejects_an_invalid_national_code_or_email(string? nationalCode, string email, string field)
+    {
+        var (_, client, _) = await RegisteredAsync();
+
+        var response = await client.PostAsJsonAsync("api/Person/UpdateUserProfile",
+            new { firstName = "New", lastName = "Name", nationalCode = nationalCode ?? NewNationalCode(), email, gender = 3 });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var body = await ApiClient.ReadJsonAsync(response);
+        PersianAssert.AllMessagesArePersian(body);
+        Assert.Contains(body.GetProperty("payload").GetProperty("details").EnumerateArray(),
+            d => string.Equals(d.GetProperty("name").GetString(), field, StringComparison.OrdinalIgnoreCase));
+    }
 
     [Fact]
     public async Task ConfirmationOtpCode_returns_the_fields_the_front_reads()

@@ -324,6 +324,7 @@ public class ETipaxCarrierTests
     [InlineData("{\"message\":\"نوع سگمنت برای یک یا تعدادی از مرسوله ها یافت نشد.\",\"status\":400}", "ShippingServiceParcelTypeUnsupported")]
     [InlineData("\"نوع سگمنت برای یک یا تعدادی از مرسوله ها یافت نشد.\"", "ShippingServiceParcelTypeUnsupported")]
     [InlineData("\"ارزش مرسوله با بارکد  در بازه ی تعریف شده برای سگمنت بسته نمیگنجد.\"", "ShippingParcelValueTooHigh")]
+    [InlineData("\"ارتفاع مرسوله با بارکد  بیش از مقدار مجاز است.\"", "ShippingParcelDimensionTooLarge")]
     public async Task Pricing_segment_rejection_becomes_a_clear_message(string body, string key)
     {
         var carrier = Create((request, _) => Task.FromResult(request.RequestUri!.AbsolutePath.EndsWith("token")

@@ -544,7 +544,7 @@ Body ندارد. بدون `serviceReferenceId`، بک‌اند **همهٔ سرو
 مثلاً سرویس‌های «همان روز» و «اکسپرس هوایی» نوع بسته‌بندی 60 را نمی‌پذیرند و در پاسخ نیستند.
 اگر هیچ سرویسی قیمت ندهد، خطای 400 با پرتکرارترین دلیل ردِ تیپاکس برمی‌گردد. اگر تیپاکس پاسخ ندهد، پیام `ProviderServiceUnavailable` است.
 با `serviceReferenceId`، ردِ تیپاکس با پیام خودش برمی‌گردد.
-پیام‌های مبهم تیپاکس به پیام روشن تبدیل می‌شوند: ردِ «نوع سگمنت» به `ShippingServiceParcelTypeUnsupported`، سقف ارزش به `ShippingParcelValueTooHigh`.
+پیام‌های مبهم تیپاکس به پیام روشن تبدیل می‌شوند: ردِ «نوع سگمنت» به `ShippingServiceParcelTypeUnsupported`، سقف ارزش به `ShippingParcelValueTooHigh`، سقف ابعاد (طول/عرض/ارتفاع) به `ShippingParcelDimensionTooLarge`.
 
 **محدودیت‌هایی که پیش از تماس با تیپاکس بررسی می‌شوند** (خطای 400 فیلدی با `orderParcels[i]`):
 

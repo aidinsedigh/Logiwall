@@ -4,10 +4,12 @@ The active carrier path requires an owned order and a supported shared paymentTy
 * Without `serviceReferenceId`: price every active service of every active provider. Return only the services the carrier accepts for this parcel, cheapest first, each with its own serviceTitle. A carrier rejection of one service (for example eTipax "segment not found": the service does not accept the pack type) is logged and skipped. If no service prices, return 400 with the most common carrier rejection message (ProviderServiceUnavailable when the carrier only failed) and keep the previous options.
 * With `serviceReferenceId`: price only that service. A missing, inactive or wrong-category ID returns 400 ShippingServiceSelectionRequired before any carrier call. A carrier rejection returns its sanitized message.
 * eTipax "نوع سگمنت" becomes ShippingServiceParcelTypeUnsupported; its "ارزش ... سگمنت" value ceiling becomes ShippingParcelValueTooHigh.
+* eTipax "ارتفاع/طول/عرض مرسوله با بارکد  بیش از مقدار مجاز است." becomes ShippingParcelDimensionTooLarge (the carrier text has an empty barcode slot).
 
 ## Parcel limits checked before the carrier call
 
 Checked on the eTipax test API on 2026-11-07. eTipax enforces only the weight cap. It ignores the catalogue dimensions and minimum weight, so Logiwall does not check them.
+Correction from the front E2E run the same day: services 4 and 14 rejected a height of 99,999,999,999 cm ("بیش از مقدار مجاز"). So eTipax has a dimension cap, but its value is unknown. Logiwall maps the reply (ShippingParcelDimensionTooLarge) and still has no local dimension limit.
 * Weight above the packaging's catalogue `maxWeight`: field error `orderParcels[i].weight`, key ShippingParcelOverweight, message shows the limit in kg.
 * Packaging `packType` 70 (eco-pack): field error `orderParcels[i].packagingReferenceId`, key ShippingEcoPackPickupUnsupported. eTipax refuses customer pickup for eco-pack; Logiwall always quotes with pickup (pickupType 10).
 * The value ceiling is per segment and not in the catalogue (box: 1–2 billion rials; envelope: under 1 billion). It is left to eTipax and mapped to a clear message.

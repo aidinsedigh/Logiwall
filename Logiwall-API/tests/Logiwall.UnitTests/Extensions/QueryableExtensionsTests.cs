@@ -108,6 +108,32 @@ public class QueryableExtensionsTests
         Assert.Equal(new[] { 4 }, result);
     }
 
+    // E2E 2026-11-07: the orders filter sent {"propertyName":"id","value":null} and GetOrders returned 500.
+    [Fact]
+    public void Null_value_on_a_non_nullable_property_is_ignored()
+    {
+        var result = Places().ApplyFilters(One("city", null), Allowed).ToList();
+
+        Assert.Equal(150, result.Count);
+    }
+
+    [Fact]
+    public void Null_value_on_a_nullable_property_matches_nulls()
+    {
+        var result = Places().ApplyFilters(One("maybe", null), Allowed).ToList();
+
+        Assert.Equal(75, result.Count);
+        Assert.All(result, p => Assert.Null(p.Maybe));
+    }
+
+    [Fact]
+    public void Text_value_on_a_number_property_is_ignored()
+    {
+        var result = Places().ApplyFilters(One("city", "abc"), Allowed).ToList();
+
+        Assert.Equal(150, result.Count);
+    }
+
     [Fact]
     public void Page_size_is_capped_at_100()
     {

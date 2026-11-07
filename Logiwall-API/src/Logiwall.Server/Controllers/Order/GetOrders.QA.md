@@ -37,6 +37,7 @@ Response `data`: `{ totalCount, result[] }`. Each order has the `OrderDto` field
 | N1 | No token | 401 |
 | N2 | A user who has not registered | 400 `CustomerNotFound` |
 | N3 | A filter on a property that is not in the allow list | 200. The service skips that condition (`QueryableExtensions.ApplyFilters`). |
+| N4 | A filter value that does not convert: `{"propertyName":"id","value":null}` or `"abc"` | 200. The service skips that condition. Before 2026-11-07, `null` on a number property returned 500 (E2E: the front sent `null` for the order number `۷`). |
 
 ## Edge cases
 
@@ -63,7 +64,8 @@ Database down: 500 with the standard error body.
 
 The front asks for `pageSize: 3` and computes `Math.ceil(totalCount / 3)` pages.
 
-Automated tests: `OrderListTests`, `OrderQuoteFlowTests.Order_list_shows_the_order_state`.
+Automated tests: `OrderListTests`, `OrderQuoteFlowTests.Order_list_shows_the_order_state`,
+`QueryableExtensionsTests` (null and text values).
 
 
 Unified statuses: status/statusName now use Orders.OverallStatus, not the legacy payment/selection State. status/state filters refer to OverallStatus. Carrier registration success, cancellation and mapped webhooks update this persisted general status; payment records never imply delivery. Test carrier success appears as Registered=10 and delivery=20; existing rows are backfilled by UnifiedOrderStatuses.

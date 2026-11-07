@@ -179,3 +179,11 @@ Architecture decision: ADR 0006. Implementation is reviewable; rollout and live 
 - ETipaxCarrier maps the value-ceiling reply to ShippingParcelValueTooHigh; before, it became the wrong ShippingServiceParcelTypeUnsupported text.
 - GetOptions without a service returns the most common carrier rejection when every service rejects, instead of ProviderServiceUnavailable.
 - Results: 67 unit tests passed; 169 SQL integration tests passed, 1 existing skip.
+
+2026-11-07 front E2E run, backend fixes (report: ../../../../e2e-reports/2026-11-07-front-e2e-report.md):
+- GetOrders returned 500 when the front sent `{"propertyName":"id","value":null}` (order number typed as text or Persian digits). `QueryableExtensions.TryConvert` now treats null as "does not convert" for a non-nullable value type, so the condition is skipped, as the method's contract says.
+- eTipax rejects an extreme dimension with "ارتفاع مرسوله با بارکد  بیش از مقدار مجاز است." (empty barcode slot). ETipaxCarrier maps it to ShippingParcelDimensionTooLarge. Correction to the 2026-11-07 limits entry: eTipax does have a dimension cap (99,999,999,999 cm rejected by services 4 and 14); its value is unknown, so no local limit was added.
+- UpdateUserProfile accepted national code 1234567890 and e-mail `a@b`. New NationalCodeAttribute (10-digit check digit; 11 digits = legal entity, digits only) on UserProfileDto and RegisterPersonRequestDto; profile e-mail needs a dot in the domain; first and last name are required. Test helpers now generate valid national codes (ApiClient.NewNationalCode).
+- Open risk (user decision 2026-11-07: record, do not fix now): logout is client-only. The API never checks the token's security stamp (AppSecureJwtDataFormat checks signature and expiry only), so a token stays valid for BearerTokenExpiration (1 day) after logout. A fix needs a sign-out endpoint that rotates the stamp plus a per-request stamp check.
+- Not code: SEP stage returns 401 on api-stage.724.ir Payment/token with the configured credentials (identity token is 200). Check the stage credentials.
+- Results: 82 unit tests passed; 171 SQL integration tests passed, 1 existing skip.

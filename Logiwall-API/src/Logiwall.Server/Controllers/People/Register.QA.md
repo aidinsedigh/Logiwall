@@ -41,6 +41,8 @@ The user comes from the token. The phone number comes from `User.UserName`, not 
 ## Validation
 
 `RegisterPersonRequestDto`: required names and national code, password `MinLength(6)`, `Compare`.
+The national code must pass `NationalCodeAttribute` (10-digit check digit; 11 digits for a legal entity):
+`1234567890` returns 400 `InvalidNationalCode` (added 2026-11-07).
 
 ## Concurrency and idempotency
 

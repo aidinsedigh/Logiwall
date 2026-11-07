@@ -13,7 +13,7 @@ public record RegisterPersonRequestDto
     [Required]
     public string LastName { get; set; } = default!;
 
-    [Required]
+    [Required, NationalCode]
     public string NationalCode { get; set; } = default!;
 
     public string? Email { get; set; }

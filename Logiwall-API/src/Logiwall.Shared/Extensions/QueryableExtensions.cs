@@ -157,8 +157,9 @@ public static class QueryableExtensions
     private static bool TryConvert(object? value, Type memberType, out object? converted)
     {
         converted = null;
+        // Null converts only to a type that can hold it; a null for an int property skips the condition.
         if (value is null)
-            return true;
+            return !memberType.IsValueType || Nullable.GetUnderlyingType(memberType) is not null;
 
         var targetType = Nullable.GetUnderlyingType(memberType) ?? memberType;
         try

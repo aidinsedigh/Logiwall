@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Security.Cryptography;
 using Logiwall.IntegrationTests.Infrastructure;
 using Logiwall.Shared.Resources;
 
@@ -24,7 +23,7 @@ public class RegisterTests(SqlServerFixture fixture)
     public async Task Second_registration_with_the_same_national_code_is_rejected()
     {
         var api = fixture.CreateApiClient();
-        var nationalCode = RandomNumberGenerator.GetInt32(0, 1_000_000_000).ToString("D10");
+        var nationalCode = ApiClient.NewNationalCode();
         var first = api.Authed(await api.LoginWithOtpAsync(ApiClient.NewPhone()));
         var second = api.Authed(await api.LoginWithOtpAsync(ApiClient.NewPhone()));
         (await RegisterAsync(first, nationalCode)).EnsureSuccessStatusCode();

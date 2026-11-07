@@ -704,6 +704,9 @@ Please confirm your email by clicking on the link.</value>
   <data name="ShippingServiceParcelTypeUnsupported" xml:space="preserve"><value>Tipax does not accept this packaging and weight with this service. Select other packaging or another service.</value></data>
   <data name="ShippingParcelOverweight" xml:space="preserve"><value>The parcel weight is more than the {0} kg limit of the selected packaging. Select larger packaging or correct the weight.</value></data>
   <data name="ShippingParcelValueTooHigh" xml:space="preserve"><value>The declared parcel value is more than the Tipax limit for this packaging. Lower the value or select other packaging.</value></data>
+  <data name="LastName" xml:space="preserve"><value>Last name</value></data>
+  <data name="InvalidNationalCode" xml:space="preserve"><value>The national code is not valid. Enter the 10-digit code from the national card.</value></data>
+  <data name="ShippingParcelDimensionTooLarge" xml:space="preserve"><value>A parcel dimension is more than the Tipax limit. Check the length, width and height in centimeters.</value></data>
   <data name="ShippingEcoPackPickupUnsupported" xml:space="preserve"><value>Tipax eco-pack packaging cannot be collected from your address. Select other packaging.</value></data>
   <data name="ShippingPaymentAgencyCredit" xml:space="preserve"><value>Sender - agency credit</value></data>
   <data name="ShippingPaymentSenderCash" xml:space="preserve"><value>Sender - cash</value></data>

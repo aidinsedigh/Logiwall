@@ -870,7 +870,25 @@ namespace Logiwall.Shared.Resources {
                 return ResourceManager.GetString("NationalCodeIsTaken", resourceCulture);
             }
         }
-        
+
+        /// <summary>
+        ///   Looks up a localized string similar to The national code is not valid. Enter the 10-digit code from the national card..
+        /// </summary>
+        public static string InvalidNationalCode {
+            get {
+                return ResourceManager.GetString("InvalidNationalCode", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Last name.
+        /// </summary>
+        public static string LastName {
+            get {
+                return ResourceManager.GetString("LastName", resourceCulture);
+            }
+        }
+
         /// <summary>
         ///   Looks up a localized string similar to New Password.
         /// </summary>

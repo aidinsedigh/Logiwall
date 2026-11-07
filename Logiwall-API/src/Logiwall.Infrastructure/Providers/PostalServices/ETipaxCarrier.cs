@@ -125,10 +125,14 @@ public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> s
             var message = CarrierErrorMessage.Parse(await response.Content.ReadAsStringAsync(cancellationToken),
                 localizer["ShippingCarrierValidationFailed"]);
             // shortcut: eTipax sends no error code, so its text is matched. "ارزش ... سگمنت" is the per-segment value ceiling;
-            // "نوع سگمنت" means the service does not take this pack type and weight. Match a code when eTipax adds one.
+            // "نوع سگمنت" means the service does not take this pack type and weight. "<dimension> ... بیش از مقدار مجاز"
+            // is a size cap; its text has an empty barcode slot. Match a code when eTipax adds one.
             if (message.Contains("ارزش", StringComparison.Ordinal) && message.Contains("سگمنت", StringComparison.Ordinal))
                 message = localizer["ShippingParcelValueTooHigh"];
             else if (message.Contains("نوع سگمنت", StringComparison.Ordinal)) message = localizer["ShippingServiceParcelTypeUnsupported"];
+            else if (message.Contains("بیش از مقدار مجاز", StringComparison.Ordinal)
+                && (message.Contains("ارتفاع", StringComparison.Ordinal) || message.Contains("طول", StringComparison.Ordinal) || message.Contains("عرض", StringComparison.Ordinal)))
+                message = localizer["ShippingParcelDimensionTooLarge"];
             throw new CarrierRequestException(message, CarrierStatus((int)response.StatusCode));
         }
         response.EnsureSuccessStatusCode();
