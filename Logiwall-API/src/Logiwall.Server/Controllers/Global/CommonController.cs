@@ -17,14 +17,15 @@ public partial class CommonController : AppControllerBase
     [HttpGet]
     public ServiceResponse<IReadOnlyList<PaymentMethodResponseDto>> GetPaymentMethods() => new()
     {
-        Data = [new((int)Constants.PaymentMethod.Online, Localizer["ShippingPaymentOnline"]),
+        Data = new PaymentMethodResponseDto[] { new((int)Constants.PaymentMethod.Online, Localizer["ShippingPaymentOnline"]),
             new((int)Constants.PaymentMethod.CashOnDelivery, Localizer["ShippingPaymentCollect"]),
             new((int)Constants.PaymentMethod.RecipientPayOnDelivery, Localizer["ShippingPaymentRecipientOnDelivery"]),
             new((int)Constants.PaymentMethod.SenderCreditOnDelivery, Localizer["ShippingPaymentSenderCreditOnDelivery"]),
             new((int)Constants.PaymentMethod.SenderWallet, Localizer["ShippingPaymentSenderWallet"]),
             new((int)Constants.PaymentMethod.SenderWalletOnDelivery, Localizer["ShippingPaymentSenderWalletOnDelivery"]),
             new((int)Constants.PaymentMethod.SenderCash, Localizer["ShippingPaymentSenderCash"]),
-            new((int)Constants.PaymentMethod.AgencyCredit, Localizer["ShippingPaymentAgencyCredit"])],
+            new((int)Constants.PaymentMethod.AgencyCredit, Localizer["ShippingPaymentAgencyCredit"]) }
+            .Where(m => Constants.SelectablePaymentMethods.Contains((Constants.PaymentMethod)m.Id)).ToArray(),
         Succuss = true
     };
 

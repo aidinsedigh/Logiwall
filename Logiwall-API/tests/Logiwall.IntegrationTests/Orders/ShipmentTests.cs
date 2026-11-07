@@ -350,10 +350,25 @@ public class ShipmentTests(SqlServerFixture fixture)
     {
         using var anonymous = fixture.Factory.CreateClient();
         var methods = await ApiClient.ReadJsonAsync(await anonymous.GetAsync("api/Common/GetPaymentMethods"));
-        Assert.Equal(Enumerable.Range(71, 8), methods.GetProperty("data").EnumerateArray().Select(x => x.GetProperty("id").GetInt32()));
+        Assert.Equal(new[] { 71, 72, 73, 75, 77 }, methods.GetProperty("data").EnumerateArray().Select(x => x.GetProperty("id").GetInt32()));
         var (client, _, _) = await ArrangeAsync();
         var services = await ApiClient.ReadJsonAsync(await client.GetAsync("api/Shipment/Services?providerCode=tipax"));
-        Assert.Equal(13, services.GetProperty("data").GetArrayLength());
+        Assert.Equal(new[] { 4, 10, 12, 13, 14, 15 }, services.GetProperty("data").EnumerateArray()
+            .Select(x => int.Parse(x.GetProperty("externalCode").GetString()!)).Order());
+    }
+
+    [Theory]
+    [InlineData(74)]
+    [InlineData(76)]
+    [InlineData(78)]
+    public async Task Pricing_rejects_payment_methods_disabled_at_the_carrier(int method)
+    {
+        var (_, id, _) = await ArrangeAsync(paid: false);
+        using var scope = fixture.Factory.Services.CreateScope();
+        var userId = await fixture.WithDbAsync(db => db.Orders.Where(o => o.Id == id).Select(o => o.Customer.Person.UserId).SingleAsync());
+        var error = await Assert.ThrowsAsync<Logiwall.Shared.Exceptions.BadRequestException>(() =>
+            scope.ServiceProvider.GetRequiredService<ICarrierQuoteService>().GetAsync(id, userId, CancellationToken.None, (PaymentMethod)method));
+        Assert.Equal("ShippingPaymentMethodMismatch", error.Key);
     }
 
     [Fact]

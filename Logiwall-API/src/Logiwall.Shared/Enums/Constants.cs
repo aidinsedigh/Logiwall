@@ -42,6 +42,11 @@ public class Constants
         AgencyCredit = 78,
     }
 
+    /// <summary>Methods users may pick. eTipax credit (40, 90) and wallet-on-delivery (60) are disabled.</summary>
+    public static readonly PaymentMethod[] SelectablePaymentMethods =
+        [PaymentMethod.Online, PaymentMethod.CashOnDelivery, PaymentMethod.RecipientPayOnDelivery,
+            PaymentMethod.SenderWallet, PaymentMethod.SenderCash];
+
     public enum ParcelType : short
     {
         [Description("پاکت")]

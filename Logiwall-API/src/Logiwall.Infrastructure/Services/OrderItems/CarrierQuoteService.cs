@@ -20,7 +20,7 @@ public class CarrierQuoteService(AppDbContext db, IEnumerable<IShippingCarrier> 
         Constants.PaymentMethod paymentMethod = Constants.PaymentMethod.CashOnDelivery, int? serviceReferenceId = null)
     {
         var ct = cancellationToken;
-        if (!Enum.IsDefined(paymentMethod)) throw new BadRequestException("ShippingPaymentMethodMismatch");
+        if (!Constants.SelectablePaymentMethods.Contains(paymentMethod)) throw new BadRequestException("ShippingPaymentMethodMismatch");
         var order = await db.Orders.AsNoTracking().Include(x => x.OrderParcels).SingleOrDefaultAsync(x => x.Id == orderId && x.Customer.Person.UserId == userId, ct);
         if (order is null) throw new ResourceNotFoundException(nameof(AppStrings.InvalidOrder));
         if (await OrderDraftWorkflow.IsLockedAsync(db, orderId, ct))
