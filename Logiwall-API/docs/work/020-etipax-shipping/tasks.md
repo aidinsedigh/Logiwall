@@ -170,3 +170,12 @@ Architecture decision: ADR 0006. Implementation is reviewable; rollout and live 
 - ETipaxCarrier.TrackAsync calls jet (Providers:ETipax:TrackingBaseUrl, TrackingToken). Jalali times become ISO times at +03:30. Unknown code: 404 ParcelTrackingNotFound; carrier failure: 400 ProviderServiceUnavailable.
 - Front (Logiwall-Frontend): tracking page calls the API; the jet URL and token are removed; the dialog shows sender/receiver, journey and payment. The local jet token moved to server user-secrets.
 - Results: 41 eTipax unit tests passed; 166 SQL integration tests passed, 1 existing skip; front TypeScript clean. Not checked end to end against a running server.
+
+2026-11-07 eTipax parcel limits with clear errors:
+- Cause: a 5 kg parcel in flyer 512 (maxWeight 2) got "نوع سگمنت ... یافت نشد" from every service. Read-only pricing probes on the eTipax test API (Tehran, and Tehran to Shiraz) showed:
+  - Weight caps are enforced (type 10: 2 kg; 20: about 30; 50: about 2.5; 60: about 100; 70: 1). The catalogue `maxWeight` is equal or stricter, except sacks 214-216 (catalogue 32, real 30).
+  - Dimensions and minimum weight are not enforced. Value has a per-segment ceiling that is not in the catalogue. Eco-pack (70) refuses customer pickup.
+- CarrierQuoteService rejects weight > packaging `maxWeight` (ShippingParcelOverweight, shows the limit) and pack type 70 (ShippingEcoPackPickupUnsupported) before any carrier call.
+- ETipaxCarrier maps the value-ceiling reply to ShippingParcelValueTooHigh; before, it became the wrong ShippingServiceParcelTypeUnsupported text.
+- GetOptions without a service returns the most common carrier rejection when every service rejects, instead of ProviderServiceUnavailable.
+- Results: 67 unit tests passed; 169 SQL integration tests passed, 1 existing skip.

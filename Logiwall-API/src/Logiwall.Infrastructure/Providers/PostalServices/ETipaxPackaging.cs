@@ -15,4 +15,13 @@ internal static class ETipaxPackaging
             && int.TryParse(value.ToString(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var number)
             && number > 0 ? number : null;
     }
+
+    /// <summary>The packaging's catalogue weight limit in kilograms; null when the record has none.</summary>
+    public static decimal? MaxWeight(string metadata)
+    {
+        using var json = JsonDocument.Parse(metadata);
+        return json.RootElement.TryGetProperty("maxWeight", out var value)
+            && decimal.TryParse(value.ToString(), NumberStyles.Float, CultureInfo.InvariantCulture, out var number)
+            && number > 0 ? number : null;
+    }
 }

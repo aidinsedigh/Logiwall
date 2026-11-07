@@ -206,6 +206,41 @@ public class NoPackagingTests(SqlServerFixture fixture) : IAsyncLifetime
         Assert.DoesNotContain(factory.Services.GetRequiredService<FakeShippingCarrier>().QuoteRequests, q => q.TraceCode == trace);
     }
 
+    // eTipax answers both cases with a vague "segment" reply (checked on its test API 2026-11-07), so they stop before the carrier call.
+    [Theory]
+    [InlineData(20, "ShippingParcelOverweight", "weight")]
+    [InlineData(70, "ShippingEcoPackPickupUnsupported", "packagingReferenceId")]
+    public async Task Packaging_limits_are_rejected_with_a_clear_field_error_before_carrier_call(int packType, string key, string field)
+    {
+        var (client, form, _, noneId) = await ArrangeAsync(20);
+        var (packingId, contentId) = await fixture.WithDbAsync(async db =>
+        {
+            var providerId = await db.ProviderReferenceItems.Where(r => r.Id == noneId).Select(r => r.ServiceProviderId).SingleAsync();
+            var packing = new ProviderReferenceItem { ServiceProviderId = providerId, Category = "packaging", ExternalCode = Guid.NewGuid().ToString("N"),
+                Title = "Limited packaging test", IsActive = true, MetadataJson = $"{{\"packType\":{packType},\"maxWeight\":1.5}}" };
+            var content = new ProviderReferenceItem { ServiceProviderId = providerId, Category = "content", ExternalCode = Guid.NewGuid().ToString("N"),
+                Title = "Limited content test", IsActive = true, MetadataJson = $"{{\"packType\":{packType}}}" };
+            db.ProviderReferenceItems.AddRange(packing, content);
+            await db.SaveChangesAsync(); return (packing.Id, content.Id);
+        });
+        form.OrderParcels[0].PackageTypeId = 1;
+        form.OrderParcels[0].PackagingReferenceId = packingId;
+        form.OrderParcels[0].ContentReferenceId = contentId;
+        form.OrderParcels[0].Weight = packType == 70 ? 1 : 2;
+        (await client.PostAsJsonAsync("api/Order/UpdateOrder", form)).EnsureSuccessStatusCode();
+
+        var response = await client.GetAsync($"api/Order/GetOptions?orderId={form.OrderId}&paymentType=72");
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
+        var error = await ApiClient.ReadJsonAsync(response);
+        Assert.Equal(key, error.GetProperty("key").GetString());
+        var detail = error.GetProperty("payload").GetProperty("details")[0];
+        Assert.Equal($"orderParcels[0].{field}", detail.GetProperty("name").GetString());
+        if (packType == 20) Assert.Contains("1.5", detail.GetProperty("errors")[0].GetProperty("message").GetString());
+        var trace = await fixture.WithDbAsync(db => db.Orders.Where(o => o.Id == form.OrderId).Select(o => "logiwall-" + o.OrderNumber).SingleAsync());
+        Assert.DoesNotContain(factory.Services.GetRequiredService<FakeShippingCarrier>().QuoteRequests, q => q.TraceCode == trace);
+    }
+
     [Fact]
     public async Task Packaging_catalog_identifies_no_packaging_records_and_explicit_selection_works()
     {

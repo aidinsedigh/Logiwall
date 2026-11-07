@@ -701,7 +701,10 @@
   <data name="ShippingServiceCatalogMissing" xml:space="preserve"><value>اطلاعات سرویس‌های این شرکت پستی هنوز آماده نیست.</value></data>
   <data name="ShippingPaymentOnline" xml:space="preserve"><value>سمت فرستنده - پیش‌پرداخت</value></data>
   <data name="ShippingServiceSelectionRequired" xml:space="preserve"><value>پیش از استعلام قیمت، نوع سرویس معتبر شرکت پستی را انتخاب کنید.</value></data>
-  <data name="ShippingServiceParcelTypeUnsupported" xml:space="preserve"><value>سرویس انتخاب‌شده این نوع مرسوله را نمی‌پذیرد؛ سرویس دیگری انتخاب کنید.</value></data>
+  <data name="ShippingServiceParcelTypeUnsupported" xml:space="preserve"><value>تیپاکس این بسته‌بندی و وزن را با این سرویس نمی‌پذیرد؛ بسته‌بندی یا سرویس دیگری انتخاب کنید.</value></data>
+  <data name="ShippingParcelOverweight" xml:space="preserve"><value>وزن بسته از حداکثر وزن مجاز بسته‌بندی انتخاب‌شده ({0} کیلوگرم) بیشتر است؛ بسته‌بندی بزرگ‌تری انتخاب کنید یا وزن را اصلاح کنید.</value></data>
+  <data name="ShippingParcelValueTooHigh" xml:space="preserve"><value>ارزش اعلام‌شدهٔ بسته از سقف مجاز تیپاکس برای این بسته‌بندی بیشتر است؛ ارزش را کمتر کنید یا بسته‌بندی دیگری انتخاب کنید.</value></data>
+  <data name="ShippingEcoPackPickupUnsupported" xml:space="preserve"><value>بسته‌بندی اکوپک تیپاکس از محل شما جمع‌آوری نمی‌شود؛ بسته‌بندی دیگری انتخاب کنید.</value></data>
   <data name="ShippingPaymentAgencyCredit" xml:space="preserve"><value>سمت فرستنده - اعتبار نمایندگی</value></data>
   <data name="ShippingPaymentSenderCash" xml:space="preserve"><value>سمت فرستنده - نقدی</value></data>
   <data name="ShippingPaymentSettlementUnavailable" xml:space="preserve"><value>تسویه با روش پرداخت انتخاب‌شده هنوز فعال نشده است.</value></data>

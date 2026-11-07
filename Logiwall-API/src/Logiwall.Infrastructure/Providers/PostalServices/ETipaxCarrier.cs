@@ -124,8 +124,11 @@ public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> s
         {
             var message = CarrierErrorMessage.Parse(await response.Content.ReadAsStringAsync(cancellationToken),
                 localizer["ShippingCarrierValidationFailed"]);
-            // shortcut: eTipax sends no error code; its "سگمنت" (segment) text means the service does not accept the pack type. Match a code when eTipax adds one.
-            if (message.Contains("سگمنت", StringComparison.Ordinal)) message = localizer["ShippingServiceParcelTypeUnsupported"];
+            // shortcut: eTipax sends no error code, so its text is matched. "ارزش ... سگمنت" is the per-segment value ceiling;
+            // "نوع سگمنت" means the service does not take this pack type and weight. Match a code when eTipax adds one.
+            if (message.Contains("ارزش", StringComparison.Ordinal) && message.Contains("سگمنت", StringComparison.Ordinal))
+                message = localizer["ShippingParcelValueTooHigh"];
+            else if (message.Contains("نوع سگمنت", StringComparison.Ordinal)) message = localizer["ShippingServiceParcelTypeUnsupported"];
             throw new CarrierRequestException(message, CarrierStatus((int)response.StatusCode));
         }
         response.EnsureSuccessStatusCode();

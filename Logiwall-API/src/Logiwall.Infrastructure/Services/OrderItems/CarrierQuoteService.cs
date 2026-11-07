@@ -33,6 +33,7 @@ public class CarrierQuoteService(AppDbContext db, IEnumerable<IShippingCarrier> 
         if (services.Count == 0)
             throw new BadRequestException(quoteAll ? "ShippingServiceCatalogMissing" : "ShippingServiceSelectionRequired");
         var newQuotes = new List<OrderInqueryOption>();
+        var rejections = new List<string>();
         var serviceTitles = new Dictionary<(short, int), string>();
         foreach (var group in services.GroupBy(s => s.ServiceProviderId))
         {
@@ -46,15 +47,18 @@ public class CarrierQuoteService(AppDbContext db, IEnumerable<IShippingCarrier> 
             // The first call caches the carrier token, so the parallel calls after it do not each log in.
             var first = await TryQuoteAsync(carrier, requests[0], rethrowRejection: !quoteAll, orderId, ct);
             var rest = await Task.WhenAll(requests.Skip(1).Select(r => TryQuoteAsync(carrier, r, rethrowRejection: !quoteAll, orderId, ct)));
-            foreach (var quote in rest.Prepend(first).SelectMany(q => q))
+            rejections.AddRange(rest.Prepend(first).Select(r => r.Rejection).OfType<string>());
+            foreach (var quote in rest.Prepend(first).SelectMany(r => r.Quotes))
                 newQuotes.Add(new OrderInqueryOption { OrderId = orderId, ServiceProviderId = provider.Id,
                     ServiceAmount = RoundUpPrice(quote.AmountRials), FinalAmount = RoundUpPrice(quote.AmountRials),
                     CarrierRequestJson = quote.RequestJson, ExternalServiceId = quote.ServiceId,
                     PaymentMethod = paymentMethod,
                     ExpiresAt = DateTimeOffset.UtcNow.AddMinutes(15), DelivereDate = string.Empty });
         }
+        // Every service rejected the parcel: the most common carrier reason (for example the value ceiling) tells the customer what to fix.
         if (newQuotes.Count == 0)
-            return new() { Succuss = false, Message = localizer[nameof(AppStrings.ProviderServiceUnavailable)] };
+            return new() { Succuss = false, Message = rejections.GroupBy(m => m).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault()
+                ?? localizer[nameof(AppStrings.ProviderServiceUnavailable)] };
         await using var tx = await db.Database.BeginTransactionAsync(ct);
         await db.Database.ExecuteSqlInterpolatedAsync($"SELECT Id FROM Orders WITH (UPDLOCK,HOLDLOCK) WHERE Id={orderId}", ct);
         if (await OrderDraftWorkflow.IsLockedAsync(db, orderId, ct)) throw new ConflictException("ShippingOrderLocked");
@@ -77,22 +81,23 @@ public class CarrierQuoteService(AppDbContext db, IEnumerable<IShippingCarrier> 
     /// <summary>Rounds a carrier price up to the next 1,000 rials, so the customer never pays less than the carrier asks.</summary>
     private static decimal RoundUpPrice(decimal rials) => Math.Ceiling(rials / 1000m) * 1000m;
 
-    /// <summary>Returns the carrier's quotes, or none when the carrier fails or (unless <paramref name="rethrowRejection"/>) rejects the request.</summary>
-    private async Task<IReadOnlyList<CarrierQuote>> TryQuoteAsync(IShippingCarrier carrier, CarrierShipmentRequest request,
+    /// <summary>Returns the carrier's quotes, or none when the carrier fails or (unless <paramref name="rethrowRejection"/>) rejects the request.
+    /// A rejection also returns the carrier's sanitized message.</summary>
+    private async Task<(IReadOnlyList<CarrierQuote> Quotes, string? Rejection)> TryQuoteAsync(IShippingCarrier carrier, CarrierShipmentRequest request,
         bool rethrowRejection, int orderId, CancellationToken ct)
     {
         try
         {
             var quotes = await carrier.QuoteAsync(request, ct);
             if (quotes.Any(q => q.ServiceId != request.ServiceId)) throw new JsonException("Carrier returned a different service.");
-            return quotes;
+            return (quotes, null);
         }
         catch (Exception e) when (e is HttpRequestException or JsonException or InvalidOperationException
             || e is CarrierRequestException && !rethrowRejection
             || e is OperationCanceledException && !ct.IsCancellationRequested)
         {
             logger.LogWarning(e, "[CarrierQuote][Get][{OrderId}][{ProviderCode}][{ServiceId}] Carrier quotation failed.", orderId, carrier.Code, request.ServiceId);
-            return [];
+            return ([], e is CarrierRequestException ? e.Message : null);
         }
     }
 
@@ -107,9 +112,9 @@ public class CarrierQuoteService(AppDbContext db, IEnumerable<IShippingCarrier> 
         var refs = await db.ProviderReferenceItems.AsNoTracking().Where(x => x.IsActive && x.ServiceProviderId == provider.Id
             && (selections.Contains(x.Id) || needsNoPackaging && x.Category == "packaging"
                 && (x.ExternalCode == "504" || x.ExternalCode == "521"))).ToListAsync(ct);
-        ResourceValidationException FieldError(string field, string key, int index) =>
+        ResourceValidationException FieldError(string field, string key, int index, params object[] args) =>
             new(key, new ErrorResourcePayload { Details =
-                [new() { Name = $"orderParcels[{index}].{field}", Errors = [new() { Key = key, Message = localizer[key] }] }] });
+                [new() { Name = $"orderParcels[{index}].{field}", Errors = [new() { Key = key, Message = localizer[key, args] }] }] });
         ProviderReferenceItem Ref(int? id, string category, int index)
         {
             var reference = refs.SingleOrDefault(x => x.Id == id && x.Category == category);
@@ -145,6 +150,11 @@ public class CarrierQuoteService(AppDbContext db, IEnumerable<IShippingCarrier> 
                 throw FieldError("contentReferenceId", "ShippingPackagingIncompatible", parcels.Count);
             if (p.Weight <= 0 || p.Length <= 0 || p.Width <= 0 || p.Height <= 0 || p.ParcelValue <= 0 || p.COD < 0)
                 throw new BadRequestException("ShippingParcelInvalid");
+            // eTipax answers an over-limit weight with a vague "segment not found"; it does not enforce the catalogue's dimensions or minimum weight.
+            if (ETipaxPackaging.MaxWeight(packing.MetadataJson) is { } maxWeight && p.Weight > maxWeight)
+                throw FieldError("weight", "ShippingParcelOverweight", parcels.Count, maxWeight.ToString("0.##", CultureInfo.InvariantCulture));
+            // Eco-pack (type 70) refuses pickup at the sender's address, and Logiwall always quotes with pickup (pickupType 10).
+            if (type == 70) throw FieldError("packagingReferenceId", "ShippingEcoPackPickupUnsupported", parcels.Count);
             CarrierAddress Address(bool origin) => new(origin ? originCity : destinationCity,
                 (origin ? order.OriginAddress : order.DestinationAddress) + ", پلاک "
                     + (origin ? order.OriginalPlaque : order.DestinationPlaque),

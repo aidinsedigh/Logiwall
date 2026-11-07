@@ -1,8 +1,17 @@
 # QA: GET /api/Order/GetOptions
 
 The active carrier path requires an owned order and a supported shared paymentType. `serviceReferenceId` is optional.
-* Without `serviceReferenceId`: price every active service of every active provider. Return only the services the carrier accepts for this parcel, cheapest first, each with its own serviceTitle. A carrier rejection of one service (for example eTipax "segment not found": the service does not accept the pack type) is logged and skipped. If no service prices, return 400 ProviderServiceUnavailable and keep the previous options.
-* With `serviceReferenceId`: price only that service. A missing, inactive or wrong-category ID returns 400 ShippingServiceSelectionRequired before any carrier call. A carrier rejection returns its sanitized message; the eTipax "segment" rejection becomes ShippingServiceParcelTypeUnsupported.
+* Without `serviceReferenceId`: price every active service of every active provider. Return only the services the carrier accepts for this parcel, cheapest first, each with its own serviceTitle. A carrier rejection of one service (for example eTipax "segment not found": the service does not accept the pack type) is logged and skipped. If no service prices, return 400 with the most common carrier rejection message (ProviderServiceUnavailable when the carrier only failed) and keep the previous options.
+* With `serviceReferenceId`: price only that service. A missing, inactive or wrong-category ID returns 400 ShippingServiceSelectionRequired before any carrier call. A carrier rejection returns its sanitized message.
+* eTipax "نوع سگمنت" becomes ShippingServiceParcelTypeUnsupported; its "ارزش ... سگمنت" value ceiling becomes ShippingParcelValueTooHigh.
+
+## Parcel limits checked before the carrier call
+
+Checked on the eTipax test API on 2026-11-07. eTipax enforces only the weight cap. It ignores the catalogue dimensions and minimum weight, so Logiwall does not check them.
+* Weight above the packaging's catalogue `maxWeight`: field error `orderParcels[i].weight`, key ShippingParcelOverweight, message shows the limit in kg.
+* Packaging `packType` 70 (eco-pack): field error `orderParcels[i].packagingReferenceId`, key ShippingEcoPackPickupUnsupported. eTipax refuses customer pickup for eco-pack; Logiwall always quotes with pickup (pickupType 10).
+* The value ceiling is per segment and not in the catalogue (box: 1–2 billion rials; envelope: under 1 billion). It is left to eTipax and mapped to a clear message.
+Tests: NoPackagingTests (overweight and eco-pack field errors, no carrier call); OrderQuoteFlowTests (all services rejected returns the carrier reason); ETipaxCarrierTests (segment and value messages).
 Each carrier price is rounded up to the next 1,000 rials before it is stored and returned (baseAmount and totalAmount); SelectPaymentType charges that stored amount.
 No pickupDates, time slots or invented delivery promises are returned.
 Invalid parcel references return indexed Persian field errors.

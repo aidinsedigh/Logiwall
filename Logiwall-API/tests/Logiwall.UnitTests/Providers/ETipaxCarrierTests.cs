@@ -319,19 +319,23 @@ public class ETipaxCarrierTests
         Assert.Equal(message, error.Message);
     }
 
-    [Fact]
-    public async Task Pricing_segment_rejection_becomes_the_unsupported_parcel_type_message()
+    // Bodies are the eTipax test API replies (2026-11-07): a bare JSON string or a message object.
+    [Theory]
+    [InlineData("{\"message\":\"نوع سگمنت برای یک یا تعدادی از مرسوله ها یافت نشد.\",\"status\":400}", "ShippingServiceParcelTypeUnsupported")]
+    [InlineData("\"نوع سگمنت برای یک یا تعدادی از مرسوله ها یافت نشد.\"", "ShippingServiceParcelTypeUnsupported")]
+    [InlineData("\"ارزش مرسوله با بارکد  در بازه ی تعریف شده برای سگمنت بسته نمیگنجد.\"", "ShippingParcelValueTooHigh")]
+    public async Task Pricing_segment_rejection_becomes_a_clear_message(string body, string key)
     {
         var carrier = Create((request, _) => Task.FromResult(request.RequestUri!.AbsolutePath.EndsWith("token")
             ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"accessToken\":\"test-token\"}") }
-            : new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = new StringContent("{\"message\":\"نوع سگمنت برای یک یا تعدادی از مرسوله ها یافت نشد.\",\"status\":400}") }));
+            : new HttpResponseMessage(HttpStatusCode.BadRequest) { Content = new StringContent(body) }));
         var address = new CarrierAddress("1", "address", 35, 51, "1", null, "name", "09123456789");
         var request = new CarrierShipmentRequest("test", [new(1, address, address, 2, 1000, 10, 10, 10, "521", "30", 60, 0)], 12, 72, 0, 0);
 
         var error = await Assert.ThrowsAsync<Logiwall.Shared.Exceptions.CarrierRequestException>(() => carrier.QuoteAsync(request, CancellationToken.None));
 
         Assert.Equal(HttpStatusCode.BadRequest, error.StatusCode);
-        Assert.Equal(Logiwall.Shared.Resources.AppStrings.ResourceManager.GetString("ShippingServiceParcelTypeUnsupported"), error.Message);
+        Assert.Equal(Logiwall.Shared.Resources.AppStrings.ResourceManager.GetString(key), error.Message);
     }
 }
 

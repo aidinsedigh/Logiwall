@@ -133,6 +133,27 @@ public class OrderQuoteFlowTests(SqlServerFixture fixture)
     }
 
     [Fact]
+    public async Task GetOptions_without_a_service_returns_the_carrier_reason_when_every_service_rejects()
+    {
+        var (client, orderId) = await ArrangeAsync();
+        var carrier = fixture.Factory.Services.GetRequiredService<FakeShippingCarrier>();
+        int[] services = [4, 12, 13, 14, 15];
+        foreach (var s in services) carrier.RejectedServices[s] = 0;
+        try
+        {
+            var response = await client.GetAsync($"api/Order/GetOptions?orderId={orderId}&paymentType={(int)Constants.PaymentMethod.CashOnDelivery}");
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            Assert.Equal("Service does not accept this pack type.", (await ApiClient.ReadJsonAsync(response)).GetProperty("message").GetString());
+            Assert.Equal(0, await OptionCountAsync(orderId));
+        }
+        finally
+        {
+            foreach (var s in services) carrier.RejectedServices.TryRemove(s, out _);
+        }
+    }
+
+    [Fact]
     public async Task GetOptions_with_failing_provider_keeps_previous_options()
     {
         var (client, orderId) = await ArrangeAsync();
