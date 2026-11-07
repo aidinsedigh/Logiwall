@@ -51,6 +51,11 @@ public class FakeShippingCarrier : IShippingCarrier
     }
     public Task<CarrierRegistrationResult> CancelAsync(string id, CancellationToken ct)
         => Task.FromResult(new CarrierRegistrationResult(true, false, 200, id, [], "{}", null));
+    /// <summary>Tracking replies by code; a code that starts with "FAIL" fails like an unreachable carrier.</summary>
+    public ConcurrentDictionary<string, Logiwall.Shared.Dtos.OrderItems.ParcelTrackingResponseDto> Trackings { get; } = new();
+    public Task<Logiwall.Shared.Dtos.OrderItems.ParcelTrackingResponseDto?> TrackAsync(string trackingCode, CancellationToken ct)
+        => trackingCode.StartsWith("FAIL", StringComparison.Ordinal) ? throw new HttpRequestException("Fake carrier is down.")
+            : Task.FromResult(Trackings.GetValueOrDefault(trackingCode));
     public Task<IReadOnlyList<CarrierReference>> GetReferencesAsync(CancellationToken ct)
         => Task.FromResult<IReadOnlyList<CarrierReference>>([
             new("packaging", "1", "Test packaging", "{\"id\":1,\"packType\":1}"),

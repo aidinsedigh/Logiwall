@@ -17,6 +17,8 @@ These keys bind to Providers:ETipax. Empty defaults keep external jobs disabled.
 | `Providers__ETipax__ReferenceSyncEnabled` | Enable after credentials and migrations are ready |
 | `Providers__ETipax__ReferenceSyncMinutes` | Default 1440, bounded 10–10080 |
 | `Providers__ETipax__ReconcileEventsEnabled` | Enable after migrations; processes received events and interrupted attempts |
+| `Providers__ETipax__TrackingBaseUrl` | eTipax "jet" tracking host; default `http://jet-test.tipax.ir:81` (test). Set the production host before release |
+| `Providers__ETipax__TrackingToken` | Long-lived jet bearer token for `GET /api/Shipment/Track`. Secret: user-secrets or environment only |
 
 Payment methods 71/72 are shared Logiwall values. The adapter maps them to ETipax 10/20; pickup and distribution are 10, from ShopLink. Service references are seeded in category service; no mode or service-ID environment variables are required.
 The Jet geolocation JWT is not an ETipax account token.

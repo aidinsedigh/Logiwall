@@ -38,6 +38,7 @@ public class LogiwallApiFactory : WebApplicationFactory<Logiwall.Server.AppSetti
         {
             builder.UseSetting("RateLimits:OtpSendPerMinute", "1000");
             builder.UseSetting("RateLimits:AuthVerifyPerMinute", "1000");
+            builder.UseSetting("RateLimits:ParcelTrackingPerMinute", "1000");
         }
         builder.ConfigureTestServices(services =>
         {

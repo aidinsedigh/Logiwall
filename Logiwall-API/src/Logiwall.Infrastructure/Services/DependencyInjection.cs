@@ -37,6 +37,13 @@ public static class DependencyInjection
             client.BaseAddress = new Uri(options.BaseUrl);
             client.Timeout = TimeSpan.FromSeconds(30);
         });
+        services.AddHttpClient("etipax-tracking", (sp, client) =>
+        {
+            var options = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<ETipaxOptions>>().Value;
+            client.BaseAddress = new Uri(options.TrackingBaseUrl);
+            // The customer waits on the tracking page.
+            client.Timeout = TimeSpan.FromSeconds(15);
+        });
         services.TryAddEnumerable(ServiceDescriptor.Transient<IShippingCarrier, ETipaxCarrier>());
         services.TryAddScoped<ICarrierQuoteService, CarrierQuoteService>();
         services.TryAddScoped<IShippingReferenceService, ShippingReferenceService>();

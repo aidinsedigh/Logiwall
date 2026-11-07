@@ -163,3 +163,10 @@ Architecture decision: ADR 0006. Implementation is reviewable; rollout and live 
 2026-11-07 quote price rounding (user choice: up to 1,000 rials):
 - eTipax finalPrice has rial fractions (test API: 10395953.649). CarrierQuoteService rounds each price up to the next 1,000 rials before it stores ServiceAmount/FinalAmount, so the front, the order list and the online payment use the same amount. No front change: StepEight already shows totalAmount.
 - Added 3 integration cases (FakeShippingCarrier.QuoteAmounts). Results: 159 SQL integration tests passed, 1 existing skip.
+
+2026-11-07 parcel tracking through the API:
+- Before: the front tracking page called the eTipax jet API directly with a bearer token in the front source.
+- Added GET api/Shipment/Track?providerCode=&code= (sign-in required, rate limit parcel-tracking 20/min per user). ShipmentService.TrackAsync finds the active provider and its IShippingCarrier; IShippingCarrier.TrackAsync maps the carrier reply into one contract, ParcelTrackingResponseDto: sender, receiver, journey (oldest first), payment. Mobile numbers and addresses are not returned.
+- ETipaxCarrier.TrackAsync calls jet (Providers:ETipax:TrackingBaseUrl, TrackingToken). Jalali times become ISO times at +03:30. Unknown code: 404 ParcelTrackingNotFound; carrier failure: 400 ProviderServiceUnavailable.
+- Front (Logiwall-Frontend): tracking page calls the API; the jet URL and token are removed; the dialog shows sender/receiver, journey and payment. The local jet token moved to server user-secrets.
+- Results: 41 eTipax unit tests passed; 166 SQL integration tests passed, 1 existing skip; front TypeScript clean. Not checked end to end against a running server.

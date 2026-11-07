@@ -93,6 +93,10 @@ public static partial class Program
             options.AddPolicy("auth-verify", ctx => RateLimitPartition.GetFixedWindowLimiter(
                 ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = configuration.GetValue("RateLimits:AuthVerifyPerMinute", 20), Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+            // Tracking calls the carrier with a shared token, so each user gets a budget; the IP is the fallback.
+            options.AddPolicy("parcel-tracking", ctx => RateLimitPartition.GetFixedWindowLimiter(
+                ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+                _ => new FixedWindowRateLimiterOptions { PermitLimit = configuration.GetValue("RateLimits:ParcelTrackingPerMinute", 20), Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
         });
 
         services.AddHttpClient();

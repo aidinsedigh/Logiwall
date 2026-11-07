@@ -714,4 +714,6 @@
   <data name="ShippingNoPackagingUnavailable" xml:space="preserve"><value>برای محتویات انتخاب‌شده، گزینهٔ بدون بسته‌بندی فعال و سازگار موجود نیست؛ محتویات را تغییر دهید.</value></data>
   <data name="ShippingPackagingIncompatible" xml:space="preserve"><value>نوع بسته‌بندی، محتویات و انتخاب نیاز به بسته‌بندی با یکدیگر سازگار نیستند.</value></data>
   <data name="ShippingReferenceFilterInvalid" xml:space="preserve"><value>فیلتر اطلاعات پایه معتبر نیست؛ برای محتویات شناسهٔ بسته‌بندی و برای بسته‌بندی شناسهٔ محتویات را بفرستید.</value></data>
+  <data name="ParcelTrackingNotFound" xml:space="preserve"><value>مرسوله‌ای با این کد رهگیری یافت نشد.</value></data>
+  <data name="ParcelTrackingCodeInvalid" xml:space="preserve"><value>کد رهگیری باید ۵ تا ۴۰ حرف انگلیسی یا عدد باشد.</value></data>
 </root>

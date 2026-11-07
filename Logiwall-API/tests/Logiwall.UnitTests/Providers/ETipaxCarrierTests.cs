@@ -3,6 +3,7 @@ using System.Text.Json;
 using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Infrastructure.Options;
 using Logiwall.Infrastructure.Providers.PostalServices;
+using Logiwall.Shared.Dtos.OrderItems;
 using Microsoft.Extensions.Options;
 
 namespace Logiwall.UnitTests.Providers;
@@ -157,6 +158,75 @@ public class ETipaxCarrierTests
         if (success) { Assert.Equal("123", result.ExternalOrderId); Assert.Equal(new[] { "a", "b" }, result.TrackingCodes); }
     }
 
+    // Trimmed from a real jet-test reply (2026-11-07) for barcode ba800197458ir.
+    private const string TrackingReply = """
+        {"IsSuccess":true,"Message":"با موفقیت انجام شد","Data":[{"ContractKindName":"اکسپرس","ContractStatusName":"ابطال شده",
+        "ContractCreateDate":"1405/08/16 12:36:15","FinalAmount":10395953.65,"PayInPlaceAmount":10395953.65,"COD":0.00,
+        "PaymentKindName":"پس کرایه","SenderFullName":"محمودی عرفان","SenderMobileNumber":"09100000000","SenderCityName":"تهران",
+        "SenderProvinceName":"تهران","ReceiverFullName":"عرفان محمودی","ReceiverCityName":"شیراز","ReceiverProvinceName":"فارس",
+        "Barcode":"ba800197458ir","states":[
+          {"StateNo":12,"StateTitle":"ابطال بسته","OperationDateTime":"1405/08/16 12:38:10","OperationNodeName":"فروش","OperationCityName":"تهران","Reason":"درخواست مشتری"},
+          {"StateNo":1,"StateTitle":"ثبت","OperationDateTime":"1405/08/16 12:36:15","OperationNodeName":"فروش","OperationCityName":"تهران","Reason":""}]}]}
+        """;
+
+    [Fact]
+    public async Task Tracking_maps_the_jet_reply_into_the_shared_contract()
+    {
+        var carrier = Create(async (http, ct) =>
+        {
+            Assert.Equal("/odata/Tipax/DspContractTrackings/Tipax.TrackingParcelWithDetail", http.RequestUri!.AbsolutePath);
+            Assert.Equal("jet-token", http.Headers.Authorization!.Parameter);
+            Assert.Equal("{\"Code\":\"ba800197458ir\"}", await http.Content!.ReadAsStringAsync(ct));
+            return new(HttpStatusCode.OK) { Content = new StringContent(TrackingReply) };
+        }, new ETipaxOptions { TrackingToken = "jet-token" });
+
+        var tracking = await carrier.TrackAsync("ba800197458ir", CancellationToken.None);
+
+        var iran = TimeSpan.FromHours(3.5);
+        Assert.NotNull(tracking);
+        Assert.Equal("ابطال شده", tracking.Status);
+        Assert.Equal("اکسپرس", tracking.ServiceName);
+        Assert.Equal(new DateTimeOffset(2026, 11, 7, 12, 36, 15, iran), tracking.RegisteredAt);
+        Assert.Equal(new ParcelTrackingPartyDto("محمودی عرفان", "تهران", "تهران"), tracking.Sender);
+        Assert.Equal(new ParcelTrackingPartyDto("عرفان محمودی", "شیراز", "فارس"), tracking.Receiver);
+        // The carrier list is out of order on purpose: the contract sorts the journey oldest first.
+        Assert.Equal(new[] { "ثبت", "ابطال بسته" }, tracking.Journey.Select(e => e.Title));
+        Assert.Equal(new ParcelTrackingEventDto("ابطال بسته", new DateTimeOffset(2026, 11, 7, 12, 38, 10, iran), "تهران", "فروش", "درخواست مشتری"),
+            tracking.Journey[1]);
+        Assert.Equal(new ParcelTrackingPaymentDto("پس کرایه", 10395953.65m, 10395953.65m, 0m), tracking.Payment);
+    }
+
+    [Fact]
+    public async Task Tracking_unknown_code_returns_null()
+    {
+        var carrier = Create((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK)
+            { Content = new StringContent("{\"IsSuccess\":false,\"Message\":\" کد رهگیری وارد شده اشتباه است\",\"Data\":[]}") }),
+            new ETipaxOptions { TrackingToken = "jet-token" });
+
+        Assert.Null(await carrier.TrackAsync("ZZ999999999IR", CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Tracking_fails_without_a_token_or_on_a_rejected_token()
+    {
+        var noToken = Create((_, _) => throw new InvalidOperationException("No HTTP call is expected."));
+        await Assert.ThrowsAsync<InvalidOperationException>(() => noToken.TrackAsync("ba800197458ir", CancellationToken.None));
+
+        var rejected = Create((_, _) => Task.FromResult(new HttpResponseMessage(HttpStatusCode.Unauthorized)),
+            new ETipaxOptions { TrackingToken = "expired" });
+        await Assert.ThrowsAsync<HttpRequestException>(() => rejected.TrackAsync("ba800197458ir", CancellationToken.None));
+    }
+
+    [Theory]
+    [InlineData("1405/08/16 12:38:10", "2026-11-07T12:38:10+03:30")]
+    [InlineData("1403/12/30 00:00:00", "2025-03-20T00:00:00+03:30")]
+    [InlineData("1405/13/01 00:00:00", null)]
+    [InlineData("2026-11-07T12:38:10", null)]
+    [InlineData(null, null)]
+    public void Jalali_times_are_read_as_iran_time(string? text, string? expected)
+        => Assert.Equal(expected is null ? null : DateTimeOffset.Parse(expected, System.Globalization.CultureInfo.InvariantCulture),
+            ETipaxCarrier.JalaliTime(text));
+
     private sealed class Handler(Func<HttpRequestMessage, CancellationToken, Task<HttpResponseMessage>> respond) : HttpMessageHandler
     {
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) => respond(request, ct);
@@ -248,8 +318,6 @@ public class ETipaxCarrierTests
         Assert.Equal(HttpStatusCode.UnprocessableEntity, error.StatusCode);
         Assert.Equal(message, error.Message);
     }
-}
-
 
     [Fact]
     public async Task Pricing_segment_rejection_becomes_the_unsupported_parcel_type_message()
@@ -265,3 +333,5 @@ public class ETipaxCarrierTests
         Assert.Equal(HttpStatusCode.BadRequest, error.StatusCode);
         Assert.Equal(Logiwall.Shared.Resources.AppStrings.ResourceManager.GetString("ShippingServiceParcelTypeUnsupported"), error.Message);
     }
+}
+

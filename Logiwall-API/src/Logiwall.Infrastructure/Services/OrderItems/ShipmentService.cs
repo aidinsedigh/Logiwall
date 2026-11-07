@@ -167,6 +167,25 @@ public class ShipmentService(AppDbContext db, IEnumerable<IShippingCarrier> carr
         return Response(shipment);
     }
 
+    public async Task<ParcelTrackingResponseDto> TrackAsync(TrackParcelRequestDto request, CancellationToken cancellationToken)
+    {
+        var providerCode = request.ProviderCode.Trim().ToLowerInvariant();
+        var providerName = await db.ServiceProviders.AsNoTracking().Where(p => p.Code == providerCode && p.IsActive)
+            .Select(p => p.Title).SingleOrDefaultAsync(cancellationToken);
+        var carrier = carriers.SingleOrDefault(c => c.Code == providerCode);
+        if (providerName is null || carrier is null) throw new BadRequestException("ShippingProviderUnavailable");
+        ParcelTrackingResponseDto? tracking;
+        try { tracking = await carrier.TrackAsync(request.Code.Trim(), cancellationToken); }
+        catch (Exception e) when (e is HttpRequestException or System.Text.Json.JsonException or InvalidOperationException
+            || e is OperationCanceledException && !cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning(e, "[Shipment][Track][{ProviderCode}] Carrier tracking failed.", providerCode);
+            throw new BadRequestException(nameof(AppStrings.ProviderServiceUnavailable));
+        }
+        return (tracking ?? throw new ResourceNotFoundException("ParcelTrackingNotFound"))
+            with { ProviderCode = providerCode, ProviderName = providerName };
+    }
+
     public async Task ReceiveEventAsync(CarrierParcelEventRequestDto request, CancellationToken cancellationToken)
     {
         var provider = await db.ServiceProviders.AsNoTracking().SingleAsync(p => p.Code == "etipax", cancellationToken);

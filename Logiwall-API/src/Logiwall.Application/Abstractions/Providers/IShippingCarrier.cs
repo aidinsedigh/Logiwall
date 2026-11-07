@@ -23,4 +23,6 @@ public interface IShippingCarrier
     Task<CarrierRegistrationResult> RegisterAsync(string requestJson, CancellationToken cancellationToken);
     Task<CarrierRegistrationResult> CancelAsync(string externalOrderId, CancellationToken cancellationToken);
     Task<IReadOnlyList<CarrierReference>> GetReferencesAsync(CancellationToken cancellationToken);
+    /// <summary>Returns null when the carrier does not know the tracking code.</summary>
+    Task<Logiwall.Shared.Dtos.OrderItems.ParcelTrackingResponseDto?> TrackAsync(string trackingCode, CancellationToken cancellationToken);
 }

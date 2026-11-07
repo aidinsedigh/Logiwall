@@ -11,4 +11,7 @@ public class ETipaxOptions
     public bool ReferenceSyncEnabled { get; set; }
     public int ReferenceSyncMinutes { get; set; } = 1440;
     public bool ReconcileEventsEnabled { get; set; }
+    /// <summary>The eTipax "jet" tracking API. It is a different host from <see cref="BaseUrl"/> and uses its own long-lived token.</summary>
+    public string TrackingBaseUrl { get; set; } = "http://jet-test.tipax.ir:81";
+    public string TrackingToken { get; set; } = string.Empty;
 }

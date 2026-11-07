@@ -43,6 +43,11 @@ public partial class ShipmentController : AppControllerBase
         => new() { Succuss = true, Data = await references.GetAsync(providerCode, "service", cancellationToken) };
 
 
+    // Any signed-in customer can track any code, like the carrier's own tracking page; the limit stops code guessing.
+    [HttpGet, Microsoft.AspNetCore.RateLimiting.EnableRateLimiting("parcel-tracking")]
+    public async Task<ServiceResponse<ParcelTrackingResponseDto>> Track([FromQuery] TrackParcelRequestDto request, CancellationToken cancellationToken)
+        => new() { Succuss = true, Data = await shipments.TrackAsync(request, cancellationToken) };
+
     [HttpPost, Authorize(AuthenticationSchemes = ShippingWebhookAuthentication.SchemeName)]
     public async Task<IActionResult> Webhook(CarrierParcelEventRequestDto request, CancellationToken cancellationToken)
     {

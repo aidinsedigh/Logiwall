@@ -5,6 +5,7 @@ using System.Text;
 using System.Text.Json;
 using Logiwall.Application.Abstractions.Providers;
 using Logiwall.Infrastructure.Options;
+using Logiwall.Shared.Dtos.OrderItems;
 using Microsoft.Extensions.Options;
 
 namespace Logiwall.Infrastructure.Providers.PostalServices;
@@ -228,6 +229,48 @@ public class ETipaxCarrier(IHttpClientFactory clients, IOptions<ETipaxOptions> s
         }
         return references;
     }
+
+    public async Task<ParcelTrackingResponseDto?> TrackAsync(string trackingCode, CancellationToken cancellationToken)
+    {
+        var token = settings.Value.TrackingToken;
+        if (string.IsNullOrWhiteSpace(token)) throw new InvalidOperationException("Providers:ETipax:TrackingToken is not configured.");
+        using var client = clients.CreateClient("etipax-tracking");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        // The OData action reads "Code" with a capital C, so the body is not serialized with the camelCase web defaults.
+        using var content = new StringContent(JsonSerializer.Serialize(new { Code = trackingCode }), Encoding.UTF8, "application/json");
+        using var response = await client.PostAsync("/odata/Tipax/DspContractTrackings/Tipax.TrackingParcelWithDetail", content, cancellationToken);
+        response.EnsureSuccessStatusCode();
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(cancellationToken));
+        // An unknown code comes back as HTTP 200 with IsSuccess=false and an empty Data list.
+        var items = doc.RootElement.TryGetProperty("Data", out var data) && data.ValueKind == JsonValueKind.Array
+            ? data : throw new JsonException("eTipax tracking Data is missing.");
+        return items.GetArrayLength() == 0 || items[0].ValueKind != JsonValueKind.Object ? null : MapTracking(trackingCode, items[0]);
+    }
+
+    private static ParcelTrackingResponseDto MapTracking(string trackingCode, JsonElement p) => new(trackingCode,
+        String(p, "ContractStatusName"), String(p, "ContractKindName"), JalaliTime(String(p, "ContractCreateDate")),
+        new(String(p, "SenderFullName"), String(p, "SenderCityName"), String(p, "SenderProvinceName")),
+        new(String(p, "ReceiverFullName"), String(p, "ReceiverCityName"), String(p, "ReceiverProvinceName")),
+        (p.TryGetProperty("states", out var states) && states.ValueKind == JsonValueKind.Array ? states.EnumerateArray() : Enumerable.Empty<JsonElement>())
+            .Where(s => s.ValueKind == JsonValueKind.Object)
+            .Select(s => new ParcelTrackingEventDto(String(s, "StateTitle") ?? string.Empty, JalaliTime(String(s, "OperationDateTime")),
+                String(s, "OperationCityName"), String(s, "OperationNodeName"), String(s, "Reason")))
+            .OrderBy(s => s.OccurredAt ?? DateTimeOffset.MaxValue).ToList(),
+        new(String(p, "PaymentKindName"), Amount(p, "FinalAmount"), Amount(p, "PayInPlaceAmount"), Amount(p, "COD")));
+
+    private static readonly TimeSpan IranOffset = TimeSpan.FromHours(3.5);
+    private static readonly PersianCalendar Persian = new();
+    /// <summary>Reads an eTipax Iran-time Jalali value such as "1405/08/16 12:38:10".</summary>
+    public static DateTimeOffset? JalaliTime(string? text)
+    {
+        var parts = text?.Split(['/', ' ', ':'], StringSplitOptions.RemoveEmptyEntries);
+        if (parts is not { Length: 6 } || !parts.All(x => int.TryParse(x, NumberStyles.None, CultureInfo.InvariantCulture, out _))) return null;
+        var n = parts.Select(x => int.Parse(x, CultureInfo.InvariantCulture)).ToArray();
+        try { return new DateTimeOffset(Persian.ToDateTime(n[0], n[1], n[2], n[3], n[4], n[5], 0), IranOffset); }
+        catch (ArgumentOutOfRangeException) { return null; }
+    }
+    private static decimal? Amount(JsonElement e, string name) => e.TryGetProperty(name, out var v)
+        && v.ValueKind == JsonValueKind.Number && v.TryGetDecimal(out var amount) ? amount : null;
 
     // Carrier credentials are server credentials; their rejection must not log out the customer.
     internal static int CarrierStatus(int status) => status is 401 or 403 ? 502 : status;
