@@ -6,8 +6,7 @@ The front was driven in Chrome (DevTools MCP) against the local API. This file l
 
 * Front tested: `D:\Own Projects\Logiwall-Frontend\Logiwall`, branch `v2` @ `64e88b1`, `npm start` on `:3000`.
 * API: `Logiwall-API` `main` @ `08dad9b`, Development, `:5030`, local SQL Server.
-* Result: 70 scenarios. 35 pass, 28 fail, 7 blocked. Full interactive report (private, ask for access):
-  https://claude.ai/artifact/JQWrxsWFqo5yvscfS74QH4
+* Result: 70 scenarios. 35 pass, 28 fail, 7 blocked.
 
 Severity: **High** = a feature is broken or the user is misled. **Medium** = wrong data, a blocked
 user group, or a security risk. **Low** = cleanup or polish. File paths are relative to the front repo.
