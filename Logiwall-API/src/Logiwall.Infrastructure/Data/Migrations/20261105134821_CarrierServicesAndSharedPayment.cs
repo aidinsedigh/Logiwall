@@ -17,7 +17,7 @@ namespace Logiwall.Infrastructure.Data.Migrations
                 nullable: false,
                 defaultValue: 71);
             SeedServices(migrationBuilder);
-            migrationBuilder.Sql("UPDATE OrderInqueryOptions SET PaymentMethod=72 WHERE ISJSON(CarrierRequestJson)=1 AND JSON_VALUE(CarrierRequestJson, '$.packages[0].paymentType')='20';");
+            MigrationSql.ExecuteDeferred(migrationBuilder, "UPDATE OrderInqueryOptions SET PaymentMethod=72 WHERE ISJSON(CarrierRequestJson)=1 AND JSON_VALUE(CarrierRequestJson, '$.packages[0].paymentType')='20';");
         }
 
         /// <inheritdoc />

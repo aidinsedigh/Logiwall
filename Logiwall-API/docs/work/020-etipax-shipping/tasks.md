@@ -187,3 +187,26 @@ Architecture decision: ADR 0006. Implementation is reviewable; rollout and live 
 - Open risk (user decision 2026-11-07: record, do not fix now): logout is client-only. The API never checks the token's security stamp (AppSecureJwtDataFormat checks signature and expiry only), so a token stays valid for BearerTokenExpiration (1 day) after logout. A fix needs a sign-out endpoint that rotates the stamp plus a per-request stamp check.
 - Not code: SEP stage returns 401 on api-stage.724.ir Payment/token with the configured credentials (identity token is 200). Check the stage credentials.
 - Results: 82 unit tests passed; 171 SQL integration tests passed, 1 existing skip.
+
+2026-11-08 release preparation review:
+- API Release build/publish succeeded. 82 unit tests and 172 SQL integration tests passed; one existing placeholder skipped. NuGet reported no known vulnerable server packages. EF model has no pending changes.
+- Found real idempotent SQL compilation failures for newly added ProvinceTitle/PaymentMethod/status columns. Deferred affected seed/backfill SQL; migration identifiers and resulting schema stay unchanged. Added MigrationUpgradeTests for baseline upgrade, second execution, active services and Persian titles.
+- Prepared ignored artifacts/releases/2026-11-08-0e16b72: API ZIP, UTF-8 BOM idempotent SQL with baseline/session preflight, manifest hashes and deployment instructions. Executed the final SQL twice on an isolated baseline database and checked Persian titles.
+- Published API started in Production mode using a temporary audit certificate and isolated DB; GetOrderStatuses returned 200/13 statuses. Stopped the audit host and removed its database. No business database or external provider mutations.
+- Documented production prerequisites and remaining SEP/logout risks in deployment/release-readiness.md. Source fixes remain uncommitted; production server configuration/history are unverified. Separate legacy client solution restore did not complete; the API build is verified independently.
+
+2026-11-08 authorized remote database upgrade:
+- Verified the designated Liara database baseline, created a COPY_ONLY/CHECKSUM backup and passed RESTORE VERIFYONLY.
+- Applied the seven pending shipping migrations through DisableETipaxLtlService in one outer transaction; verified history, six tables, trusted foreign keys, five active services, thirteen status mappings and 678 cities per direction.
+- Counts unchanged: zero orders/parcels, four users. Packaging/content still require authenticated carrier synchronization after server configuration. No API deployment or external carrier/payment request. Execution record: deployment/database-upgrade-2026-11-08.md. No credentials stored in the repository.
+
+2026-11-08 explicit fixed OTP on the deployed server, requested by the user:
+- Added Otp:UseFixedCode (default false). When true, issue 12345 and skip SMS in every environment. Keep the Development-only flag and normal SMS flow unchanged when the explicit flag is off.
+- Ten OTP login/throttling tests passed, including Production-mode fixed code, zero SMS calls and rejection of a wrong code.
+- Deployed the reviewed source to Liara logiwall-api successfully. Set Otp__UseFixedCode=true through Liara and verified the running container reads true. The API restarted and its local GetOrderStatuses endpoint returned HTTP 200.
+- No SMS credentials were configured and no test SMS or live user login was initiated. Request a new code before entering 12345. No database migration is required.
+
+2026-11-08 authorized carrier account setup and reference bootstrap:
+- Copied the existing local Tipax Username/Password/ApiKey into Liara environment variables; explicitly set the matching test BaseUrl. No secrets were written to repository files or output.
+- Enabled ReferenceSyncEnabled with ReferenceSyncMinutes=1440. Verified Otp__UseFixedCode remained true after the configuration restart.
+- Confirmed worker completion in the remote database: 51 active packaging, 35 content, 13 status and 5 service references. Lease advanced by one day. No carrier order, cancellation or payment was submitted.

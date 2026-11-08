@@ -2,6 +2,14 @@
 
 Frontend request/response contracts and examples: [frontend-api.md](frontend-api.md).
 
+## Explicit fixed OTP mode
+
+The user requested fixed-code login on the deployed server on 2026-11-08.
+Set `Otp__UseFixedCode=true` to accept `12345` without calling SMS, including in Production.
+The flag defaults to false. Existing `Otp:UseDevelopmentCode` remains restricted to Development.
+When fixed mode is disabled, configure the SMS account for normal random-code delivery.
+Expiry, retry limits, resend cooldown and disabled-account checks remain active.
+
 ## Configuration
 
 Use server environment variables or dotnet user-secrets. Never put credentials in frontend env files.
@@ -25,7 +33,10 @@ The Jet geolocation JWT is not an ETipax account token.
 
 ## Database and bootstrap
 
-Review migrations `ETipaxShipping`, `ShippingEventReconciliationSchedule` and `CarrierServicesAndSharedPayment` before deployment.
+Review the complete upgrade through `20261107091650_DisableETipaxLtlService` before deployment.
+It includes SeedAdminRole, ETipaxShipping, ShippingEventReconciliationSchedule, CarrierServicesAndSharedPayment,
+UnifiedOrderStatuses, SimplifyPublicOrderStatuses, SelectableETipaxServices and DisableETipaxLtlService after the gateway-fields baseline.
+See [the release checklist](deployment/release-readiness.md) for tested SQL artifacts, prerequisites and deployment order.
 They create shipment/reference/attempt/event/lease tables and import 678 cities for each existing origin/destination category.
 They preserve existing IDs where a city is unambiguous, preserve historical MyTipax mappings, disable MyTipax, and add ETipax.
 The immutable city seed is embedded in Infrastructure, so it also ships in published output.
@@ -39,7 +50,10 @@ dotnet tool restore
 dotnet ef database update --project ../Logiwall.Infrastructure --startup-project . --configuration Release
 ```
 
-Migrations have been applied to local LogiwallDb. Production was not changed. Tests use a separate random database and delete it afterwards.
+Check each environment's migration history before upgrading.
+The user-designated Liara database was upgraded on 2026-11-08; see [the execution record](deployment/database-upgrade-2026-11-08.md).
+On 2026-11-08, local LogiwallDb had migrations through SimplifyPublicOrderStatuses; the last two service-data migrations were pending.
+Tests use separate random databases and delete them afterwards.
 Use `POST /api/Shipment/SynchronizeReferences` as an admin, or enable the catalogue job.
 `GET /api/Shipment/References?category=packaging&providerCode=etipax` returns internal IDs, not carrier codes.
 Categories are packaging, content, status and service. The 13 ETipax services come from ShopLink static seeds, not a remote service endpoint. Failed/empty sync never deletes the previous catalogue.

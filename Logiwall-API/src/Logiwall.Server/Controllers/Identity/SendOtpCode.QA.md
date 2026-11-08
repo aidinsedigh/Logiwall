@@ -3,6 +3,8 @@
 In Development with Otp:UseDevelopmentCode=true, SendOtpCode stores 12345 and returns success without calling the SMS service.
 The default Development config enables this temporary local mode. Restart the backend after changing configuration.
 Production ignores this option and uses the normal random code and SMS flow.
+Explicit Otp:UseFixedCode=true overrides the environment check: it stores 12345 and skips SMS in every environment.
+This separate flag defaults to false. It is enabled on the server at the user's explicit request.
 
 Verify a new phone can request a code and confirm 12345 to receive a token, even if the SMS service is unavailable.
 Verify wrong/expired/consumed codes fail. Disabled accounts, five-attempt limit and resend cooldown still apply.
@@ -10,3 +12,4 @@ Normal-mode SMS failures must still return failure. Keep OTP values out of logs 
 Registration completeness and ownership behavior remain unchanged.
 
 Automated coverage: DevelopmentOtpTests and OtpSendPathTests, with an isolated SQL Server database.
+The Production fixed-code regression verifies zero SMS calls, rejection of a wrong code and successful confirmation of 12345.

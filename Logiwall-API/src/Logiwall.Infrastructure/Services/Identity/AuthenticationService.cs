@@ -78,8 +78,8 @@ public class AuthenticationService(AppDbContext dbContext,
             }
 
             // Store the code before the SMS goes out, so a delivered code always works.
-            var developmentCode = environment.IsDevelopment() && otpOptions.Value.UseDevelopmentCode;
-            var code = developmentCode ? "12345" : GenerateRandomCode();
+            var fixedCode = otpOptions.Value.UseFixedCode || (environment.IsDevelopment() && otpOptions.Value.UseDevelopmentCode);
+            var code = fixedCode ? "12345" : GenerateRandomCode();
             var expiryTime = DateTimeOffset.Now.Add(OtpValidity);
             var userOtp = new UserOtp
             {
@@ -96,7 +96,7 @@ public class AuthenticationService(AppDbContext dbContext,
             await userManager.SetAuthenticationTokenAsync(user, "OTP", "timestamp", expiryTime.ToString("o"));
             await userManager.SetAuthenticationTokenAsync(user, "OTP", "attempts", "0");
 
-            if (developmentCode)
+            if (fixedCode)
                 return new ServiceResponse<bool>
                 {
                     Data = true, Succuss = true,

@@ -4,7 +4,7 @@ namespace Logiwall.Infrastructure.Data.Migrations;
 
 public partial class UnifiedOrderStatuses
 {
-    private static void SeedAndBackfill(MigrationBuilder migrationBuilder) => migrationBuilder.Sql("""
+    private static void SeedAndBackfill(MigrationBuilder migrationBuilder) => MigrationSql.ExecuteDeferred(migrationBuilder, """
         DECLARE @provider smallint = (SELECT Id FROM ServiceProviders WHERE Code='etipax');
         DECLARE @map TABLE(Code nvarchar(100),Title nvarchar(200),Mapped smallint);
         INSERT INTO @map VALUES
