@@ -1,7 +1,8 @@
 using System.Net;
+using Logiwall.Domain.Entities.OrderItems;
 using Logiwall.IntegrationTests.Infrastructure;
-using Logiwall.Shared.Dtos.OrderItems;
 using Logiwall.Shared.Resources;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Logiwall.IntegrationTests.Orders;
@@ -14,8 +15,28 @@ public class ParcelTrackingTests(SqlServerFixture fixture)
 
     private async Task<HttpResponseMessage> TrackAsync(string providerCode, string code)
     {
-        var (client, _) = await OrderTestData.RegisteredUserAsync(fixture);
+        var (client, customerId) = await OrderTestData.RegisteredUserAsync(fixture);
+        await OwnParcelAsync(customerId, code.Trim());
         return await client.GetAsync($"api/Shipment/Track?providerCode={providerCode}&code={Uri.EscapeDataString(code)}");
+    }
+
+    /// <summary>Gives the customer an eTipax shipment whose parcel has this tracking code.</summary>
+    private async Task OwnParcelAsync(int customerId, string trackingCode)
+    {
+        var orderId = await OrderTestData.InsertOrderAsync(fixture, customerId);
+        await fixture.WithDbAsync(async db =>
+        {
+            var providerId = await db.ServiceProviders.Where(p => p.Code == "etipax").Select(p => p.Id).SingleAsync();
+            var parcel = new OrderParcel { OrderId = orderId, Weight = 1, ParcelValue = 100000, Length = 10, Width = 10, Height = 10 };
+            var quote = new OrderInqueryOption { OrderId = orderId, ServiceProviderId = providerId, Choosen = true, FinalAmount = 1000, DelivereDate = "" };
+            db.AddRange(parcel, quote);
+            await db.SaveChangesAsync();
+            db.Shipments.Add(new Shipment { OrderId = orderId, ServiceProviderId = providerId, QuoteId = quote.Id,
+                TraceCode = "logiwall-track-" + trackingCode, State = ShipmentRegistrationState.Registered, CreatedAt = DateTimeOffset.UtcNow,
+                Parcels = [new ShipmentParcel { OrderParcelId = parcel.Id, TrackingCode = trackingCode }] });
+            await db.SaveChangesAsync();
+            return true;
+        });
     }
 
     [Fact]
@@ -47,6 +68,22 @@ public class ParcelTrackingTests(SqlServerFixture fixture)
     public async Task Track_unknown_code_is_not_found()
     {
         var response = await TrackAsync("etipax", NewCode());
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), "ParcelTrackingNotFound");
+    }
+
+    [Fact]
+    public async Task Track_code_of_another_customer_is_not_found()
+    {
+        var code = NewCode();
+        var (_, ownerId) = await OrderTestData.RegisteredUserAsync(fixture);
+        await OwnParcelAsync(ownerId, code);
+        fixture.Factory.Services.GetRequiredService<FakeShippingCarrier>().Trackings[code] = new(code, "ثبت", "اکسپرس", DateTimeOffset.UtcNow,
+            new("فرستنده", "تهران", "تهران"), new("گیرنده", "شیراز", "فارس"), [], new("پس کرایه", 1000m, 1000m, 0m));
+        var (stranger, _) = await OrderTestData.RegisteredUserAsync(fixture);
+
+        var response = await stranger.GetAsync($"api/Shipment/Track?providerCode=etipax&code={code}");
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         PersianAssert.HasMessage(await ApiClient.ReadJsonAsync(response), "ParcelTrackingNotFound");

@@ -167,15 +167,20 @@ public class ShipmentService(AppDbContext db, IEnumerable<IShippingCarrier> carr
         return Response(shipment);
     }
 
-    public async Task<ParcelTrackingResponseDto> TrackAsync(TrackParcelRequestDto request, CancellationToken cancellationToken)
+    public async Task<ParcelTrackingResponseDto> TrackAsync(TrackParcelRequestDto request, int userId, CancellationToken cancellationToken)
     {
         var providerCode = request.ProviderCode.Trim().ToLowerInvariant();
+        var code = request.Code.Trim();
         var providerName = await db.ServiceProviders.AsNoTracking().Where(p => p.Code == providerCode && p.IsActive)
             .Select(p => p.Title).SingleOrDefaultAsync(cancellationToken);
         var carrier = carriers.SingleOrDefault(c => c.Code == providerCode);
         if (providerName is null || carrier is null) throw new BadRequestException("ShippingProviderUnavailable");
+        // A code of another customer answers like an unknown code, so codes cannot be probed.
+        if (!await db.ShipmentParcels.AnyAsync(p => p.TrackingCode == code && p.Shipment.ServiceProvider.Code == providerCode
+            && p.Shipment.Order.Customer.Person.UserId == userId, cancellationToken))
+            throw new ResourceNotFoundException("ParcelTrackingNotFound");
         ParcelTrackingResponseDto? tracking;
-        try { tracking = await carrier.TrackAsync(request.Code.Trim(), cancellationToken); }
+        try { tracking = await carrier.TrackAsync(code, cancellationToken); }
         catch (Exception e) when (e is HttpRequestException or System.Text.Json.JsonException or InvalidOperationException
             || e is OperationCanceledException && !cancellationToken.IsCancellationRequested)
         {
